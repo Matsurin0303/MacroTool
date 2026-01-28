@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="MacroTool.Application.Tests/MacroTool.Application.Tests.csproj" Id="6ccb1c3b-09c8-4a9d-ae0d-98b9f524fc07" />
+  <Project Path="MacroTool.Application/MacroTool.Application.csproj" Id="5dc883c0-9d8f-45f2-9cf1-982869c3461f" />
+  <Project Path="MacroTool.Domain.Tests/MacroTool.Domain.Tests.csproj" Id="6974f4cb-ee7f-427c-9f82-edee7c120754" />
+  <Project Path="MacroTool.Domain/MacroTool.Domain.csproj" Id="6ee4b508-29c4-433a-8d20-7c83cda1f5c4" />
+  <Project Path="MacroTool.Infrastructure.Windows/MacroTool.Infrastructure.Windows.csproj" Id="dcebdd44-dab7-40ae-8e7f-6edf804f20cd" />
+  <Project Path="MacroTool.WinForms/MacroTool.WinForms.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+</Solution>
