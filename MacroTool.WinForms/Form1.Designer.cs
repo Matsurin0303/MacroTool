@@ -155,7 +155,7 @@
             // tsbPlay
             // 
             tsbPlay.AutoSize = false;
-            tsbPlay.Image = MacroTool.WinForms.Properties.Resources.再生ボタン;
+            tsbPlay.Image = Properties.Resources.Play;
             tsbPlay.ImageTransparentColor = Color.Magenta;
             tsbPlay.Name = "tsbPlay";
             tsbPlay.Size = new Size(80, 70);
@@ -165,7 +165,7 @@
             // tsbRecord
             // 
             tsbRecord.AutoSize = false;
-            tsbRecord.Image = MacroTool.WinForms.Properties.Resources.録画ボタン1;
+            tsbRecord.Image = Properties.Resources.Record;
             tsbRecord.ImageTransparentColor = Color.Magenta;
             tsbRecord.Name = "tsbRecord";
             tsbRecord.Size = new Size(80, 70);
@@ -175,7 +175,7 @@
             // tsbStop
             // 
             tsbStop.AutoSize = false;
-            tsbStop.Image = MacroTool.WinForms.Properties.Resources.再生停止ボタン;
+            tsbStop.Image = Properties.Resources.Stop;
             tsbStop.ImageTransparentColor = Color.Magenta;
             tsbStop.Name = "tsbStop";
             tsbStop.Size = new Size(80, 70);
@@ -190,7 +190,7 @@
             // tsdMouse
             // 
             tsdMouse.AutoSize = false;
-            tsdMouse.Image = MacroTool.WinForms.Properties.Resources.マウス;
+            tsdMouse.Image = Properties.Resources.Mouse;
             tsdMouse.ImageTransparentColor = Color.Magenta;
             tsdMouse.Name = "tsdMouse";
             tsdMouse.Size = new Size(80, 70);
@@ -200,7 +200,7 @@
             // tsdTextKey
             // 
             tsdTextKey.AutoSize = false;
-            tsdTextKey.Image = MacroTool.WinForms.Properties.Resources.キーボード;
+            tsdTextKey.Image = Properties.Resources.Keyboard;
             tsdTextKey.ImageTransparentColor = Color.Magenta;
             tsdTextKey.Name = "tsdTextKey";
             tsdTextKey.Size = new Size(80, 70);
@@ -210,7 +210,7 @@
             // tsdWait
             // 
             tsdWait.AutoSize = false;
-            tsdWait.Image = MacroTool.WinForms.Properties.Resources.時計;
+            tsdWait.Image = Properties.Resources.Wait;
             tsdWait.ImageTransparentColor = Color.Magenta;
             tsdWait.Name = "tsdWait";
             tsdWait.Size = new Size(80, 70);
@@ -220,7 +220,7 @@
             // tsdImageOcr
             // 
             tsdImageOcr.AutoSize = false;
-            tsdImageOcr.Image = MacroTool.WinForms.Properties.Resources.イメージ画像;
+            tsdImageOcr.Image = Properties.Resources.Image;
             tsdImageOcr.ImageTransparentColor = Color.Magenta;
             tsdImageOcr.Name = "tsdImageOcr";
             tsdImageOcr.Size = new Size(80, 70);
@@ -230,7 +230,7 @@
             // tsdMisc
             // 
             tsdMisc.AutoSize = false;
-            tsdMisc.Image = MacroTool.WinForms.Properties.Resources.ツールボックス;
+            tsdMisc.Image = Properties.Resources.Misc;
             tsdMisc.ImageTransparentColor = Color.Magenta;
             tsdMisc.Name = "tsdMisc";
             tsdMisc.Size = new Size(80, 70);
@@ -245,7 +245,7 @@
             // tsbEdit
             // 
             tsbEdit.AutoSize = false;
-            tsbEdit.Image = MacroTool.WinForms.Properties.Resources.鉛筆のアイコン素材;
+            tsbEdit.Image = Properties.Resources.Edit;
             tsbEdit.ImageTransparentColor = Color.Magenta;
             tsbEdit.Name = "tsbEdit";
             tsbEdit.Size = new Size(80, 70);
@@ -255,7 +255,7 @@
             // tsbDelete
             // 
             tsbDelete.AutoSize = false;
-            tsbDelete.Image = MacroTool.WinForms.Properties.Resources.ノーマルの太さのバツアイコン;
+            tsbDelete.Image = Properties.Resources.Delete;
             tsbDelete.ImageTransparentColor = Color.Magenta;
             tsbDelete.Name = "tsbDelete";
             tsbDelete.Size = new Size(80, 70);
@@ -265,7 +265,7 @@
             // tsbSearchReplace
             // 
             tsbSearchReplace.AutoSize = false;
-            tsbSearchReplace.Image = MacroTool.WinForms.Properties.Resources.虫眼鏡のアイコン;
+            tsbSearchReplace.Image = Properties.Resources.Search;
             tsbSearchReplace.ImageTransparentColor = Color.Magenta;
             tsbSearchReplace.Name = "tsbSearchReplace";
             tsbSearchReplace.Size = new Size(100, 70);
@@ -322,7 +322,7 @@
             // 
             newToolStripMenuItem.Name = "newToolStripMenuItem";
             newToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.N;
-            newToolStripMenuItem.Size = new Size(181, 22);
+            newToolStripMenuItem.Size = new Size(145, 22);
             newToolStripMenuItem.Text = "New";
             newToolStripMenuItem.Click += newToolStripMenuItem_Click;
             // 
@@ -330,56 +330,56 @@
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
             openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
-            openToolStripMenuItem.Size = new Size(181, 22);
+            openToolStripMenuItem.Size = new Size(145, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
             // recentFilesToolStripMenuItem
             // 
             recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
-            recentFilesToolStripMenuItem.Size = new Size(181, 22);
+            recentFilesToolStripMenuItem.Size = new Size(145, 22);
             recentFilesToolStripMenuItem.Text = "Recent Files";
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(178, 6);
+            toolStripMenuItem1.Size = new Size(142, 6);
             // 
             // saveToolStripMenuItem
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
-            saveToolStripMenuItem.Size = new Size(181, 22);
+            saveToolStripMenuItem.Size = new Size(145, 22);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
             // saveAsToolStripMenuItem
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(181, 22);
+            saveAsToolStripMenuItem.Size = new Size(145, 22);
             saveAsToolStripMenuItem.Text = "Save As...";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(178, 6);
+            toolStripMenuItem2.Size = new Size(142, 6);
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new Size(181, 22);
+            settingsToolStripMenuItem.Size = new Size(145, 22);
             settingsToolStripMenuItem.Text = "Settings";
             // 
             // toolStripMenuItem3
             // 
             toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(178, 6);
+            toolStripMenuItem3.Size = new Size(142, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(181, 22);
+            exitToolStripMenuItem.Size = new Size(145, 22);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
             // 
@@ -492,7 +492,7 @@
             imageListToolStrip.Images.SetKeyName(1, "Record");
             imageListToolStrip.Images.SetKeyName(2, "Mouse");
             imageListToolStrip.Images.SetKeyName(3, "Mouse");
-            imageListToolStrip.Images.SetKeyName(4, "Keybord");
+            imageListToolStrip.Images.SetKeyName(4, "Keyboard");
             imageListToolStrip.Images.SetKeyName(5, "Wait");
             imageListToolStrip.Images.SetKeyName(6, "Image");
             imageListToolStrip.Images.SetKeyName(7, "Misc");

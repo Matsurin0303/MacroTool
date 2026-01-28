@@ -19,7 +19,7 @@ namespace MacroTool.WinForms.Properties {
     // または Visual Studio のようなツールを使用して自動生成されました。
     // メンバーを追加または削除するには、.ResX ファイルを編集して、/str オプションと共に
     // ResGen を実行し直すか、または VS プロジェクトをビルドし直します。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -63,9 +63,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap イメージ画像 {
+        internal static System.Drawing.Bitmap Delete {
             get {
-                object obj = ResourceManager.GetObject("イメージ画像", resourceCulture);
+                object obj = ResourceManager.GetObject("Delete", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -73,9 +73,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap キーボード {
+        internal static System.Drawing.Bitmap Edit {
             get {
-                object obj = ResourceManager.GetObject("キーボード", resourceCulture);
+                object obj = ResourceManager.GetObject("Edit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -83,9 +83,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap ツールボックス {
+        internal static System.Drawing.Bitmap Image {
             get {
-                object obj = ResourceManager.GetObject("ツールボックス", resourceCulture);
+                object obj = ResourceManager.GetObject("Image", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -93,9 +93,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap ノーマルの太さのバツアイコン {
+        internal static System.Drawing.Bitmap Keyboard {
             get {
-                object obj = ResourceManager.GetObject("ノーマルの太さのバツアイコン", resourceCulture);
+                object obj = ResourceManager.GetObject("Keyboard", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -103,9 +103,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap マウス {
+        internal static System.Drawing.Bitmap Misc {
             get {
-                object obj = ResourceManager.GetObject("マウス", resourceCulture);
+                object obj = ResourceManager.GetObject("Misc", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -113,9 +113,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 再生ボタン {
+        internal static System.Drawing.Bitmap Mouse {
             get {
-                object obj = ResourceManager.GetObject("再生ボタン", resourceCulture);
+                object obj = ResourceManager.GetObject("Mouse", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -123,9 +123,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 再生停止ボタン {
+        internal static System.Drawing.Bitmap Play {
             get {
-                object obj = ResourceManager.GetObject("再生停止ボタン", resourceCulture);
+                object obj = ResourceManager.GetObject("Play", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -133,9 +133,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 時計 {
+        internal static System.Drawing.Bitmap Record {
             get {
-                object obj = ResourceManager.GetObject("時計", resourceCulture);
+                object obj = ResourceManager.GetObject("Record", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -143,9 +143,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 虫眼鏡のアイコン {
+        internal static System.Drawing.Bitmap Search {
             get {
-                object obj = ResourceManager.GetObject("虫眼鏡のアイコン", resourceCulture);
+                object obj = ResourceManager.GetObject("Search", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,9 +153,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 鉛筆のアイコン素材 {
+        internal static System.Drawing.Bitmap Stop {
             get {
-                object obj = ResourceManager.GetObject("鉛筆のアイコン素材", resourceCulture);
+                object obj = ResourceManager.GetObject("Stop", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -163,9 +163,9 @@ namespace MacroTool.WinForms.Properties {
         /// <summary>
         ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
         /// </summary>
-        internal static System.Drawing.Bitmap 録画ボタン1 {
+        internal static System.Drawing.Bitmap Wait {
             get {
-                object obj = ResourceManager.GetObject("録画ボタン1", resourceCulture);
+                object obj = ResourceManager.GetObject("Wait", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
