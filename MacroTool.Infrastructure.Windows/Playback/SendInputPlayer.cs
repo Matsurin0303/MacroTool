@@ -1,14 +1,20 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using MacroTool.Application.Abstractions;
+﻿using MacroTool.Application.Abstractions;
+using MacroTool.Application.Playback;
 using MacroTool.Domain.Macros;
 using MacroTool.Infrastructure.Windows.Interop;
+using Microsoft.Extensions.Options;
 
 namespace MacroTool.Infrastructure.Windows.Playback;
 
 public sealed class SendInputPlayer : IPlayer
 {
+    private readonly PlaybackOptions _opt;
+
+    public SendInputPlayer(IOptions<PlaybackOptions> opt)
+    {
+        _opt = opt.Value;
+    }
+
     public async Task PlayAsync(Macro macro, CancellationToken token)
     {
         foreach (var step in macro.Steps)
@@ -19,16 +25,16 @@ public sealed class SendInputPlayer : IPlayer
             if (ms > 0)
                 await Task.Delay(ms, token);
 
-            Execute(step.Action);
+            await ExecuteAsync(step.Action, token);
         }
     }
 
-    private static void Execute(MacroAction action)
+    private async Task ExecuteAsync(MacroAction action, CancellationToken token)
     {
         switch (action)
         {
             case MouseClick mc:
-                DoMouseClick(mc);
+                await DoMouseClickAsync(mc, token);
                 break;
 
             case KeyDown kd:
@@ -40,26 +46,32 @@ public sealed class SendInputPlayer : IPlayer
                 break;
 
             default:
-                // 未対応アクションは無視（将来拡張）
                 break;
         }
     }
 
-    private static void DoMouseClick(MouseClick mc)
+    private async Task StabilizeAsync(int ms, CancellationToken token)
+    {
+        if (!_opt.EnableStabilizeWait) return;
+        if (ms <= 0) return;
+        await Task.Delay(ms, token);
+    }
+
+    private async Task DoMouseClickAsync(MouseClick mc, CancellationToken token)
     {
         Win32.SetCursorPos(mc.Point.X, mc.Point.Y);
-
-        // 安定用に少し待つ（不要なら削除可）
-        Thread.Sleep(10);
+        await StabilizeAsync(_opt.CursorSettleDelayMs, token);
 
         if (mc.Button == MouseButton.Right)
         {
             MouseEvent(Win32.MOUSEEVENTF_RIGHTDOWN);
+            await StabilizeAsync(_opt.ClickHoldDelayMs, token);
             MouseEvent(Win32.MOUSEEVENTF_RIGHTUP);
         }
         else
         {
             MouseEvent(Win32.MOUSEEVENTF_LEFTDOWN);
+            await StabilizeAsync(_opt.ClickHoldDelayMs, token);
             MouseEvent(Win32.MOUSEEVENTF_LEFTUP);
         }
     }
@@ -97,7 +109,6 @@ public sealed class SendInputPlayer : IPlayer
                     dwFlags = isDown ? 0u : Win32.KEYEVENTF_KEYUP,
                     dwExtraInfo = InjectionTag.Value
                 }
-
             }
         };
 

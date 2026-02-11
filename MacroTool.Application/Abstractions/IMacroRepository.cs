@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MacroTool.Domain;
-using MacroTool.Domain.Macros;
+﻿using MacroTool.Domain.Macros;
 
 namespace MacroTool.Application.Abstractions;
 

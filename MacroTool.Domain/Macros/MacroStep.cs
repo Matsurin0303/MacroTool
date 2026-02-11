@@ -1,9 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MacroTool.Domain.Macros;
 
-namespace MacroTool.Domain.Macros;
+public sealed class MacroStep
+{
+    public MacroDelay Delay { get; }
+    public MacroAction Action { get; }
 
-public sealed record MacroStep(MacroDelay Delay, MacroAction Action);
+    public string Label { get; }
+    public string Comment { get; }
+
+    public MacroStep(MacroDelay delay, MacroAction action, string label = "", string comment = "")
+    {
+        Delay = delay;
+        Action = action;
+        Label = label ?? "";
+        Comment = comment ?? "";
+    }
+}

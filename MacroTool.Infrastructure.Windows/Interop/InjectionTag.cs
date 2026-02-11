@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MacroTool.Infrastructure.Windows.Interop;
+﻿namespace MacroTool.Infrastructure.Windows.Interop;
 
 internal static class InjectionTag
 {

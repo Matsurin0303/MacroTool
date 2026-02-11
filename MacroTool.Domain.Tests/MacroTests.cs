@@ -1,5 +1,4 @@
 ﻿using MacroTool.Domain.Macros;
-using Xunit;
 
 namespace MacroTool.Domain.Tests;
 

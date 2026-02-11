@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using MacroTool.Domain.Macros;
+﻿using MacroTool.Domain.Macros;
 
 namespace MacroTool.Application.Abstractions;
 

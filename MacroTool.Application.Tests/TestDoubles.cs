@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using MacroTool.Application.Abstractions;
+﻿using MacroTool.Application.Abstractions;
 using MacroTool.Domain.Macros;
 
 namespace MacroTool.Application.Tests;
@@ -12,6 +9,7 @@ internal sealed class FakeRecorder : IRecorder
     public bool IsRecording { get; private set; }
     public bool StartResult { get; set; } = true;
 
+
     public bool Start()
     {
         IsRecording = StartResult;
@@ -20,8 +18,8 @@ internal sealed class FakeRecorder : IRecorder
 
     public void Stop() => IsRecording = false;
 
-    public void Raise(DateTime ts, MacroAction action)
-        => ActionRecorded?.Invoke(this, new RecordedAction(ts, action));
+    public void Raise(TimeSpan elapsed, MacroAction action)
+    => ActionRecorded?.Invoke(this, new RecordedAction(elapsed, action));
 }
 
 internal sealed class FakePlayer : IPlayer

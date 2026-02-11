@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using MacroTool.Application.Abstractions;
+﻿using MacroTool.Application.Abstractions;
 using MacroTool.Domain.Macros;
+using System.Text.Json;
 
 namespace MacroTool.Infrastructure.Windows.Persistence;
 
 public sealed class JsonMacroRepository : IMacroRepository
 {
-    private const int CurrentVersion = 1;
+    private const int CurrentVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -38,8 +35,9 @@ public sealed class JsonMacroRepository : IMacroRepository
         var dto = JsonSerializer.Deserialize<MacroFileDto>(json, JsonOptions)
                   ?? throw new InvalidDataException("Invalid macro file.");
 
-        if (dto.Version != CurrentVersion)
+        if (dto.Version is not 1 and not 2)
             throw new InvalidDataException($"Unsupported macro version: {dto.Version}");
+
 
         var macro = new Macro();
         foreach (var s in dto.Steps)
@@ -59,7 +57,11 @@ public sealed class JsonMacroRepository : IMacroRepository
     {
         public int DelayMs { get; set; }
         public ActionDto Action { get; set; } = new();
+
+        public string? Label { get; set; }
+        public string? Comment { get; set; }
     }
+
 
     private sealed class ActionDto
     {
@@ -78,8 +80,11 @@ public sealed class JsonMacroRepository : IMacroRepository
         => new()
         {
             DelayMs = step.Delay.TotalMilliseconds,
-            Action = ToDto(step.Action)
+            Action = ToDto(step.Action),
+            Label = step.Label,
+            Comment = step.Comment
         };
+
 
     private static ActionDto ToDto(MacroAction action)
     {
@@ -113,27 +118,48 @@ public sealed class JsonMacroRepository : IMacroRepository
     {
         var delay = MacroDelay.FromMilliseconds(dto.DelayMs);
         var action = FromDto(dto.Action);
-        return new MacroStep(delay, action);
+
+        var label = dto.Label ?? "";
+        var comment = dto.Comment ?? "";
+
+        return new MacroStep(delay, action, label, comment);
     }
+
+
+    private static int RequiredInt(int? v, string name)
+        => v ?? throw new InvalidDataException($"Missing required field: {name}");
+
+    private static ushort RequiredUShort(ushort? v, string name)
+        => v ?? throw new InvalidDataException($"Missing required field: {name}");
+
+    private static string RequiredString(string? v, string name)
+        => string.IsNullOrWhiteSpace(v)
+            ? throw new InvalidDataException($"Missing required field: {name}")
+            : v;
 
     private static MacroAction FromDto(ActionDto dto)
     {
         return dto.Kind switch
         {
             "MouseClick" => new MouseClick(
-                new ScreenPoint(dto.X ?? 0, dto.Y ?? 0),
-                ParseButton(dto.Button)
+                new ScreenPoint(
+                    RequiredInt(dto.X, "Action.X"),
+                    RequiredInt(dto.Y, "Action.Y")),
+                ParseButton(RequiredString(dto.Button, "Action.Button"))
             ),
 
-            "KeyDown" => new KeyDown(new VirtualKey(dto.Vk ?? 0)),
-            "KeyUp" => new KeyUp(new VirtualKey(dto.Vk ?? 0)),
+            "KeyDown" => new KeyDown(new VirtualKey(RequiredUShort(dto.Vk, "Action.Vk"))),
+            "KeyUp" => new KeyUp(new VirtualKey(RequiredUShort(dto.Vk, "Action.Vk"))),
 
             _ => throw new InvalidDataException($"Unknown action kind: {dto.Kind}")
         };
     }
 
-    private static MouseButton ParseButton(string? s)
-        => string.Equals(s, "Right", StringComparison.OrdinalIgnoreCase)
-            ? MouseButton.Right
-            : MouseButton.Left;
+    private static MouseButton ParseButton(string s)
+    {
+        if (string.Equals(s, "Left", StringComparison.OrdinalIgnoreCase)) return MouseButton.Left;
+        if (string.Equals(s, "Right", StringComparison.OrdinalIgnoreCase)) return MouseButton.Right;
+        throw new InvalidDataException($"Invalid mouse button: {s}");
+    }
+
 }

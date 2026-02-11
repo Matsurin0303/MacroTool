@@ -1,15 +1,11 @@
-using System.IO;
-using MacroTool.WinForms.Core; // 追加（置いた場所に合わせる）
 using MacroTool.Application.Services;
-using MacroTool.Domain.Macros;
-using MacroTool.WinForms.Core;
-using System;
-using System.Drawing;
+using MacroTool.WinForms.Core; // 追加（置いた場所に合わせる）
 using System.ComponentModel;
-using DomainMacroAction = MacroTool.Domain.Macros.MacroAction;
-using DomainMouseClick = MacroTool.Domain.Macros.MouseClick;
 using DomainKeyDown = MacroTool.Domain.Macros.KeyDown;
 using DomainKeyUp = MacroTool.Domain.Macros.KeyUp;
+using DomainMacroAction = MacroTool.Domain.Macros.MacroAction;
+using DomainMouseClick = MacroTool.Domain.Macros.MouseClick;
+using MacroTool.WinForms.Settings;
 
 namespace MacroTool.WinForms;
 
@@ -27,6 +23,8 @@ public partial class Form1 : Form
     private readonly RecentFilesStore _recentFiles = new(appName: "MacroTool", maxItems: 10);
 
     // Recent Files の識別用タグ（メニューに差し込む項目だけ消せるように）
+    private readonly SettingsStore _settingsStore = new(SettingsStore.DefaultPath());
+    private AppSettings _settings;
 
     // Status
     private ToolStripStatusLabel _lblState = null!;
@@ -58,6 +56,16 @@ public partial class Form1 : Form
         InitializeComponent();
         ApplyToolStripIcons();
         recentFilesToolStripMenuItem.DropDownOpening += (_, __) => RebuildRecentFilesMenu();
+        // 編集可
+        colLabel.ReadOnly = false;
+        colComment.ReadOnly = false;
+
+        // 編集不可
+        colNo.ReadOnly = true;
+        colIcon.ReadOnly = true;
+        colAction.ReadOnly = true;
+        colValue.ReadOnly = true;
+
 
         settingsToolStripMenuItem.Click += (_, __) =>
             MessageBox.Show(this, "Settings は未実装です。", "Info",
@@ -87,18 +95,55 @@ public partial class Form1 : Form
         _app.MacroChanged += (_, __) => BeginInvoke(new Action(() =>
         {
             if (!_suppressDirty) _isDirty = true;
-            RefreshGridFromDomain();
+            RefreshGridFromDomainPreserveSelection();
             UpdateUi();
         }));
-
-
 
         // --- 一覧（Designerで作成したgridActionsを使う） ---
         gridActions.AutoGenerateColumns = false;
         gridActions.DataSource = _rows;
-        ConfigureGridColumns();
         gridActions.CellFormatting += GridActions_CellFormatting;
         gridActions.RowTemplate.Height = 22; // アイコン見やすく（任意）
+        gridActions.CellEndEdit += GridActions_CellEndEdit;
+        gridActions.KeyDown += GridActions_KeyDown;
+        gridActions.CellBeginEdit += GridActions_CellBeginEdit;
+        gridActions.CellMouseDown += GridActions_CellMouseDown;
+
+        ConfigureGridColumns();
+
+        // --- 右クリックメニュー ---
+        mnuCopy.Click += (_, __) => CopySelectedRows();
+        mnuCut.Click += (_, __) => CutSelectedRows();
+        mnuPaste.Click += (_, __) => PasteRows();
+        mnuDelete.Click += (_, __) => DeleteSelectedRows();
+
+        // 状態に応じてEnable制御（開くたび更新）
+        cmsActions.Opening += (_, e) =>
+        {
+            bool stopped = _app.State == MacroTool.Application.AppState.Stopped;
+
+            mnuCopy.Enabled = stopped && gridActions.SelectedRows.Count > 0;
+            mnuCut.Enabled = stopped && gridActions.SelectedRows.Count > 0;
+
+            // 貼り付けはテキストがある時だけ
+            mnuPaste.Enabled = stopped && Clipboard.ContainsText();
+
+            mnuDelete.Enabled = stopped && gridActions.SelectedRows.Count > 0;
+        };
+
+        settingsToolStripMenuItem.Click += (_, __) =>
+        {
+            using var dlg = new SettingsForm(_settingsStore);
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                _settings = _settingsStore.Load();
+
+                // UI設定を反映（削除確認など）
+                ApplyUiSettings();
+
+                // Playback設定は次のセクションでDI反映を入れます（※ここはGUI完成優先なので後でもOK）
+            }
+        };
 
 
         // --- ToolStrip（Record/Stop/Play） ---
@@ -110,6 +155,8 @@ public partial class Form1 : Form
         _statusTimer.Start();
 
         UpdateUi();
+        _settings = _settingsStore.Load();
+
     }
 
     private void LoadMacroFromFile()
@@ -200,7 +247,7 @@ public partial class Form1 : Form
             else
                 item.Click += (_, __) => handler();
         }
-
+        Bind(tsbDelete, DeleteSelectedRows);
         Bind(tsbRecord, StartRecording);
         Bind(tsbStop, () => _app.StopAll());
         Bind(tsbPlay, () =>
@@ -318,7 +365,6 @@ public partial class Form1 : Form
         }
         _app.UserNotification -= OnUserNotification;
         _app.StopAll();          // 再生/録画停止だけは明示
-        _app.Dispose();
         _statusTimer.Stop();
         base.OnFormClosing(e);
     }
@@ -327,39 +373,67 @@ public partial class Form1 : Form
     private void saveToolStripMenuItem_Click(object sender, EventArgs e) => SaveMacro();
     private void saveAsToolStripMenuItem_Click(object sender, EventArgs e) => SaveMacroAs();
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) => Close();
-
-    private sealed class ActionRow
-    {
-        public int No { get; set; }
-        public string IconKey { get; set; } = "";
-        public string Action { get; set; } = "";
-        public string Value { get; set; } = "";
-        public string Label { get; set; } = "";
-        public string Comment { get; set; } = "";
-    }
-
     private void RefreshGridFromDomain()
     {
-        _rows.RaiseListChangedEvents = false;
-        _rows.Clear();
-
-        int i = 1;
-        foreach (var step in _app.CurrentMacro.Steps)
+        _suppressGridCommit = true;
+        try
         {
-            _rows.Add(new ActionRow
+            _rows.Clear();
+
+            int no = 1;
+            foreach (var step in _app.CurrentMacro.Steps)
             {
-                No = i++,
-                IconKey = ToIconKey(step.Action),
-                Action = step.Action.Kind,
-                Value = step.Action.DisplayValue,
-                Label = "",    // まだドメインに無ければ空でOK
-                Comment = ""   // まだドメインに無ければ空でOK
-            });
+                _rows.Add(ActionRow.FromDomain(no++, step));
+
+            }
+        }
+        finally
+        {
+            _suppressGridCommit = false;
+        }
+    }
+    private void RefreshGridFromDomainPreserveSelection()
+    {
+        // 現在の選択状態を退避
+        int? rowIndex = null;
+        string? colName = null;
+        int firstDisplayed = -1;
+
+        if (gridActions.CurrentCell is DataGridViewCell cell)
+        {
+            rowIndex = cell.RowIndex;
+            colName = gridActions.Columns[cell.ColumnIndex].Name;
         }
 
-        _rows.RaiseListChangedEvents = true;
-        _rows.ResetBindings();
+        if (gridActions.RowCount > 0)
+        {
+            try { firstDisplayed = gridActions.FirstDisplayedScrollingRowIndex; }
+            catch { /* まれに例外になる環境があるので握りつぶし */ }
+        }
+
+        // 一覧を作り直す
+        RefreshGridFromDomain();
+
+        // 退避した選択を復元
+        if (rowIndex is int r && r >= 0 && r < gridActions.RowCount)
+        {
+            int c = 0;
+            if (!string.IsNullOrEmpty(colName) && gridActions.Columns.Contains(colName))
+                c = gridActions.Columns[colName].Index;
+
+            // CurrentCell を戻す（行選択でも CurrentCell が要）
+            gridActions.CurrentCell = gridActions.Rows[r].Cells[c];
+            gridActions.Rows[r].Selected = true;
+        }
+
+        // スクロール位置も復元（範囲内なら）
+        if (firstDisplayed >= 0 && firstDisplayed < gridActions.RowCount)
+        {
+            try { gridActions.FirstDisplayedScrollingRowIndex = firstDisplayed; }
+            catch { }
+        }
     }
+
 
     private void OnUserNotification(object? sender, string msg)
     {
@@ -391,13 +465,69 @@ public partial class Form1 : Form
 
         e.FormattingApplied = true;
     }
+
+    private void GridActions_KeyDown(object? sender, KeyEventArgs e)
+    {
+        // コピー / 切り取り / 貼り付け
+        if (e.Control && e.KeyCode == Keys.C)
+        {
+            CopySelectedRows();
+            e.Handled = true;
+            return;
+        }
+        if (e.Control && e.KeyCode == Keys.X)
+        {
+            CutSelectedRows();
+            e.Handled = true;
+            return;
+        }
+        if (e.Control && e.KeyCode == Keys.V)
+        {
+            PasteRows();
+            e.Handled = true;
+            return;
+        }
+        if (e.Control && e.KeyCode == Keys.Z)
+        {
+            _app.Undo();
+            e.Handled = true;
+            return;
+        }
+        if (e.Control && e.KeyCode == Keys.Y)
+        {
+            _app.Redo();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.KeyCode == Keys.Delete)
+        {
+            DeleteSelectedRows();
+            e.Handled = true;
+        }
+
+    }
+
+    private void GridActions_CellBeginEdit(object? sender, DataGridViewCellCancelEventArgs e)
+    {
+        // Label/Comment編集開始時は、編集行だけ選択に寄せる
+        var colName = gridActions.Columns[e.ColumnIndex].Name;
+        if (colName != nameof(colLabel) && colName != nameof(colComment))
+            return;
+
+        var row = gridActions.Rows[e.RowIndex];
+        gridActions.ClearSelection();
+        row.Selected = true;
+    }
+
+
     private void ConfigureGridColumns()
     {
         gridActions.AutoGenerateColumns = false;
         gridActions.AllowUserToAddRows = false;
         gridActions.AllowUserToDeleteRows = false;
-        gridActions.ReadOnly = true;
-        gridActions.MultiSelect = false;
+        gridActions.ReadOnly = false;
+        gridActions.MultiSelect = true;
         gridActions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
         // 行ヘッダの余白がいらなければ
@@ -454,22 +584,7 @@ public partial class Form1 : Form
         // 既定エラーダイアログ抑制（保険）
         gridActions.DataError += (_, e) => e.ThrowException = false;
     }
-    private static class IconKeys
-    {
-        public const string Mouse = "Mouse";
-        public const string Keyboard = "Keyboard";
-        public const string Misc = "Misc";
-    }
 
-    private static string ToIconKey(DomainMacroAction action)
-    {
-        return action switch
-        {
-            DomainMouseClick => IconKeys.Mouse,
-            DomainKeyDown or DomainKeyUp => IconKeys.Keyboard,
-            _ => IconKeys.Misc
-        };
-    }
     private void UpdateUi()
     {
         UpdateCurrentFileTitle();
@@ -605,5 +720,233 @@ public partial class Form1 : Form
         recentFilesToolStripMenuItem.DropDownItems.Add(clear);
     }
 
+    private bool _suppressGridCommit;
+
+    private void GridActions_CellEndEdit(object? sender, DataGridViewCellEventArgs e)
+    {
+        if (_suppressGridCommit) return;
+        if (e.RowIndex < 0) return;
+        if (e.RowIndex >= _rows.Count) return;
+
+        var column = gridActions.Columns[e.ColumnIndex];
+
+        // Label / Comment 以外は無視
+        if (column.Name != nameof(colLabel) &&
+            column.Name != nameof(colComment))
+            return;
+
+        var row = _rows[e.RowIndex];
+        var label = row.Label ?? "";
+        var comment = row.Comment ?? "";
+        _app.UpdateStepMetadata(e.RowIndex, label, comment);
+
+    }
+
+    private void DeleteSelectedRows()
+    {
+        if (_app.State != MacroTool.Application.AppState.Stopped)
+            return;
+
+        if (gridActions.SelectedRows.Count == 0)
+            return;
+
+        // 削除前に確認（好みで外してもOK）
+        if (_settings.Ui.ConfirmDelete)
+        {
+            var result = MessageBox.Show(
+                this,
+                $"選択した {gridActions.SelectedRows.Count} 行を削除しますか？",
+                "確認",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result != DialogResult.Yes)
+                return;
+        }
+        // 現在セル・スクロール位置を退避（選択保持の仕組みを流用）
+        int? currentRow = gridActions.CurrentCell?.RowIndex;
+        string? currentColName = gridActions.CurrentCell is null
+            ? null
+            : gridActions.Columns[gridActions.CurrentCell.ColumnIndex].Name;
+
+        int firstDisplayed = -1;
+        try { firstDisplayed = gridActions.FirstDisplayedScrollingRowIndex; } catch { }
+
+        // SelectedRows から index を取る（DataGridViewRow.Index は表示行Index = _rows の index と一致）
+        var indices = gridActions.SelectedRows
+            .Cast<DataGridViewRow>()
+            .Select(r => r.Index)
+            .ToArray();
+
+        _app.DeleteSteps(indices);
+
+
+
+        // MacroChanged → RefreshGrid… が走るが、削除の場合は「次の行」を自然に選ぶ方が体感が良いので補正
+        BeginInvoke(new Action(() =>
+        {
+            if (gridActions.RowCount == 0) return;
+
+            int targetRow = 0;
+            if (currentRow is int r)
+            {
+                // 削除後は「同じ行番号」か、はみ出したら末尾
+                targetRow = Math.Min(r, gridActions.RowCount - 1);
+            }
+
+            int targetCol = 0;
+            if (!string.IsNullOrEmpty(currentColName) && gridActions.Columns.Contains(currentColName))
+                targetCol = gridActions.Columns[currentColName].Index;
+
+            gridActions.CurrentCell = gridActions.Rows[targetRow].Cells[targetCol];
+            gridActions.Rows[targetRow].Selected = true;
+
+            if (firstDisplayed >= 0 && firstDisplayed < gridActions.RowCount)
+            {
+                try { gridActions.FirstDisplayedScrollingRowIndex = firstDisplayed; } catch { }
+            }
+        }));
+    }
+
+    private void SelectRow(int rowIndex)
+    {
+        if (rowIndex < 0 || rowIndex >= gridActions.RowCount) return;
+
+        int colIndex = gridActions.CurrentCell?.ColumnIndex ?? 0;
+        colIndex = Math.Min(colIndex, gridActions.ColumnCount - 1);
+
+        gridActions.CurrentCell = gridActions.Rows[rowIndex].Cells[colIndex];
+        gridActions.Rows[rowIndex].Selected = true;
+
+        // スクロールも自然に追従
+        try
+        {
+            if (rowIndex < gridActions.FirstDisplayedScrollingRowIndex ||
+                rowIndex >= gridActions.FirstDisplayedScrollingRowIndex + gridActions.DisplayedRowCount(false))
+            {
+                gridActions.FirstDisplayedScrollingRowIndex = rowIndex;
+            }
+        }
+        catch { }
+    }
+    private int GetInsertIndexForPaste()
+    {
+        // CurrentCellがあればその行に挿入、無ければ末尾
+        if (gridActions.CurrentCell is null) return _rows.Count;
+        int idx = gridActions.CurrentCell.RowIndex;
+        if (idx < 0) return _rows.Count;
+        if (idx > _rows.Count) return _rows.Count;
+        return idx;
+    }
+
+    private int[] GetSelectedRowIndices()
+    {
+        return gridActions.SelectedRows
+            .Cast<DataGridViewRow>()
+            .Select(r => r.Index)
+            .OrderBy(i => i)
+            .ToArray();
+    }
+
+    private void CopySelectedRows()
+    {
+        if (_app.State != MacroTool.Application.AppState.Stopped) return;
+
+        var indices = GetSelectedRowIndices();
+        if (indices.Length == 0) return;
+
+        try
+        {
+            var text = _app.CopyStepsToClipboardText(indices);
+            if (!string.IsNullOrWhiteSpace(text))
+                Clipboard.SetText(text);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void CutSelectedRows()
+    {
+        if (_app.State != MacroTool.Application.AppState.Stopped) return;
+
+        var indices = GetSelectedRowIndices();
+        if (indices.Length == 0) return;
+
+        // 任意：確認
+        var r = MessageBox.Show(this, $"選択した {indices.Length} 行を切り取りますか？",
+            "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        if (r != DialogResult.Yes) return;
+
+        try
+        {
+            var text = _app.CutStepsToClipboardText(indices);
+            if (!string.IsNullOrWhiteSpace(text))
+                Clipboard.SetText(text);
+
+            // 削除後の選択調整（削除実装で入れてるなら不要だが、あってもOK）
+            BeginInvoke(new Action(() =>
+            {
+                if (gridActions.RowCount == 0) return;
+                int target = Math.Min(indices.Min(), gridActions.RowCount - 1);
+                SelectRow(target);
+            }));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void PasteRows()
+    {
+        if (_app.State != MacroTool.Application.AppState.Stopped) return;
+        if (!Clipboard.ContainsText()) return;
+
+        var text = Clipboard.GetText();
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        int insertIndex = GetInsertIndexForPaste();
+
+        try
+        {
+            int added = _app.PasteStepsFromClipboardText(insertIndex, text);
+            if (added <= 0) return;
+
+            BeginInvoke(new Action(() =>
+            {
+                if (gridActions.RowCount == 0) return;
+                SelectRow(Math.Min(insertIndex, gridActions.RowCount - 1));
+            }));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "貼り付けエラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    private void GridActions_CellMouseDown(object? sender, DataGridViewCellMouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right) return;
+        if (e.RowIndex < 0) return;
+
+        // 右クリックした行が未選択なら、その行だけ選択にする
+        if (!gridActions.Rows[e.RowIndex].Selected)
+        {
+            gridActions.ClearSelection();
+            gridActions.CurrentCell = gridActions.Rows[e.RowIndex].Cells[Math.Max(0, e.ColumnIndex)];
+            gridActions.Rows[e.RowIndex].Selected = true;
+        }
+    }
+
+    private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+    {
+
+    }
+
+    private void ApplyUiSettings()
+    {
+        // 削除確認は DeleteSelectedRows() で参照する
+    }
 
 }

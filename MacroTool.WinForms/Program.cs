@@ -1,4 +1,5 @@
 using MacroTool.Application.Abstractions;
+using MacroTool.Application.Playback;
 using MacroTool.Application.Services;
 using MacroTool.Infrastructure.Windows.Persistence;
 using MacroTool.Infrastructure.Windows.Playback;
@@ -16,12 +17,14 @@ internal static class Program
         System.Windows.Forms.ApplicationConfiguration.Initialize();
 
         using var host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services =>
+            .ConfigureServices((ctx, services) =>
             {
                 services.AddSingleton<IRecorder, LowLevelHookRecorder>();
                 services.AddSingleton<IPlayer, SendInputPlayer>();
                 services.AddSingleton<IMacroRepository, JsonMacroRepository>();
                 services.AddSingleton<MacroAppService>();
+
+                services.Configure<PlaybackOptions>(ctx.Configuration.GetSection("Playback"));
 
                 services.AddTransient<Form1>();
             })

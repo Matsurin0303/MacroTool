@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading;
-using MacroTool.Application.Services;
+﻿using MacroTool.Application.Services;
 using MacroTool.Domain.Macros;
-using Xunit;
 
 namespace MacroTool.Application.Tests;
 

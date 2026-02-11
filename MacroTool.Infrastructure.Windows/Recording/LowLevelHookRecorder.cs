@@ -1,9 +1,9 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using MacroTool.Application.Abstractions;
+﻿using MacroTool.Application.Abstractions;
 using MacroTool.Domain.Macros;
 using MacroTool.Infrastructure.Windows.Interop;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading.Channels;
 
 namespace MacroTool.Infrastructure.Windows.Recording;
 
@@ -14,7 +14,16 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
 
     private Win32.LowLevelMouseProc? _mouseProc;
     private Win32.LowLevelKeyboardProc? _keyProc;
+    private readonly Channel<RecordedAction> _channel =
+    Channel.CreateUnbounded<RecordedAction>(new UnboundedChannelOptions
+    {
+        SingleReader = true,
+        SingleWriter = false
+    });
 
+    private CancellationTokenSource? _cts;
+    private Task? _pump;
+    private Stopwatch? _sw;
     public event EventHandler<RecordedAction>? ActionRecorded;
 
     public bool IsRecording { get; private set; }
@@ -22,6 +31,11 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
     public bool Start()
     {
         if (IsRecording) return true;
+
+        _sw = Stopwatch.StartNew();
+
+        _cts = new CancellationTokenSource();
+        _pump = Task.Run(() => PumpAsync(_cts.Token));
 
         _mouseProc = MouseHookCallback;
         _keyProc = KeyboardHookCallback;
@@ -37,6 +51,7 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
         return IsRecording;
     }
 
+
     public void Stop()
     {
         if (_mouseHook != IntPtr.Zero) Win32.UnhookWindowsHookEx(_mouseHook);
@@ -44,8 +59,28 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
 
         _mouseHook = IntPtr.Zero;
         _keyHook = IntPtr.Zero;
+
         IsRecording = false;
+
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+
+        _sw = null;
     }
+
+    private async Task PumpAsync(CancellationToken token)
+    {
+        var reader = _channel.Reader;
+        while (await reader.WaitToReadAsync(token))
+        {
+            while (reader.TryRead(out var a))
+            {
+                ActionRecorded?.Invoke(this, a);
+            }
+        }
+    }
+
 
     private IntPtr SetMouseHook(Win32.LowLevelMouseProc proc)
     {
@@ -77,7 +112,8 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
                 var button = (msg == Win32.WM_RBUTTONDOWN) ? MouseButton.Right : MouseButton.Left;
                 var action = new MouseClick(new ScreenPoint(info.pt.x, info.pt.y), button);
 
-                ActionRecorded?.Invoke(this, new RecordedAction(DateTime.Now, action));
+                var elapsed = _sw?.Elapsed ?? TimeSpan.Zero;
+                _channel.Writer.TryWrite(new RecordedAction(elapsed, action));
             }
         }
 
@@ -98,12 +134,13 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
             if (msg == Win32.WM_KEYDOWN || msg == Win32.WM_KEYUP)
             {
                 var vk = new VirtualKey((ushort)info.vkCode);
+                var elapsed = _sw?.Elapsed ?? TimeSpan.Zero;
 
                 MacroAction action = (msg == Win32.WM_KEYDOWN)
                     ? new KeyDown(vk)
                     : new KeyUp(vk);
-
-                ActionRecorded?.Invoke(this, new RecordedAction(DateTime.Now, action));
+                
+                _channel.Writer.TryWrite(new RecordedAction(elapsed, action));
             }
         }
 
