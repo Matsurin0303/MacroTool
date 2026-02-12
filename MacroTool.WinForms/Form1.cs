@@ -140,7 +140,6 @@ public partial class Form1 : Form
 
         // Settings（※「未実装」Clickハンドラは絶対に残さないこと）
         // もしDesigner側で Click が紐付いている場合は、Designerの Click も削除/差し替えしてください。
-        settingsToolStripMenuItem.Click -= settingsToolStripMenuItem_Click; // もし自動生成があっても無害
         settingsToolStripMenuItem.Click += (_, __) => OpenSettings();
 
         // ToolStrip（Record/Stop/Play/Delete）
@@ -392,9 +391,6 @@ public partial class Form1 : Form
     private void saveToolStripMenuItem_Click(object sender, EventArgs e) => SaveMacro();
     private void saveAsToolStripMenuItem_Click(object sender, EventArgs e) => SaveMacroAs();
     private void exitToolStripMenuItem_Click(object sender, EventArgs e) => Close();
-
-    // Designerが生成している可能性があるClick（残っていても外すためのダミー）
-    private void settingsToolStripMenuItem_Click(object? sender, EventArgs e) { }
 
     // ===== Grid =====
     private void RefreshGridFromDomain()
