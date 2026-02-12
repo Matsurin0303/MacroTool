@@ -3,11 +3,9 @@
     <Platform Name="Any CPU" />
     <Platform Name="x64" />
   </Configurations>
-  <Folder Name="/docs/">
-    <File Path="Spec.md" />
-  </Folder>
+  <Folder Name="/docs/" />
   <Folder Name="/docs/domain/">
-    <File Path="domain-spec.md" />
+    <File Path="MacroTool_MacroSpecification_v1.0.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="MacroTool.Application/MacroTool.Application.csproj" Id="5dc883c0-9d8f-45f2-9cf1-982869c3461f" />
