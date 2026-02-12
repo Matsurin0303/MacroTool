@@ -4,6 +4,7 @@ using MacroTool.Application.Services;
 using MacroTool.Infrastructure.Windows.Persistence;
 using MacroTool.Infrastructure.Windows.Playback;
 using MacroTool.Infrastructure.Windows.Recording;
+using MacroTool.WinForms.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -19,13 +20,27 @@ internal static class Program
         using var host = Host.CreateDefaultBuilder()
             .ConfigureServices((ctx, services) =>
             {
+                // Settings（LocalAppData\MacroTool\settings.json）
+                var store = new SettingsStore(SettingsStore.DefaultPath());
+                var s = store.Load();
+
+                var initial = new PlaybackOptions
+                {
+                    EnableStabilizeWait = s.Playback.EnableStabilizeWait,
+                    CursorSettleDelayMs = s.Playback.CursorSettleDelayMs,
+                    ClickHoldDelayMs = s.Playback.ClickHoldDelayMs
+                };
+
+                // ★即時反映の要：アクセサをSingletonで保持
+                services.AddSingleton<IPlaybackOptionsAccessor>(new PlaybackOptionsAccessor(initial));
+
+                // Core
                 services.AddSingleton<IRecorder, LowLevelHookRecorder>();
                 services.AddSingleton<IPlayer, SendInputPlayer>();
                 services.AddSingleton<IMacroRepository, JsonMacroRepository>();
                 services.AddSingleton<MacroAppService>();
 
-                services.Configure<PlaybackOptions>(ctx.Configuration.GetSection("Playback"));
-
+                // Form
                 services.AddTransient<Form1>();
             })
             .Build();
