@@ -1,4 +1,5 @@
 ﻿namespace MacroTool.WinForms.Dialogs;
+public sealed record ScheduleMacroDialogResult(bool Clear, DateTime? RunAt);
 
 public sealed class ScheduleMacroDialog : Form
 {
@@ -7,6 +8,8 @@ public sealed class ScheduleMacroDialog : Form
 
     public DateTime ScheduledAt => _picker.Value;
     public bool ClearSchedule => _chkClear.Checked;
+
+
 
     private ScheduleMacroDialog(DateTime? current)
     {
@@ -71,5 +74,13 @@ public sealed class ScheduleMacroDialog : Form
     {
         using var dlg = new ScheduleMacroDialog(current);
         return dlg.ShowDialog(owner) == DialogResult.OK ? dlg : null;
+    }
+
+    public static ScheduleMacroDialogResult? Show(System.Windows.Forms.IWin32Window owner, DateTime? initialRunAt)
+    {
+        // 最小: 入力UIなしで「初期値をそのまま返す」(テスト用)
+        // 本来は DateTimePicker を持つフォームで OK/Cancel/Clear を作る
+        var runAt = initialRunAt ?? DateTime.Now.AddMinutes(1);
+        return new ScheduleMacroDialogResult(Clear: false, RunAt: runAt);
     }
 }

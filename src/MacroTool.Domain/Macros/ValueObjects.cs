@@ -131,7 +131,17 @@ public sealed record GoToTarget
     /// </summary>
     public string Label { get; set; } = string.Empty;
 
-    public override string ToString()
+    // ---- factories (Form1 が GoToTarget.Next() を呼ぶため) ----
+    public static GoToTarget Start() => new() { Kind = GoToKind.Start };
+    public static GoToTarget End() => new() { Kind = GoToKind.End };
+    public static GoToTarget Next() => new() { Kind = GoToKind.Next };
+    public static GoToTarget ToLabel(string label) => new()
+    {
+        Kind = GoToKind.Label,
+        Label = label ?? string.Empty
+    };
+
+public override string ToString()
         => Kind == GoToKind.Label ? $"Label:{Label}" : Kind.ToString();
 }
 
@@ -142,7 +152,6 @@ public sealed record GoToTarget
 public sealed record SearchArea
 {
     public SearchAreaKind Kind { get; set; } = SearchAreaKind.EntireDesktop;
-
     /// <summary>
     /// Kind=AreaOfDesktop では「スクリーン座標」、Kind=AreaOfFocusedWindow では「ウィンドウ左上からの相対座標」を想定。
     /// </summary>

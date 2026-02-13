@@ -144,7 +144,7 @@ public sealed class HotkeyDialog : Form
         ResultActions = actions;
     }
 
-    public static IReadOnlyList<MacroAction>? Show(IWin32Window owner)
+    public new static IReadOnlyList<MacroAction>? Show(IWin32Window owner)
     {
         using var dlg = new HotkeyDialog();
         return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.ResultActions : null;

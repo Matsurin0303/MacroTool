@@ -37,6 +37,7 @@ public sealed record MouseClickAction : MacroAction
 {
     public MouseButton Button { get; set; } = MouseButton.Left;
     public MouseClickType Action { get; set; } = MouseClickType.Click;
+    public MouseClickType ClickType { get; set; } = MouseClickType.Click;
 
     /// <summary>ON: 相対座標 / OFF: 絶対座標</summary>
     public bool Relative { get; set; } = false;
@@ -96,6 +97,8 @@ public sealed record WaitForPixelColorAction : MacroAction
 {
     public int X { get; set; }
     public int Y { get; set; }
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
 
     /// <summary>#RRGGBB</summary>
     public string ColorHex { get; set; } = "#FFFFFF";
@@ -103,12 +106,16 @@ public sealed record WaitForPixelColorAction : MacroAction
     /// <summary>0-100</summary>
     public int TolerancePercent { get; set; } = 0;
 
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    // 互換: Infrastructure が IfTrueGoTo を参照するため
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
 
     /// <summary>0以下なら無期限</summary>
     public int TimeoutMs { get; set; } = 0;
 
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    // 互換: Infrastructure が IfFalseGoTo を参照するため
+    [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
 
     public override string Kind => "WaitForPixelColor";
     public override string DisplayValue
@@ -118,17 +125,33 @@ public sealed record WaitForPixelColorAction : MacroAction
 public sealed record WaitForScreenChangeAction : MacroAction
 {
     public SearchArea SearchArea { get; set; } = new();
+    public SearchArea Area { get; set; } = new() { Kind = SearchAreaKind.EntireDesktop };
 
-    public bool MouseAction { get; set; } = false;
-    public MouseActionBehavior MouseActionBehavior { get; set; } = MouseActionBehavior.Positioning;
+    public bool MouseActionEnabled { get; set; } = false;
+    public MouseActionBehavior MouseAction { get; set; } = MouseActionBehavior.Positioning;
+    public MousePosition MousePosition { get; set; } = MousePosition.Center;
 
-    public bool SaveCoordinate { get; set; } = false;
-    public string SaveXVariable { get; set; } = "";
-    public string SaveYVariable { get; set; } = "";
+    public bool SaveCoordinateEnabled { get; set; } = false;
+    public string SaveXVariable { get; set; } = "X";
+    public string SaveYVariable { get; set; } = "Y";
 
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
-    public int TimeoutMs { get; set; } = 0;
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
+
+    public int TimeoutMs { get; set; } = 5000;
+
+    // ---- 互換プロパティ（SendInputPlayer が参照している名前） ----
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
+
+    [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
+
+    [JsonIgnore]
+    public MouseActionBehavior MouseActionBehavior { get => MouseAction; set => MouseAction = value; }
+
+    [JsonIgnore]
+    public bool SaveCoordinate { get => SaveCoordinateEnabled; set => SaveCoordinateEnabled = value; }
 
     public override string Kind => "WaitForScreenChange";
     public override string DisplayValue
@@ -138,9 +161,14 @@ public sealed record WaitForScreenChangeAction : MacroAction
 public sealed record WaitForTextInputAction : MacroAction
 {
     public string TextToWaitFor { get; set; } = "";
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
-    public int TimeoutMs { get; set; } = 0;
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    // 互換
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
+
+    [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
+
+    public int TimeoutMs { get; set; } = 5000;
 
     public override string Kind => "WaitForTextInput";
     public override string DisplayValue
@@ -151,22 +179,38 @@ public sealed record WaitForTextInputAction : MacroAction
 
 public sealed record FindImageAction : MacroAction
 {
+    public SearchArea Area { get; set; } = new() { Kind = SearchAreaKind.EntireDesktop };
     public SearchArea SearchArea { get; set; } = new();
     public int ColorTolerancePercent { get; set; } = 0;
 
     public ImageTemplate Template { get; set; } = new();
 
-    public bool MouseAction { get; set; } = false;
-    public MouseActionBehavior MouseActionBehavior { get; set; } = MouseActionBehavior.Positioning;
+    public bool MouseActionEnabled { get; set; } = false;
+    public MouseActionBehavior MouseAction { get; set; } = MouseActionBehavior.Positioning;
     public MousePosition MousePosition { get; set; } = MousePosition.Center;
 
-    public bool SaveCoordinate { get; set; } = false;
-    public string SaveXVariable { get; set; } = "";
-    public string SaveYVariable { get; set; } = "";
+    public bool SaveCoordinateEnabled { get; set; } = false;
+    public string SaveXVariable { get; set; } = "X";
+    public string SaveYVariable { get; set; } = "Y";
 
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
-    public int TimeoutMs { get; set; } = 0;
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
+
+    public int TimeoutMs { get; set; } = 5000;
+
+    // 互換
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
+
+    [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
+
+    [JsonIgnore]
+    public MouseActionBehavior MouseActionBehavior { get => MouseAction; set => MouseAction = value; }
+
+    [JsonIgnore]
+    public bool SaveCoordinate { get => SaveCoordinateEnabled; set => SaveCoordinateEnabled = value; }
+
 
     public override string Kind => "FindImage";
     public override string DisplayValue
@@ -175,21 +219,37 @@ public sealed record FindImageAction : MacroAction
 
 public sealed record FindTextOcrAction : MacroAction
 {
+    public SearchArea Area { get; set; } = new() { Kind = SearchAreaKind.EntireDesktop };
     public string TextToSearchFor { get; set; } = "";
     public OcrLanguage Language { get; set; } = OcrLanguage.English;
     public SearchArea SearchArea { get; set; } = new();
 
-    public bool MouseAction { get; set; } = false;
-    public MouseActionBehavior MouseActionBehavior { get; set; } = MouseActionBehavior.Positioning;
+    public bool MouseActionEnabled { get; set; } = false;
+    public MouseActionBehavior MouseAction { get; set; } = MouseActionBehavior.Positioning;
     public MousePosition MousePosition { get; set; } = MousePosition.Center;
 
-    public bool SaveCoordinate { get; set; } = false;
-    public string SaveXVariable { get; set; } = "";
-    public string SaveYVariable { get; set; } = "";
+    public bool SaveCoordinateEnabled { get; set; } = false;
+    public string SaveXVariable { get; set; } = "X";
+    public string SaveYVariable { get; set; } = "Y";
 
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
-    public int TimeoutMs { get; set; } = 0;
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
+
+    public int TimeoutMs { get; set; } = 5000;
+
+    // 互換
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
+
+   [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
+
+    [JsonIgnore]
+    public MouseActionBehavior MouseActionBehavior { get => MouseAction; set => MouseAction = value; }
+
+    [JsonIgnore]
+    public bool SaveCoordinate { get => SaveCoordinateEnabled; set => SaveCoordinateEnabled = value; }
+
 
     public override string Kind => "FindTextOcr";
     public override string DisplayValue
@@ -226,8 +286,19 @@ public sealed record IfAction : MacroAction
     public IfConditionKind Condition { get; set; } = IfConditionKind.ValueDefined;
     public string Value { get; set; } = "";
 
-    public GoToTarget IfTrueGoTo { get; set; } = new() { Kind = GoToKind.Next };
-    public GoToTarget IfFalseGoTo { get; set; } = new() { Kind = GoToKind.Next };
+    // Form1 が CompareValue を参照するための互換
+    [JsonIgnore]
+    public string CompareValue { get => Value; set => Value = value; }
+
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
+
+    // Infrastructure 互換
+    [JsonIgnore]
+    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
+
+    [JsonIgnore]
+    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
 
     public override string Kind => "If";
     public override string DisplayValue
