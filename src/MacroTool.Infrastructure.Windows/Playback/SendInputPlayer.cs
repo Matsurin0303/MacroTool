@@ -470,7 +470,7 @@ public sealed class SendInputPlayer : IPlayer
             if (TryFindScreenChange(baselineBytes, baseStride, nowBytes, nowStride, rect.Width, rect.Height, out var changed))
             {
                 var screenPt = new Point(rect.Left + changed.X, rect.Top + changed.Y);
-                ApplyCoordinateEffects(action.MouseAction, action.MouseActionBehavior, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
+                ApplyCoordinateEffects(action.MouseActionEnabled, action.MouseAction, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
                 return new ScreenChangeResult(true, screenPt);
             }
 
@@ -517,7 +517,7 @@ public sealed class SendInputPlayer : IPlayer
                 var anchor = ResolveAnchorPoint(foundTopLeft, template.Size, action.MousePosition);
                 var screenPt = new Point(rect.Left + anchor.X, rect.Top + anchor.Y);
 
-                ApplyCoordinateEffects(action.MouseAction, action.MouseActionBehavior, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
+                ApplyCoordinateEffects(action.MouseActionEnabled, action.MouseAction, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
                 return new SearchResult(true, screenPt);
             }
 
@@ -548,7 +548,7 @@ public sealed class SendInputPlayer : IPlayer
             {
                 var anchor = ResolveAnchorPoint(new Point(found.Value.Bounds.Left, found.Value.Bounds.Top), found.Value.Bounds.Size, action.MousePosition);
                 var screenPt = new Point(rect.Left + anchor.X, rect.Top + anchor.Y);
-                ApplyCoordinateEffects(action.MouseAction, action.MouseActionBehavior, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
+                ApplyCoordinateEffects(action.MouseActionEnabled, action.MouseAction, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
                 return new SearchResult(true, screenPt);
             }
 

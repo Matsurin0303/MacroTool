@@ -161,6 +161,11 @@ public sealed record WaitForScreenChangeAction : MacroAction
 public sealed record WaitForTextInputAction : MacroAction
 {
     public string TextToWaitFor { get; set; } = "";
+ 
+    // Form1 が TrueGoTo/FalseGoTo を使うので本体を定義
+    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
+    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
+    
     // 互換
     [JsonIgnore]
     public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
