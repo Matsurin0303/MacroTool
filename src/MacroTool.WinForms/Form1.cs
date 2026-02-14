@@ -906,15 +906,20 @@ public partial class Form1 : Form
     private void AddMouseClick()
     {
         var p = Cursor.Position;
-        var action = new MouseClickAction
+        var initial = new MouseClickAction
         {
             X = p.X,
             Y = p.Y,
             Relative = false,
             Button = MouseButton.Left,
+            Action = MouseClickType.Click,
+            // 互換: ActionEditor が表示する場合に備えて同期
             ClickType = MouseClickType.Click
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.MouseClickDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddMouseMove()
@@ -1171,6 +1176,7 @@ public partial class Form1 : Form
         var step = _app.CurrentMacro.Steps[idx];
         MacroAction? edited = step.Action switch
         {
+            MouseClickAction mc => Dialogs.MouseClickDialog.Show(this, mc),
             KeyPressAction kp => Dialogs.KeyPressDialog.Show(this, kp),
             _ => Dialogs.ActionEditorForm.EditAction(this, step.Action)
         };
