@@ -320,13 +320,13 @@ public partial class Form1 : Form
             return;
         }
 
-        _miExportCsv = new ToolStripMenuItem("Export CSV...")
+        _miExportCsv = new ToolStripMenuItem("Export to CSV")
         {
             Name = "miExportCsv"
         };
         _miExportCsv.Click += (_, __) => ExportToCsv();
 
-        _miScheduleMacro = new ToolStripMenuItem("Schedule Macro...")
+        _miScheduleMacro = new ToolStripMenuItem("Schedule macro")
         {
             Name = "miScheduleMacro"
         };
@@ -383,35 +383,34 @@ public partial class Form1 : Form
     {
         // Mouse
         tsdMouse.DropDownItems.Clear();
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Click...", null, (_, __) => AddMouseClick()));
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Move...", null, (_, __) => AddMouseMove()));
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Wheel...", null, (_, __) => AddMouseWheel()));
-
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Click", null, (_, __) => AddMouseClick()));
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Move", null, (_, __) => AddMouseMove()));
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Wheel", null, (_, __) => AddMouseWheel()));
         // Text/Key
         tsdTextKey.DropDownItems.Clear();
-        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Key press...", null, (_, __) => AddKeyPress()));
-        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Hotkey...", null, (_, __) => AddHotkey()));
+        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Key press", null, (_, __) => AddKeyPress()));
+        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Hotkey", null, (_, __) => AddHotkey()));
 
         // Wait
         tsdWait.DropDownItems.Clear();
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait...", null, (_, __) => AddWaitTime()));
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for pixel color...", null, (_, __) => AddWaitForPixelColor()));
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for screen change...", null, (_, __) => AddWaitForScreenChange()));
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for text input...", null, (_, __) => AddWaitForTextInput()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait", null, (_, __) => AddWaitTime()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for pixel color", null, (_, __) => AddWaitForPixelColor()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for screen changes", null, (_, __) => AddWaitForScreenChange()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for text input", null, (_, __) => AddWaitForTextInput()));
 
         // Image/OCR
         tsdImageOcr.DropDownItems.Clear();
         tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image (file)...", null, (_, __) => AddFindImageFromFile()));
-        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image (capture)...", null, (_, __) => AddFindImageFromCapture()));
-        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find text (OCR)...", null, (_, __) => AddFindTextOcr()));
+        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image", null, (_, __) => AddFindImage()));
+        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find text (OCR)", null, (_, __) => AddFindTextOcr()));
 
         // Misc / Control Flow
         tsdMisc.DropDownItems.Clear();
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Repeat...", null, (_, __) => AddRepeat()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Go to...", null, (_, __) => AddGoTo()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("If...", null, (_, __) => AddIf()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Embed macro file...", null, (_, __) => AddEmbedMacroFile()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Execute program...", null, (_, __) => AddExecuteProgram()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Repeat", null, (_, __) => AddRepeat()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Go to", null, (_, __) => AddGoTo()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("If", null, (_, __) => AddIf()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Embed macro file", null, (_, __) => AddEmbedMacroFile()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Execute program", null, (_, __) => AddExecuteProgram()));
     }
 
     private int[] GetSelectedStepIndices()
@@ -1507,5 +1506,19 @@ public partial class Form1 : Form
             try { gridActions.FirstDisplayedScrollingRowIndex = e.StepIndex; } catch { }
             }));
     }
+    private void AddFindImage()
+    {
+        // v1.0 UI では「Find image」1つに集約し、取得方法は内部で選択する
+        var result = MessageBox.Show(
+            this,
+            "テンプレート画像の取り込み方法を選択してください。\n\n" +
+            "はい(Yes): ファイルから読み込み\n" +
+            "いいえ(No): 画面をキャプチャ",
+            "Find image",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
 
+        if (result == DialogResult.Yes) AddFindImageFromFile();
+        else if (result == DialogResult.No) AddFindImageFromCapture();
+    }
 }

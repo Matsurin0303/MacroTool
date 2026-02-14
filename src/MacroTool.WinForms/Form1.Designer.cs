@@ -345,7 +345,7 @@
             // 
             recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
             recentFilesToolStripMenuItem.Size = new Size(180, 22);
-            recentFilesToolStripMenuItem.Text = "Recent Files";
+            recentFilesToolStripMenuItem.Text = "Recent files";
             // 
             // toolStripMenuItem1
             // 
@@ -364,7 +364,7 @@
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             saveAsToolStripMenuItem.Size = new Size(180, 22);
-            saveAsToolStripMenuItem.Text = "Save As...";
+            saveAsToolStripMenuItem.Text = "Save As…";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
