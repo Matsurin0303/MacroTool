@@ -45,6 +45,21 @@ public partial class Form1 : Form
     private ToolStripMenuItem? _miPlayFromSelected;
     private ToolStripMenuItem? _miPlaySelectedOnly;
 
+    // Ribbon: Playback tab UI（docs/images に寄せる／一部は UI のみ）
+    private ToolStrip? _tsPlayback;
+    private ToolStripSplitButton? _tsbPlayPb;
+    private ToolStripSplitButton? _tsbRecordPb;
+    private ToolStripButton? _tsbStopPb;
+    private ToolStripMenuItem? _miPlayUntilSelectedPb;
+    private ToolStripMenuItem? _miPlayFromSelectedPb;
+    private ToolStripMenuItem? _miPlaySelectedOnlyPb;
+
+    // Ribbon: View tab UI
+    private ToolStrip? _tsView;
+    private ToolStripButton? _tsbShowLineNumbers;
+    private ToolStripButton? _tsbVariableExplorer;
+    private ToolStripButton? _tsbShowActionOverlays;
+
     // Dialog
     private readonly OpenFileDialog _openMacroDialog = new()
     {
@@ -180,6 +195,10 @@ public partial class Form1 : Form
         // v1.0: 追加のメニュー（CSV出力/スケジュール/各アクション追加/範囲再生）
         InitializeFileMenuExtras();
         InitializeActionToolStrips();
+
+        // docs/images: Playback/View タブのリボンを配置（未実装は UI のみ）
+        InitializePlaybackTabUi();
+        InitializeViewTabUi();
 
         // Status更新タイマー
         _statusTimer.Interval = 250;
@@ -503,6 +522,321 @@ public partial class Form1 : Form
         tsdMisc.DropDownItems.Add(new ToolStripSeparator());
         tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Calculate expression") { Enabled = false });
         tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Extract from Web Site") { Enabled = false });
+    }
+
+
+    // ===== docs/images: Playback タブ UI（リボン配置：一部は UI のみ） =====
+    private void InitializePlaybackTabUi()
+    {
+        if (_tsPlayback != null) return;
+
+        // Playback タブはリボンのみ（中身は将来拡張）
+        tabPage3.Controls.Clear();
+
+        var ts = new ToolStrip
+        {
+            Dock = DockStyle.Fill,
+            GripStyle = ToolStripGripStyle.Hidden,
+            ImageScalingSize = new Size(32, 32),
+            Padding = new Padding(2, 2, 2, 2)
+        };
+
+        _tsPlayback = ts;
+
+        _tsbPlayPb = new ToolStripSplitButton
+        {
+            AutoSize = false,
+            Size = new Size(80, 70),
+            Text = "Play",
+            Image = Properties.Resources.Play,
+            TextImageRelation = TextImageRelation.ImageAboveText
+        };
+
+        _tsbRecordPb = new ToolStripSplitButton
+        {
+            AutoSize = false,
+            Size = new Size(80, 70),
+            Text = "Record",
+            Image = Properties.Resources.Record,
+            TextImageRelation = TextImageRelation.ImageAboveText
+        };
+
+        _tsbStopPb = new ToolStripButton
+        {
+            AutoSize = false,
+            Size = new Size(80, 70),
+            Text = "Stop",
+            Image = Properties.Resources.Stop,
+            TextImageRelation = TextImageRelation.ImageAboveText
+        };
+
+        BuildPlayDropDown(_tsbPlayPb, isPlaybackTab: true);
+
+        // ButtonClick は SplitButton の本体クリックに合わせる
+        _tsbPlayPb.ButtonClick += (_, __) =>
+        {
+            if (_app.State != MacroTool.Application.AppState.Stopped) return;
+            if (_app.ActionCount == 0) return;
+            _app.Play();
+        };
+        _tsbRecordPb.ButtonClick += (_, __) => StartRecording();
+        _tsbStopPb.Click += (_, __) => _app.StopAll();
+
+        ts.Items.Add(_tsbPlayPb);
+        ts.Items.Add(_tsbRecordPb);
+        ts.Items.Add(_tsbStopPb);
+        ts.Items.Add(new ToolStripSeparator());
+
+        // === Playback Properties（UIのみ） ===
+        var propsPanel = BuildPlaybackPropertiesPanel();
+        ts.Items.Add(CreateHost(propsPanel));
+
+        ts.Items.Add(new ToolStripSeparator());
+
+        // === After playback（UIのみ） ===
+        var afterPanel = BuildAfterPlaybackPanel();
+        ts.Items.Add(CreateHost(afterPanel));
+
+        ts.Items.Add(new ToolStripSeparator());
+
+        // === Playback filter（UIのみ） ===
+        var filterPanel = BuildPlaybackFilterPanel();
+        ts.Items.Add(CreateHost(filterPanel));
+
+        tabPage3.Controls.Add(ts);
+
+        // local helpers
+        static ToolStripControlHost CreateHost(Control c)
+        {
+            var host = new ToolStripControlHost(c)
+            {
+                AutoSize = false,
+                Size = new Size(c.Width, c.Height),
+                Margin = new Padding(6, 0, 6, 0)
+            };
+            return host;
+        }
+    }
+
+    private void BuildPlayDropDown(ToolStripSplitButton playButton, bool isPlaybackTab)
+    {
+        playButton.DropDownItems.Clear();
+
+        // Record&Edit の既存メニューとは別インスタンス（同じ ToolStripItem を複数箇所に付けられないため）
+        var miUntil = new ToolStripMenuItem("Play until selected") { Name = isPlaybackTab ? "miPlayUntilSelectedPb" : "miPlayUntilSelected" };
+        miUntil.Click += (_, __) => PlayUntilSelected();
+
+        var miFrom = new ToolStripMenuItem("Play from selected") { Name = isPlaybackTab ? "miPlayFromSelectedPb" : "miPlayFromSelected" };
+        miFrom.Click += (_, __) => PlayFromSelected();
+
+        var miSelected = new ToolStripMenuItem("Play selected") { Name = isPlaybackTab ? "miPlaySelectedPb" : "miPlaySelected" };
+        miSelected.Click += (_, __) => PlaySelectedOnly();
+
+        playButton.DropDownItems.Add(miUntil);
+        playButton.DropDownItems.Add(miFrom);
+        playButton.DropDownItems.Add(miSelected);
+
+        if (isPlaybackTab)
+        {
+            _miPlayUntilSelectedPb = miUntil;
+            _miPlayFromSelectedPb = miFrom;
+            _miPlaySelectedOnlyPb = miSelected;
+        }
+    }
+
+    private static Panel BuildPlaybackPropertiesPanel()
+    {
+        var panel = new Panel
+        {
+            Width = 320,
+            Height = 70,
+            Padding = new Padding(6, 4, 6, 2)
+        };
+
+        var tlp = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 4
+        };
+        tlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        tlp.Controls.Add(new Label { Text = "Playback speed:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        tlp.Controls.Add(new TextBox { Text = "100", Width = 60, Anchor = AnchorStyles.Left }, 1, 0);
+
+        tlp.Controls.Add(new Label { Text = "Mouse path:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
+        var cmbPath = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Anchor = AnchorStyles.Left };
+        cmbPath.Items.AddRange(new object[] { "As recorded" });
+        cmbPath.SelectedIndex = 0;
+        tlp.Controls.Add(cmbPath, 1, 1);
+
+        tlp.Controls.Add(new Label { Text = "Repeat:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
+        tlp.Controls.Add(new TextBox { Text = "1", Width = 60, Anchor = AnchorStyles.Left }, 1, 2);
+
+        var lbl = new Label
+        {
+            Text = "Playback Properties",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = SystemColors.GrayText
+        };
+        tlp.Controls.Add(lbl, 0, 3);
+        tlp.SetColumnSpan(lbl, 2);
+
+        panel.Controls.Add(tlp);
+
+        // v1.0: まだ反映先がないため UI のみ
+        panel.Enabled = false;
+        return panel;
+    }
+
+    private static Panel BuildAfterPlaybackPanel()
+    {
+        var panel = new Panel
+        {
+            Width = 220,
+            Height = 70,
+            Padding = new Padding(6, 4, 6, 2)
+        };
+
+        var tlp = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 3
+        };
+        tlp.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+        tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        tlp.Controls.Add(new Label { Text = "After playback:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
+        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Anchor = AnchorStyles.Left };
+        cmb.Items.AddRange(new object[] { "No action" });
+        cmb.SelectedIndex = 0;
+        tlp.Controls.Add(cmb, 1, 0);
+
+        var lbl = new Label
+        {
+            Text = "After playback",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = SystemColors.GrayText
+        };
+        tlp.Controls.Add(lbl, 0, 2);
+        tlp.SetColumnSpan(lbl, 2);
+
+        panel.Controls.Add(tlp);
+        panel.Enabled = false;
+        return panel;
+    }
+
+    private static Panel BuildPlaybackFilterPanel()
+    {
+        var panel = new Panel
+        {
+            Width = 260,
+            Height = 70,
+            Padding = new Padding(6, 4, 6, 2)
+        };
+
+        var outer = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2
+        };
+        outer.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        outer.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+
+        var flow = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true
+        };
+
+        flow.Controls.Add(new CheckBox { Text = "Mouse moves", Checked = true, AutoSize = true });
+        flow.Controls.Add(new CheckBox { Text = "Mouse clicks", Checked = true, AutoSize = true });
+        flow.Controls.Add(new CheckBox { Text = "Key presses", Checked = true, AutoSize = true });
+        flow.Controls.Add(new CheckBox { Text = "Wait times", Checked = true, AutoSize = true });
+        flow.Controls.Add(new CheckBox { Text = "Focus changes", Checked = false, AutoSize = true });
+        flow.Controls.Add(new CheckBox { Text = "Show notifications", Checked = false, AutoSize = true });
+
+        outer.Controls.Add(flow, 0, 0);
+        outer.Controls.Add(new Label
+        {
+            Text = "Playback filter",
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            ForeColor = SystemColors.GrayText
+        }, 0, 1);
+
+        panel.Controls.Add(outer);
+        panel.Enabled = false;
+        return panel;
+    }
+
+    // ===== docs/images: View タブ UI（リボン配置） =====
+    private void InitializeViewTabUi()
+    {
+        if (_tsView != null) return;
+
+        tabPage4.Controls.Clear();
+
+        var ts = new ToolStrip
+        {
+            Dock = DockStyle.Fill,
+            GripStyle = ToolStripGripStyle.Hidden,
+            ImageScalingSize = new Size(32, 32),
+            Padding = new Padding(2, 2, 2, 2)
+        };
+
+        _tsView = ts;
+
+        _tsbShowLineNumbers = new ToolStripButton
+        {
+            AutoSize = false,
+            Size = new Size(120, 70),
+            Text = "Show line numbers",
+            TextImageRelation = TextImageRelation.ImageAboveText,
+            CheckOnClick = true,
+            Checked = colNo.Visible
+        };
+        _tsbShowLineNumbers.Click += (_, __) =>
+        {
+            colNo.Visible = _tsbShowLineNumbers.Checked;
+        };
+
+        _tsbVariableExplorer = new ToolStripButton
+        {
+            AutoSize = false,
+            Size = new Size(120, 70),
+            Text = "Variable explorer",
+            TextImageRelation = TextImageRelation.ImageAboveText,
+            Enabled = false
+        };
+
+        _tsbShowActionOverlays = new ToolStripButton
+        {
+            AutoSize = false,
+            Size = new Size(140, 70),
+            Text = "Show action overlays",
+            TextImageRelation = TextImageRelation.ImageAboveText,
+            Enabled = false
+        };
+
+        ts.Items.Add(_tsbShowLineNumbers);
+        ts.Items.Add(_tsbVariableExplorer);
+        ts.Items.Add(_tsbShowActionOverlays);
+
+        tabPage4.Controls.Add(ts);
     }
 
     private int[] GetSelectedStepIndices()
@@ -1031,6 +1365,11 @@ public partial class Form1 : Form
         SetToolStripEnabled(tsbPlay, playEnabled);
         SetToolStripEnabled(tsbStop, stopEnabled);
 
+        // Playback タブ側の同等ボタン
+        if (_tsbRecordPb != null) SetToolStripEnabled(_tsbRecordPb, recordEnabled);
+        if (_tsbPlayPb != null) SetToolStripEnabled(_tsbPlayPb, playEnabled);
+        if (_tsbStopPb != null) SetToolStripEnabled(_tsbStopPb, stopEnabled);
+
         // Edit/Delete
         tsbDelete.Enabled = stopped && hasSelection;
         tsbEdit.Enabled = stopped && gridActions.SelectedRows.Count == 1;
@@ -1053,6 +1392,9 @@ public partial class Form1 : Form
         if (_miPlayUntilSelected != null) _miPlayUntilSelected.Enabled = playEnabled && hasSelection;
         if (_miPlayFromSelected != null) _miPlayFromSelected.Enabled = playEnabled && hasSelection;
         if (_miPlaySelectedOnly != null) _miPlaySelectedOnly.Enabled = playEnabled && hasSelection;
+        if (_miPlayUntilSelectedPb != null) _miPlayUntilSelectedPb.Enabled = playEnabled && hasSelection;
+        if (_miPlayFromSelectedPb != null) _miPlayFromSelectedPb.Enabled = playEnabled && hasSelection;
+        if (_miPlaySelectedOnlyPb != null) _miPlaySelectedOnlyPb.Enabled = playEnabled && hasSelection;
     }
 
     private static void SetToolStripEnabled(ToolStripItem item, bool enabled)

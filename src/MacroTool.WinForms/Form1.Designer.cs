@@ -37,7 +37,7 @@
             tsRecordEdit = new ToolStrip();
             tsbPlay = new ToolStripSplitButton();
             tsbRecord = new ToolStripSplitButton();
-            tsbStop = new ToolStripSplitButton();
+            tsbStop = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
             tsdMouse = new ToolStripDropDownButton();
             tsdTextKey = new ToolStripDropDownButton();
@@ -218,7 +218,7 @@
             tsdTextKey.ImageTransparentColor = Color.Magenta;
             tsdTextKey.Name = "tsdTextKey";
             tsdTextKey.Size = new Size(80, 70);
-            tsdTextKey.Text = "Text/Key";
+            tsdTextKey.Text = "Text/key";
             tsdTextKey.TextImageRelation = TextImageRelation.ImageAboveText;
             // 
             // tsdWait
@@ -296,6 +296,7 @@
             // 
             tsbSendToPhraseExpress.Alignment = ToolStripItemAlignment.Right;
             tsbSendToPhraseExpress.AutoSize = false;
+            tsbSendToPhraseExpress.Image = Properties.Resources.Misc;
             tsbSendToPhraseExpress.ImageTransparentColor = Color.Magenta;
             tsbSendToPhraseExpress.Name = "tsbSendToPhraseExpress";
             tsbSendToPhraseExpress.Size = new Size(160, 70);
@@ -420,7 +421,7 @@
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             saveAsToolStripMenuItem.Size = new Size(180, 22);
             // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
-            saveAsToolStripMenuItem.Text = "Save As…";
+            saveAsToolStripMenuItem.Text = "Save As...";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
@@ -650,7 +651,7 @@
         private ToolStrip tsRecordEdit;
         private ToolStripSplitButton tsbPlay;
         private ToolStripSplitButton tsbRecord;
-        private ToolStripSplitButton tsbStop;
+        private ToolStripButton tsbStop;
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripDropDownButton tsdMouse;
         private ToolStripDropDownButton tsdTextKey;
