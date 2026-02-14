@@ -925,26 +925,32 @@ public partial class Form1 : Form
     private void AddMouseMove()
     {
         var p = Cursor.Position;
-        var action = new MouseMoveAction
+        var initial = new MouseMoveAction
         {
             Relative = false,
             StartX = p.X,
             StartY = p.Y,
             EndX = p.X,
             EndY = p.Y,
-            DurationMs = 200
+            DurationMs = 50
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.MouseMoveDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddMouseWheel()
     {
-        var action = new MouseWheelAction
+        var initial = new MouseWheelAction
         {
             Orientation = WheelOrientation.Vertical,
-            Value = 120
+            Value = 0
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.MouseWheelDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddKeyPress()
@@ -1177,6 +1183,8 @@ public partial class Form1 : Form
         MacroAction? edited = step.Action switch
         {
             MouseClickAction mc => Dialogs.MouseClickDialog.Show(this, mc),
+            MouseMoveAction mm => Dialogs.MouseMoveDialog.Show(this, mm),
+            MouseWheelAction mw => Dialogs.MouseWheelDialog.Show(this, mw),
             KeyPressAction kp => Dialogs.KeyPressDialog.Show(this, kp),
             _ => Dialogs.ActionEditorForm.EditAction(this, step.Action)
         };
