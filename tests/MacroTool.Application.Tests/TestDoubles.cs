@@ -1,5 +1,6 @@
 ﻿using MacroTool.Application.Abstractions;
 using MacroTool.Domain.Macros;
+using System;
 
 namespace MacroTool.Application.Tests;
 
@@ -24,6 +25,7 @@ internal sealed class FakeRecorder : IRecorder
 
 internal sealed class FakePlayer : IPlayer
 {
+    public event EventHandler<StepExecutingEventArgs>? StepExecuting;
     public bool ThrowOnPlay { get; set; }
     public Macro? PlayedMacro { get; private set; }
 

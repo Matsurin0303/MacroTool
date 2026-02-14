@@ -48,11 +48,18 @@
             tsbEdit = new ToolStripButton();
             tsbDelete = new ToolStripButton();
             tsbSearchReplace = new ToolStripButton();
+            toolStripSeparator3 = new ToolStripSeparator();
+            tsbSendToPhraseExpress = new ToolStripButton();
             tabPage3 = new TabPage();
             tabPage4 = new TabPage();
             tabPage5 = new TabPage();
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
+            recordAndEditToolStripMenuItem = new ToolStripMenuItem();
+            playbackToolStripMenuItem = new ToolStripMenuItem();
+            viewToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            registerLicenseKeyToolStripMenuItem = new ToolStripMenuItem();
             newToolStripMenuItem = new ToolStripMenuItem();
             openToolStripMenuItem = new ToolStripMenuItem();
             recentFilesToolStripMenuItem = new ToolStripMenuItem();
@@ -152,7 +159,7 @@
             tsRecordEdit.Dock = DockStyle.Fill;
             tsRecordEdit.GripStyle = ToolStripGripStyle.Hidden;
             tsRecordEdit.ImageScalingSize = new Size(32, 32);
-            tsRecordEdit.Items.AddRange(new ToolStripItem[] { tsbPlay, tsbRecord, tsbStop, toolStripSeparator1, tsdMouse, tsdTextKey, tsdWait, tsdImageOcr, tsdMisc, toolStripSeparator2, tsbEdit, tsbDelete, tsbSearchReplace });
+            tsRecordEdit.Items.AddRange(new ToolStripItem[] { tsbPlay, tsbRecord, tsbStop, toolStripSeparator1, tsdMouse, tsdTextKey, tsdWait, tsdImageOcr, tsdMisc, toolStripSeparator2, tsbEdit, tsbDelete, tsbSearchReplace, toolStripSeparator3, tsbSendToPhraseExpress });
             tsRecordEdit.Location = new Point(3, 3);
             tsRecordEdit.Name = "tsRecordEdit";
             tsRecordEdit.Size = new Size(1014, 76);
@@ -279,6 +286,22 @@
             tsbSearchReplace.Text = "Search && replace";
             tsbSearchReplace.TextImageRelation = TextImageRelation.ImageAboveText;
             // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Alignment = ToolStripItemAlignment.Right;
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(6, 76);
+            // 
+            // tsbSendToPhraseExpress
+            // 
+            tsbSendToPhraseExpress.Alignment = ToolStripItemAlignment.Right;
+            tsbSendToPhraseExpress.AutoSize = false;
+            tsbSendToPhraseExpress.ImageTransparentColor = Color.Magenta;
+            tsbSendToPhraseExpress.Name = "tsbSendToPhraseExpress";
+            tsbSendToPhraseExpress.Size = new Size(160, 70);
+            tsbSendToPhraseExpress.Text = "Send to PhraseExpress";
+            tsbSendToPhraseExpress.TextImageRelation = TextImageRelation.ImageAboveText;
+            // 
             // tabPage3
             // 
             tabPage3.Location = new Point(4, 24);
@@ -311,7 +334,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, recordAndEditToolStripMenuItem, playbackToolStripMenuItem, viewToolStripMenuItem, helpToolStripMenuItem, registerLicenseKeyToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(1028, 24);
@@ -324,6 +347,37 @@
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(37, 20);
             fileToolStripMenuItem.Text = "File";
+            // 
+            // recordAndEditToolStripMenuItem
+            // 
+            recordAndEditToolStripMenuItem.Name = "recordAndEditToolStripMenuItem";
+            recordAndEditToolStripMenuItem.Size = new Size(104, 20);
+            recordAndEditToolStripMenuItem.Text = "Record and Edit";
+            // 
+            // playbackToolStripMenuItem
+            // 
+            playbackToolStripMenuItem.Name = "playbackToolStripMenuItem";
+            playbackToolStripMenuItem.Size = new Size(66, 20);
+            playbackToolStripMenuItem.Text = "Playback";
+            // 
+            // viewToolStripMenuItem
+            // 
+            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            viewToolStripMenuItem.Size = new Size(44, 20);
+            viewToolStripMenuItem.Text = "View";
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // registerLicenseKeyToolStripMenuItem
+            // 
+            registerLicenseKeyToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            registerLicenseKeyToolStripMenuItem.Name = "registerLicenseKeyToolStripMenuItem";
+            registerLicenseKeyToolStripMenuItem.Size = new Size(141, 20);
+            registerLicenseKeyToolStripMenuItem.Text = "Register license key...";
             // 
             // newToolStripMenuItem
             // 
@@ -345,6 +399,7 @@
             // 
             recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
             recentFilesToolStripMenuItem.Size = new Size(180, 22);
+            // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
             recentFilesToolStripMenuItem.Text = "Recent files";
             // 
             // toolStripMenuItem1
@@ -364,6 +419,7 @@
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             saveAsToolStripMenuItem.Size = new Size(180, 22);
+            // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
             saveAsToolStripMenuItem.Text = "Save As…";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
@@ -554,7 +610,7 @@
             Controls.Add(tableLayoutPanel1);
             MainMenuStrip = menuStrip1;
             Name = "Form1";
-            Text = "Form1";
+            Text = "MacroTool";
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();
             pnlRibbon.ResumeLayout(false);
@@ -605,11 +661,18 @@
         private ToolStripButton tsbEdit;
         private ToolStripButton tsbDelete;
         private ToolStripButton tsbSearchReplace;
+        private ToolStripSeparator toolStripSeparator3;
+        private ToolStripButton tsbSendToPhraseExpress;
         private TabPage tabPage3;
         private TabPage tabPage4;
         private TabPage tabPage5;
         private MenuStrip menuStrip1;
         private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem recordAndEditToolStripMenuItem;
+        private ToolStripMenuItem playbackToolStripMenuItem;
+        private ToolStripMenuItem viewToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem registerLicenseKeyToolStripMenuItem;
         private ToolStripMenuItem newToolStripMenuItem;
         private ToolStripMenuItem openToolStripMenuItem;
         private ToolStripMenuItem recentFilesToolStripMenuItem;

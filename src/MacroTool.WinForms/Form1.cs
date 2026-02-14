@@ -89,6 +89,9 @@ public partial class Form1 : Form
 
         ApplyToolStripIcons();
 
+        // 画像UI（docs/images）に寄せる：上段メニューをタブとして使い、下段はリボン（TabControlのヘッダを隠す）
+        ConfigureRibbonTabs();
+
         // Recent Files
         recentFilesToolStripMenuItem.DropDownOpening += (_, __) => RebuildRecentFilesMenu();
 
@@ -185,6 +188,50 @@ public partial class Form1 : Form
 
         UpdateUi();
         RefreshGridFromDomain();
+    }
+
+    private void ConfigureRibbonTabs()
+    {
+        // TabControlのタブ見出しを非表示（MenuStrip側を“タブ見出し”として使う）
+        tabRibbon.Appearance = TabAppearance.FlatButtons;
+        tabRibbon.ItemSize = new Size(0, 1);
+        tabRibbon.SizeMode = TabSizeMode.Fixed;
+
+        // “未実装”はクリックさせない（仕様: 将来実装予定は処理しない）
+        registerLicenseKeyToolStripMenuItem.Enabled = false;
+
+        // MenuStrip のタブ切替（チェックで疑似的に選択表示）
+        recordAndEditToolStripMenuItem.CheckOnClick = true;
+        playbackToolStripMenuItem.CheckOnClick = true;
+        viewToolStripMenuItem.CheckOnClick = true;
+        helpToolStripMenuItem.CheckOnClick = true;
+
+        recordAndEditToolStripMenuItem.Click += (_, __) => SelectRibbonTab(tabPage2, recordAndEditToolStripMenuItem);
+        playbackToolStripMenuItem.Click += (_, __) => SelectRibbonTab(tabPage3, playbackToolStripMenuItem);
+        viewToolStripMenuItem.Click += (_, __) => SelectRibbonTab(tabPage4, viewToolStripMenuItem);
+        helpToolStripMenuItem.Click += (_, __) => SelectRibbonTab(tabPage5, helpToolStripMenuItem);
+
+        // 初期表示
+        SelectRibbonTab(tabPage2, recordAndEditToolStripMenuItem);
+
+        // PhraseExpress 連携は将来機能（UIのみ）
+        tsbSendToPhraseExpress.Enabled = false;
+    }
+
+    private void SelectRibbonTab(TabPage page, ToolStripMenuItem selected)
+    {
+        tabRibbon.SelectedTab = page;
+
+        // File は“タブ”ではないので除外
+        var tabs = new[]
+        {
+            recordAndEditToolStripMenuItem,
+            playbackToolStripMenuItem,
+            viewToolStripMenuItem,
+            helpToolStripMenuItem
+        };
+        foreach (var mi in tabs)
+            mi.Checked = mi == selected;
     }
 
     // ===== Settings =====
@@ -320,6 +367,14 @@ public partial class Form1 : Form
             return;
         }
 
+        // v1.0 では未対応だが UI 画像には存在するため、表示だけ（無効化）
+        var miTriggerMacroByHotkey = new ToolStripMenuItem("Trigger macro by hotkey")
+        {
+            Name = "miTriggerMacroByHotkey",
+            Enabled = false
+        };
+
+        // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
         _miExportCsv = new ToolStripMenuItem("Export to CSV")
         {
             Name = "miExportCsv"
@@ -332,11 +387,15 @@ public partial class Form1 : Form
         };
         _miScheduleMacro.Click += (_, __) => ScheduleMacro();
 
+        var sepBetweenCsvAndSchedule = new ToolStripSeparator { Name = "miSepCsvSchedule" };
+
         // 既存の区切り線（SaveAs と Settings の間）より前に差し込む
         var insertBefore = fileToolStripMenuItem.DropDownItems.IndexOf(toolStripMenuItem2);
         if (insertBefore < 0) insertBefore = fileToolStripMenuItem.DropDownItems.Count;
-        fileToolStripMenuItem.DropDownItems.Insert(insertBefore, _miExportCsv);
-        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 1, _miScheduleMacro);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore, miTriggerMacroByHotkey);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 1, _miExportCsv);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 2, sepBetweenCsvAndSchedule);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 3, _miScheduleMacro);
     }
 
     // ===== v1.0: ToolStrip 拡張（各アクション追加 / 範囲再生 / 編集） =====
@@ -381,36 +440,69 @@ public partial class Form1 : Form
 
     private void InitializeActionDropDowns()
     {
+        // docs/images に合わせた表示（将来実装予定は無効化して表示のみ）
+
         // Mouse
         tsdMouse.DropDownItems.Clear();
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Click", null, (_, __) => AddMouseClick()));
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Move", null, (_, __) => AddMouseMove()));
-        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Wheel", null, (_, __) => AddMouseWheel()));
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Click [C]", null, (_, __) => AddMouseClick()));
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Move [M]", null, (_, __) => AddMouseMove()));
+        tsdMouse.DropDownItems.Add(new ToolStripMenuItem("Wheel [V]", null, (_, __) => AddMouseWheel()));
+
         // Text/Key
         tsdTextKey.DropDownItems.Clear();
-        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Key press", null, (_, __) => AddKeyPress()));
+        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Key press [K]", null, (_, __) => AddKeyPress()));
+
+        // Text は将来実装予定（UIのみ）
+        tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Text [T]") { Enabled = false });
+
+        // Hotkey は v1.0 対応（複数キー入力の支援）
+        tsdTextKey.DropDownItems.Add(new ToolStripSeparator());
         tsdTextKey.DropDownItems.Add(new ToolStripMenuItem("Hotkey", null, (_, __) => AddHotkey()));
 
         // Wait
         tsdWait.DropDownItems.Clear();
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait", null, (_, __) => AddWaitTime()));
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for pixel color", null, (_, __) => AddWaitForPixelColor()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait [W]", null, (_, __) => AddWaitTime()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for pixel color [P]", null, (_, __) => AddWaitForPixelColor()));
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for screen changes", null, (_, __) => AddWaitForScreenChange()));
+
+        // 将来実装予定（UIのみ）
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for hotkey press") { Enabled = false });
+
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for text input", null, (_, __) => AddWaitForTextInput()));
+        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for file") { Enabled = false });
 
         // Image/OCR
         tsdImageOcr.DropDownItems.Clear();
-        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image (file)...", null, (_, __) => AddFindImageFromFile()));
-        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image", null, (_, __) => AddFindImage()));
+        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find image [I]", null, (_, __) => AddFindImage()));
         tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Find text (OCR)", null, (_, __) => AddFindTextOcr()));
+        tsdImageOcr.DropDownItems.Add(new ToolStripSeparator());
+
+        // Capture 系は UI 画像には存在するが、このブランチでは未実装のため無効化
+        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Capture text (OCR)") { Enabled = false });
+        tsdImageOcr.DropDownItems.Add(new ToolStripMenuItem("Capture image (Screenshot)") { Enabled = false });
 
         // Misc / Control Flow
         tsdMisc.DropDownItems.Clear();
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Repeat", null, (_, __) => AddRepeat()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Go to", null, (_, __) => AddGoTo()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("If", null, (_, __) => AddIf()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Repeat [L]", null, (_, __) => AddRepeat()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("GoTo [G]", null, (_, __) => AddGoTo()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Condition", null, (_, __) => AddIf()));
+        tsdMisc.DropDownItems.Add(new ToolStripSeparator());
         tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Embed macro file", null, (_, __) => AddEmbedMacroFile()));
-        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Execute program", null, (_, __) => AddExecuteProgram()));
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Execute program [E]", null, (_, __) => AddExecuteProgram()));
+
+        // 以下は将来実装予定（UIのみ）
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Window focus [F]") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripSeparator());
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Show notification [N]") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Show message box") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Beep [B]") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripSeparator());
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Set variable") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Set variable from data list") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Save variable") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripSeparator());
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Calculate expression") { Enabled = false });
+        tsdMisc.DropDownItems.Add(new ToolStripMenuItem("Extract from Web Site") { Enabled = false });
     }
 
     private int[] GetSelectedStepIndices()
@@ -582,6 +674,28 @@ public partial class Form1 : Form
             FalseGoTo = GoToTarget.Next()
         };
         AddActionWithEditor(action);
+    }
+
+    private void AddFindImage()
+    {
+        // v1.0 UI では「Find image」1つに集約し、取得方法は内部で選択する
+        var result = MessageBox.Show(
+            this,
+            "テンプレート画像の取り込み方法を選択してください。\n\n" +
+            "はい(Yes): ファイルから読み込み\n" +
+            "いいえ(No): 画面をキャプチャ",
+            "Find image",
+            MessageBoxButtons.YesNoCancel,
+            MessageBoxIcon.Question);
+
+        if (result == DialogResult.Yes)
+        {
+            AddFindImageFromFile();
+        }
+        else if (result == DialogResult.No)
+        {
+            AddFindImageFromCapture();
+        }
     }
 
     private void AddFindImageFromFile()
@@ -1506,19 +1620,5 @@ public partial class Form1 : Form
             try { gridActions.FirstDisplayedScrollingRowIndex = e.StepIndex; } catch { }
             }));
     }
-    private void AddFindImage()
-    {
-        // v1.0 UI では「Find image」1つに集約し、取得方法は内部で選択する
-        var result = MessageBox.Show(
-            this,
-            "テンプレート画像の取り込み方法を選択してください。\n\n" +
-            "はい(Yes): ファイルから読み込み\n" +
-            "いいえ(No): 画面をキャプチャ",
-            "Find image",
-            MessageBoxButtons.YesNoCancel,
-            MessageBoxIcon.Question);
 
-        if (result == DialogResult.Yes) AddFindImageFromFile();
-        else if (result == DialogResult.No) AddFindImageFromCapture();
-    }
 }
