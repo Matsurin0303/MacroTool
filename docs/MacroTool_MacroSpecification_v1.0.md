@@ -19,8 +19,8 @@
 - **マクロ**: 操作手順（アクション）を並べた実行単位  
 - **アクション**: マクロを構成する 1 ステップ（例: Click / Wait / Find image 等）  
 - **Variable**: 実行中に値（文字列・数値・座標など）を保持する領域  
-- **Label**: ジャンプ先として参照可能な行識別子  
-- **GoTo**: 指定行（Start/End/Next/Label）へ実行位置を移動する制御  
+- **(ユーザー定義Label一覧…)**: ジャンプ先として参照可能な行識別子  
+- **GoTo**: 指定行（Start/End/Next/(ユーザー定義Label一覧…)）へ実行位置を移動する制御  
 
 ---
 
@@ -161,15 +161,17 @@
 | 2-6-2-3 | Color | カラーコード | 入力 | `#FFFFFF` |
 | 2-6-2-4 | Color表示 | 色の可視化 | 表示 | カラーコードの色 |
 | 2-6-2-5 | Color tolerance | 色許容度 | 入力 | 0〜100% |
-| 2-6-2-6 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-2-6 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-2-7 | Waiting ms | 検出までの待機(ms) | 入力 | 単位ms |
-| 2-6-2-8 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-2-8 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-2-9 | OK | OKボタン | クリック | 動作の追加 |
 | 2-6-2-10 | Cancel | Cancelボタン | クリック | 変更破棄 |
 
-備考（Labelの意味）  
-- Label はユーザー定義ラベルの一覧から選択する  
-- Start: マクロ先頭行 / End: マクロ最終行 / Next: 次行 / Label: 該当ラベル行
+備考（(ユーザー定義Label一覧…)の意味）  
+- (ユーザー定義Label一覧…) はユーザーが各マクロに定義付けた一意の値
+- Labelは一意：既存Labelと重複したら末尾に数字付与、数字付きならインクリメント（例：Jump先 → Jump先1 → Jump先2…）
+- GoToで選択できるもの：Start / Next / End / (ユーザー定義Label一覧…)
+- Start: マクロ先頭行 / End: マクロ最終行 / Next: 次行 / (ユーザー定義Label一覧…): 該当ラベル行
 
 ---
 
@@ -189,9 +191,9 @@
 | 2-6-3-3 | Save Coordinate | 成功時座標保存ON/OFF | チェック |  |
 | 2-6-3-3-1 | Save Coordinate behavior(X) | X座標保存先 | 選択 | Variableに保存 |
 | 2-6-3-3-2 | Save Coordinate behavior(Y) | Y座標保存先 | 選択 | Variableに保存 |
-| 2-6-3-4 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-3-4 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-3-5 | Waiting ms | 検出までの待機(ms) | 入力 |  |
-| 2-6-3-6 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-3-6 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-3-7 | OK | OKボタン | クリック | 動作の追加 |
 | 2-6-3-8 | Cancel | Cancelボタン | クリック | 変更破棄 |
 
@@ -206,9 +208,9 @@
 |---|---|---|---|---|
 | 2-6-5 | Wait for text input | テキスト入力待機 |  |  |
 | 2-6-5-1 | Text to wait for | 検出対象テキスト | 入力 |  |
-| 2-6-5-2 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-5-2 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-5-3 | Waiting ms | 検出までの待機(ms) | 入力 |  |
-| 2-6-5-4 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-6-5-4 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-6-5-5 | OK | OKボタン | クリック | 動作の追加 |
 | 2-6-5-6 | Cancel | Cancelボタン | クリック | 変更破棄 |
 
@@ -241,9 +243,9 @@
 | 2-7-1-8 | Save Coordinate | 成功時座標保存ON/OFF | チェック |  |
 | 2-7-1-8-1 | Save Coordinate behavior(X) | X座標保存先 | 選択 | Variableに保存 |
 | 2-7-1-8-2 | Save Coordinate behavior(Y) | Y座標保存先 | 選択 | Variableに保存 |
-| 2-7-1-9 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
+| 2-7-1-9 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-7-1-10 | Waiting ms | 検出までの待機(ms) | 入力 |  |
-| 2-7-1-11 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-7-1-11 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-7-1-12 | OK | OKボタン | クリック | 動作の追加 |
 | 2-7-1-13 | Cancel | Cancelボタン | クリック | 変更破棄 |
 
@@ -272,9 +274,9 @@
 | 2-7-2-9 | Save Coordinate | 成功時座標保存ON/OFF | チェック |  |
 | 2-7-2-9-1 | Save Coordinate behavior(X) | X座標保存先 | 選択 | Variableに保存 |
 | 2-7-2-9-2 | Save Coordinate behavior(Y) | Y座標保存先 | 選択 | Variableに保存 |
-| 2-7-2-10 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
+| 2-7-2-10 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-7-2-11 | Waiting ms | 検出までの待機(ms) | 入力 |  |
-| 2-7-2-12 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-7-2-12 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 | 2-7-2-13 | OK | OKボタン | クリック | 動作の追加 |
 | 2-7-2-14 | Cancel | Cancelボタン | クリック | 変更破棄 |
 
@@ -298,12 +300,12 @@
 | 開発ID | 項目名 | 概要 | 起動/操作 | 備考 |
 |---|---|---|---|---|
 | 2-8-1 | Repeat | 繰り返し実行 |  |  |
-| 2-8-1-1 | Label | 指定Label範囲を繰り返す | 選択 |  |
+| 2-8-1-1 | (ユーザー定義Label一覧…) | 指定(ユーザー定義Label一覧…)範囲を繰り返す | 選択 |  |
 | 2-8-1-1-1 | Seconds | 条件：秒数 | 入力 | seconds |
 | 2-8-1-1-2 | Repetitions | 条件：回数 | 入力 | repetitions |
 | 2-8-1-1-3 | Until | 条件：終了時刻 | 入力 | HH:mm:ss |
 | 2-8-1-1-4 | Infinite | 条件：無限 | 選択 |  |
-| 2-8-1-2 | Go to | Repeat終了後の遷移 | 選択 | Start / End / Next / Label |
+| 2-8-1-2 | Go to | Repeat終了後の遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 
 ---
 
@@ -311,7 +313,7 @@
 
 | 開発ID | 機能名 | 概要 | 起動/操作 | 備考 |
 |---|---|---|---|---|
-| 2-8-2 | Go to | 指定Labelの行に移動 |  |  |
+| 2-8-2 | Go to | 指定(ユーザー定義Label一覧…)の行に移動 |  |  |
 
 ---
 
@@ -323,8 +325,8 @@
 | 2-8-3-1 | Variable name | 条件対象のVariable選択 | 選択 |  |
 | 2-8-3-2 | If | 条件種別 | 選択 | Text/Value/RegEx/Defined |
 | 2-8-3-3 | Value | 条件値 | 入力 |  |
-| 2-8-3-4 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / Label |
-| 2-8-3-5 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / Label |
+| 2-8-3-4 | If true Go to | 成功時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
+| 2-8-3-5 | If false Go to | 失敗時遷移 | 選択 | Start / End / Next / (ユーザー定義Label一覧…) |
 
 条件種別一覧：
 - Text equals
@@ -385,7 +387,7 @@ GoTo 指定可能値は以下とする：
 - **Start**: マクロ先頭行へ遷移
 - **End**: マクロ最終行へ遷移
 - **Next**: 次行へ遷移
-- **Label**: 指定ラベル行へ遷移（ユーザー定義ラベル一覧から選択）
+- **(ユーザー定義Label一覧…)**: 指定ラベル行へ遷移（ユーザー定義ラベル一覧から選択）
 
 ---
 
@@ -401,7 +403,7 @@ GoTo 指定可能値は以下とする：
   - DetectionAction
   - ControlFlowAction
 - Variable
-- Label
+- (ユーザー定義Label一覧…)
 
 ---
 

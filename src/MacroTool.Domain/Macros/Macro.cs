@@ -1,4 +1,6 @@
 ﻿namespace MacroTool.Domain.Macros;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 public sealed class Macro
 {
@@ -9,15 +11,98 @@ public sealed class Macro
 
     public void Clear() => _steps.Clear();
 
+    /// <summary>
+    /// 現在定義されているラベル一覧（空白除外・重複なし・登場順）
+    /// </summary>
+    public IReadOnlyList<string> GetDefinedLabels()
+        => _steps
+            .Select(s => NormalizeLabel(s.Label))
+            .Where(l => l.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
     public void AddStep(MacroStep step)
     {
+        if (step is null) throw new ArgumentNullException(nameof(step));
         // ルール（不変条件）をここに集約できる
         // - Step/Action は null 不可
-        _steps.Add(step);
+        var used = CollectUsedLabels(excludeIndex: -1);
+        var normalized = NormalizeStepLabel(step, used);
+        _steps.Add(normalized);
     }
 
     public void AddStep(MacroAction action, string? label = "", string? comment = "")
         => AddStep(new MacroStep(action, label, comment));
+
+    private static string NormalizeLabel(string? label)
+        => (label ?? string.Empty).Trim();
+
+    private HashSet<string> CollectUsedLabels(int excludeIndex)
+    {
+        var used = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < _steps.Count; i++)
+        {
+            if (i == excludeIndex) continue;
+            var l = NormalizeLabel(_steps[i].Label);
+            if (l.Length > 0) used.Add(l);
+        }
+        return used;
+    }
+
+    private static MacroStep NormalizeStepLabel(MacroStep step, HashSet<string> used)
+    {
+        var label = NormalizeLabel(step.Label);
+        if (label.Length == 0)
+        {
+            // 空は一意性対象外
+            return step.Label == string.Empty ? step : new MacroStep(step.Action, "", step.Comment);
+        }
+
+        var unique = MakeUniqueLabel(label, used);
+        if (unique == step.Label) return step;
+        return new MacroStep(step.Action, unique, step.Comment);
+    }
+
+    /// <summary>
+    /// Label一意化：
+    /// - 同名が無ければそのまま
+    /// - 同名があれば末尾に数字付与（Jump先 -> Jump先1）
+    /// - 末尾に数字があればインクリメント（Jump先1 -> Jump先2）
+    /// </summary>
+    private static string MakeUniqueLabel(string requested, HashSet<string> used)
+    {
+        if (!used.Contains(requested))
+        {
+            used.Add(requested);
+            return requested;
+        }
+
+        string baseName;
+        int n;
+
+        var m = Regex.Match(requested, @"^(.*?)(\d+)$");
+        if (m.Success)
+        {
+            baseName = m.Groups[1].Value;
+            n = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture) + 1;
+        }
+        else
+        {
+            baseName = requested;
+            n = 1;
+        }
+
+        while (true)
+        {
+            var candidate = baseName + n.ToString(CultureInfo.InvariantCulture);
+            if (!used.Contains(candidate))
+            {
+                used.Add(candidate);
+                return candidate;
+            }
+            n++;
+        }
+    }
 
     /// <summary>完了までの総時間（Delay合計）</summary>
     public TimeSpan TotalDuration()
@@ -67,7 +152,9 @@ public sealed class Macro
         if (index < 0 || index >= _steps.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
 
-        _steps[index] = newStep ?? throw new ArgumentNullException(nameof(newStep));
+        if (newStep is null) throw new ArgumentNullException(nameof(newStep));
+        var used = CollectUsedLabels(excludeIndex: index);
+        _steps[index] = NormalizeStepLabel(newStep, used);
     }
 
     /// <summary>
@@ -113,14 +200,23 @@ public sealed class Macro
         var list = steps.ToList();
         if (list.Count == 0) return;
 
-        _steps.InsertRange(index, list);
+        var used = CollectUsedLabels(excludeIndex: -1);
+        var normalized = new List<MacroStep>(list.Count);
+        foreach (var s in list)
+        {
+            if (s is null) throw new ArgumentNullException(nameof(steps), "steps contains null.");
+            normalized.Add(NormalizeStepLabel(s, used));
+        }
+
+        _steps.InsertRange(index, normalized);
     }
 
     public void ReplaceAllSteps(IEnumerable<MacroStep> steps)
     {
         if (steps is null) throw new ArgumentNullException(nameof(steps));
         _steps.Clear();
-        _steps.AddRange(steps);
+        // 一意化しながら入れ直す
+        InsertSteps(0, steps);
     }
 
 

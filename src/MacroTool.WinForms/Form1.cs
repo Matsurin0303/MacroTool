@@ -5,6 +5,7 @@ using MacroTool.WinForms.Core;
 using MacroTool.WinForms.Settings;
 using System.ComponentModel;
 using MacroTool.Domain.Macros;
+using MacroTool.WinForms.Editors;
 using Dialogs = MacroTool.WinForms.Dialogs;
 
 namespace MacroTool.WinForms;
@@ -71,6 +72,15 @@ public partial class Form1 : Form
 
         _app = app;
         _playbackOptionsAccessor = playbackOptionsAccessor;
+
+        // PropertyGrid: GoToTarget を「Start/Next/End/Label一覧」で選べるようにする
+        GoToTargetEditor.Register();
+        GoToTargetEditor.LabelsProvider = () =>
+            _app.CurrentMacro.Steps
+                .Select(s => (s.Label ?? string.Empty).Trim())
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
 
         // Settings 読み込み（起動時に即反映）
         _settings = _settingsStore.Load();
