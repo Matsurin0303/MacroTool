@@ -93,6 +93,7 @@ public partial class Form1 : Form
 
         // Notification
         _app.UserNotification += OnUserNotification;
+        _app.StepExecuting += OnStepExecuting;
 
         // StatusStripに「状態」「経過」を追加（Designerを汚さない）
         _lblState = new ToolStripStatusLabel
@@ -987,6 +988,7 @@ public partial class Form1 : Form
         }
 
         _app.UserNotification -= OnUserNotification;
+        _app.StepExecuting -= OnStepExecuting;
         _app.StopAll();
         _statusTimer.Stop();
         base.OnFormClosing(e);
@@ -1484,6 +1486,16 @@ public partial class Form1 : Form
         };
 
         recentFilesToolStripMenuItem.DropDownItems.Add(clear);
+    }
+    private void OnStepExecuting(object? sender, StepExecutingEventArgs e)
+    {
+        if (IsDisposed) return;
+        BeginInvoke(new Action(() =>
+        {
+            if (_app.State != MacroTool.Application.AppState.Playing) return;
+            SelectRowSafely(e.StepIndex);
+            try { gridActions.FirstDisplayedScrollingRowIndex = e.StepIndex; } catch { }
+            }));
     }
 
 }

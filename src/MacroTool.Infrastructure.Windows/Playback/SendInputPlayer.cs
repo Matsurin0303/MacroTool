@@ -21,6 +21,7 @@ namespace MacroTool.Infrastructure.Windows.Playback;
 /// </summary>
 public sealed class SendInputPlayer : IPlayer
 {
+    public event EventHandler<StepExecutingEventArgs>? StepExecuting;
     private readonly IPlaybackOptionsAccessor _optAccessor;
     private readonly IMacroRepository _repo;
 
@@ -51,6 +52,10 @@ public sealed class SendInputPlayer : IPlayer
         while (i >= 0 && i < steps.Count)
         {
             token.ThrowIfCancellationRequested();
+
+            // UI追従用：トップレベルの再生時だけ通知（埋め込みマクロの中までは追わない）
+            if (depth == 0)
+                StepExecuting?.Invoke(this, new StepExecutingEventArgs(i));
 
             var step = steps[i];
             var next = await ExecuteStepAsync(step, i, steps, labelMap, ctx, opt, depth, token);

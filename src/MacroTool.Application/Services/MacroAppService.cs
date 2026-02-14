@@ -11,6 +11,9 @@ public sealed class MacroAppService : IDisposable
     private readonly IPlayer _player;
     private readonly IMacroRepository _repo;
     private const int MaxUndoHistory = 100;
+
+    private IReadOnlyList<int>? _playIndexMap;
+
     private readonly Stack<List<MacroStep>> _undo = new();
     private readonly Stack<List<MacroStep>> _redo = new();
 
@@ -56,6 +59,7 @@ public sealed class MacroAppService : IDisposable
     public event EventHandler<AppState>? StateChanged;
     public event EventHandler? MacroChanged;
     public event EventHandler<string>? UserNotification; // UIでメッセージ出したい場合用（任意）
+    public event EventHandler<StepExecutingEventArgs>? StepExecuting;
 
     public MacroAppService(IRecorder recorder, IPlayer player, IMacroRepository repo)
     {
@@ -64,6 +68,8 @@ public sealed class MacroAppService : IDisposable
         _repo = repo;
 
         _recorder.ActionRecorded += OnActionRecorded;
+        _player.StepExecuting += OnPlayerStepExecuting;
+
     }
 
     // ===== 状態関連 =====
@@ -121,7 +127,11 @@ public sealed class MacroAppService : IDisposable
     }
 
     // ===== 再生 =====
-    public void Play() => PlayInternal(CurrentMacro);
+    public void Play()
+    {
+        var map = Enumerable.Range(0, CurrentMacro.Count).ToList();
+        PlayInternal(CurrentMacro, map);
+    }
 
     /// <summary>
     /// 選択行まで再生（0..inclusiveIndex）
@@ -130,7 +140,8 @@ public sealed class MacroAppService : IDisposable
     {
         if (inclusiveIndex < 0) return;
         if (inclusiveIndex >= CurrentMacro.Count) { Play(); return; }
-        PlayInternal(Slice(0, inclusiveIndex + 1));
+        var(m, map) = SliceWithMap(0, inclusiveIndex + 1);
+        PlayInternal(m, map);
     }
 
     /// <summary>
@@ -140,7 +151,8 @@ public sealed class MacroAppService : IDisposable
     {
         if (startIndex < 0) startIndex = 0;
         if (startIndex >= CurrentMacro.Count) return;
-        PlayInternal(Slice(startIndex, CurrentMacro.Count - startIndex));
+        var(m, map) = SliceWithMap(startIndex, CurrentMacro.Count - startIndex);
+        PlayInternal(m, map);
     }
 
     /// <summary>
@@ -159,18 +171,24 @@ public sealed class MacroAppService : IDisposable
         foreach (var i in list)
             macro.AddStep(CurrentMacro.Steps[i]);
 
-        PlayInternal(macro);
+        PlayInternal(macro, list);
     }
 
-    private Macro Slice(int start, int count)
+    private (Macro macro, IReadOnlyList<int> map) SliceWithMap(int start, int count)
     {
         var m = new Macro();
+        var map = new List<int>(count);
+
         for (int i = 0; i < count; i++)
-            m.AddStep(CurrentMacro.Steps[start + i]);
-        return m;
+        {
+            var src = start + i;
+            map.Add(src);
+            m.AddStep(CurrentMacro.Steps[src]);
+        }
+        return (m, map);
     }
 
-    private void PlayInternal(Macro macro)
+    private void PlayInternal(Macro macro, IReadOnlyList<int> indexMap)
     {
         if (State == AppState.Playing) return;
         if (macro.Count == 0) return;
@@ -182,6 +200,7 @@ public sealed class MacroAppService : IDisposable
         _playCts?.Cancel();
         _playCts?.Dispose();
         _playCts = new CancellationTokenSource();
+        _playIndexMap = indexMap;
 
         SetState(AppState.Playing);
 
@@ -203,6 +222,7 @@ public sealed class MacroAppService : IDisposable
             }
             finally
             {
+                _playIndexMap = null;
                 // Play中のままならStoppedへ戻す
                 if (State == AppState.Playing)
                     SetState(AppState.Stopped);
@@ -304,9 +324,21 @@ public sealed class MacroAppService : IDisposable
 
     public void Dispose()
     {
+        _player.StepExecuting -= OnPlayerStepExecuting;
         StopAll();
         _recorder.ActionRecorded -= OnActionRecorded;
         _playCts?.Dispose();
+
+    }
+
+    private void OnPlayerStepExecuting(object? sender, StepExecutingEventArgs e)
+    {
+        var map = _playIndexMap;
+        var idx = e.StepIndex;
+        if (map is not null && idx >= 0 && idx<map.Count)
+            idx = map[idx];
+
+        StepExecuting?.Invoke(this, new StepExecutingEventArgs(idx));
     }
 
     public void UpdateStepMetadata(int index, string? label, string? comment)
