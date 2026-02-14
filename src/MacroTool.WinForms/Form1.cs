@@ -969,8 +969,10 @@ public partial class Form1 : Form
 
     private void AddWaitTime()
     {
-        var action = new WaitTimeAction { Milliseconds = 1000 };
-        AddActionWithEditor(action);
+        var initial = new WaitTimeAction { Milliseconds = 1000 };
+        var action = Dialogs.WaitTimeDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddWaitForPixelColor()
@@ -979,46 +981,56 @@ public partial class Form1 : Form
         var color = GetPixelColorAt(p);
         var hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
-        var action = new WaitForPixelColorAction
+        var initial = new WaitForPixelColorAction
         {
             X = p.X,
             Y = p.Y,
             ColorHex = hex,
             TolerancePercent = 10,
             TrueGoTo = GoToTarget.Next(),
-            TimeoutMs = 5000,
-            FalseGoTo = GoToTarget.Next()
+            TimeoutMs = 120_000,
+            FalseGoTo = GoToTarget.End()
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.WaitForPixelColorDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddWaitForScreenChange()
     {
-        var action = new WaitForScreenChangeAction
+        var initial = new WaitForScreenChangeAction
         {
-            Area = new SearchArea { Kind = SearchAreaKind.FocusedWindow },
+            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
             MouseActionEnabled = false,
             MouseAction = MouseActionBehavior.Positioning,
             SaveCoordinateEnabled = false,
             SaveXVariable = "X",
             SaveYVariable = "Y",
             TrueGoTo = GoToTarget.Next(),
-            TimeoutMs = 5000,
-            FalseGoTo = GoToTarget.Next()
+            TimeoutMs = 120_000,
+            FalseGoTo = GoToTarget.End()
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.WaitForScreenChangeDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddWaitForTextInput()
     {
-        var action = new WaitForTextInputAction
+        var initial = new WaitForTextInputAction
         {
             TextToWaitFor = "OK",
             TrueGoTo = GoToTarget.Next(),
-            TimeoutMs = 30000,
-            FalseGoTo = GoToTarget.Next()
+            TimeoutMs = 120_000,
+            FalseGoTo = GoToTarget.End()
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.WaitForTextInputDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddFindImage()
@@ -1186,6 +1198,10 @@ public partial class Form1 : Form
             MouseMoveAction mm => Dialogs.MouseMoveDialog.Show(this, mm),
             MouseWheelAction mw => Dialogs.MouseWheelDialog.Show(this, mw),
             KeyPressAction kp => Dialogs.KeyPressDialog.Show(this, kp),
+            WaitTimeAction wt => Dialogs.WaitTimeDialog.Show(this, wt),
+            WaitForPixelColorAction wpc => Dialogs.WaitForPixelColorDialog.Show(this, wpc),
+            WaitForScreenChangeAction wsc => Dialogs.WaitForScreenChangeDialog.Show(this, wsc),
+            WaitForTextInputAction wti => Dialogs.WaitForTextInputDialog.Show(this, wti),
             _ => Dialogs.ActionEditorForm.EditAction(this, step.Action)
         };
 

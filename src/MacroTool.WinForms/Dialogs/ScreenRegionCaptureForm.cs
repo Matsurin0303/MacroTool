@@ -12,7 +12,14 @@ public sealed class ScreenRegionCaptureForm : Form
     private Point _start;
     private Point _end;
 
+    private Rectangle _virtualScreen;
+
     public byte[] CapturedPngBytes { get; private set; } = Array.Empty<byte>();
+
+    /// <summary>
+    /// 選択された矩形（スクリーン座標）。キャンセル時は Rectangle.Empty。
+    /// </summary>
+    public Rectangle CapturedScreenRectangle { get; private set; } = Rectangle.Empty;
 
     public ScreenRegionCaptureForm()
     {
@@ -76,6 +83,13 @@ public sealed class ScreenRegionCaptureForm : Form
             cropped.Save(ms, ImageFormat.Png);
             CapturedPngBytes = ms.ToArray();
 
+            // client座標 -> スクリーン座標へ変換
+            CapturedScreenRectangle = new Rectangle(
+                _virtualScreen.Left + rect.Left,
+                _virtualScreen.Top + rect.Top,
+                rect.Width,
+                rect.Height);
+
             DialogResult = DialogResult.OK;
             Close();
         };
@@ -85,14 +99,14 @@ public sealed class ScreenRegionCaptureForm : Form
     {
         base.OnShown(e);
 
-        var vs = GetVirtualScreen();
-        Location = new Point(vs.Left, vs.Top);
-        Size = new Size(vs.Width, vs.Height);
+        _virtualScreen = GetVirtualScreen();
+        Location = new Point(_virtualScreen.Left, _virtualScreen.Top);
+        Size = new Size(_virtualScreen.Width, _virtualScreen.Height);
 
         _screen?.Dispose();
-        _screen = new Bitmap(vs.Width, vs.Height, PixelFormat.Format32bppArgb);
+        _screen = new Bitmap(_virtualScreen.Width, _virtualScreen.Height, PixelFormat.Format32bppArgb);
         using var g = Graphics.FromImage(_screen);
-        g.CopyFromScreen(vs.Left, vs.Top, 0, 0, new Size(vs.Width, vs.Height), CopyPixelOperation.SourceCopy);
+        g.CopyFromScreen(_virtualScreen.Left, _virtualScreen.Top, 0, 0, new Size(_virtualScreen.Width, _virtualScreen.Height), CopyPixelOperation.SourceCopy);
     }
 
     protected override void OnPaint(PaintEventArgs e)
