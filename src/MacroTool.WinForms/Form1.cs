@@ -1035,24 +1035,26 @@ public partial class Form1 : Form
 
     private void AddFindImage()
     {
-        // v1.0 UI では「Find image」1つに集約し、取得方法は内部で選択する
-        var result = MessageBox.Show(
-            this,
-            "テンプレート画像の取り込み方法を選択してください。\n\n" +
-            "はい(Yes): ファイルから読み込み\n" +
-            "いいえ(No): 画面をキャプチャ",
-            "Find image",
-            MessageBoxButtons.YesNoCancel,
-            MessageBoxIcon.Question);
+        var initial = new FindImageAction
+        {
+            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            ColorTolerancePercent = 0,
+            Template = new ImageTemplate { Kind = ImageTemplateKind.FilePath, FilePath = string.Empty },
+            MouseActionEnabled = true,
+            MouseAction = MouseActionBehavior.Positioning,
+            MousePosition = MacroTool.Domain.Macros.MousePosition.Center,
+            SaveCoordinateEnabled = false,
+            SaveXVariable = "X",
+            SaveYVariable = "Y",
+            TrueGoTo = GoToTarget.Next(),
+            TimeoutMs = 120_000,
+            FalseGoTo = GoToTarget.End()
+        };
 
-        if (result == DialogResult.Yes)
-        {
-            AddFindImageFromFile();
-        }
-        else if (result == DialogResult.No)
-        {
-            AddFindImageFromCapture();
-        }
+        var action = Dialogs.FindImageDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddFindImageFromFile()
@@ -1110,22 +1112,26 @@ public partial class Form1 : Form
 
     private void AddFindTextOcr()
     {
-        var action = new FindTextOcrAction
+        var initial = new FindTextOcrAction
         {
             TextToSearchFor = "",
-            Language = OcrLanguage.Japanese,
-            Area = new SearchArea { Kind = SearchAreaKind.FocusedWindow },
-            MouseActionEnabled = false,
+            Language = OcrLanguage.English,
+            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            MouseActionEnabled = true,
             MouseAction = MouseActionBehavior.Positioning,
             MousePosition = MacroTool.Domain.Macros.MousePosition.Center,
             SaveCoordinateEnabled = false,
             SaveXVariable = "X",
             SaveYVariable = "Y",
             TrueGoTo = GoToTarget.Next(),
-            TimeoutMs = 5000,
-            FalseGoTo = GoToTarget.Next()
+            TimeoutMs = 120_000,
+            FalseGoTo = GoToTarget.End()
         };
-        AddActionWithEditor(action);
+
+        var action = Dialogs.FindTextOcrDialog.Show(this, initial);
+        if (action is null) return;
+        InsertAction(action);
     }
 
     private void AddRepeat()
@@ -1202,6 +1208,8 @@ public partial class Form1 : Form
             WaitForPixelColorAction wpc => Dialogs.WaitForPixelColorDialog.Show(this, wpc),
             WaitForScreenChangeAction wsc => Dialogs.WaitForScreenChangeDialog.Show(this, wsc),
             WaitForTextInputAction wti => Dialogs.WaitForTextInputDialog.Show(this, wti),
+            FindImageAction fia => Dialogs.FindImageDialog.Show(this, fia),
+            FindTextOcrAction fto => Dialogs.FindTextOcrDialog.Show(this, fto),
             _ => Dialogs.ActionEditorForm.EditAction(this, step.Action)
         };
 
