@@ -1,4 +1,10 @@
-﻿using System.Runtime.InteropServices;
+using System;
+using System.Drawing;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using MacroTool.Domain.Macros;
 
 // WinForms の Control.MousePosition（Point）と、ドメイン enum の MousePosition が衝突するため別名を付ける
@@ -8,10 +14,14 @@ namespace MacroTool.WinForms.Dialogs;
 
 /// <summary>
 /// Find image（2-7-1）設定ダイアログ。
-/// UI仕様: docs/images/2-7-1_FindImage.png（Help ボタンは不要）
+/// UI仕様の見た目に寄せつつ、
+/// - マクロ追加前の Test
+/// - Area of desktop / Area of focused window の Define / Confirm Area
+/// を追加。
 /// </summary>
 public sealed class FindImageDialog : Form
 {
+    // --- UI ---
     private readonly PictureBox _picTemplate;
     private readonly Button _btnCapture;
     private readonly Button _btnOpen;
@@ -20,7 +30,9 @@ public sealed class FindImageDialog : Form
     private readonly ComboBox _cmbArea;
     private readonly Button _btnDefineArea;
     private readonly Button _btnConfirmArea;
+
     private readonly NumericUpDown _numTolerance;
+    private readonly Label _lblPercent;
     private readonly Button _btnTest;
 
     private readonly CheckBox _chkMouseAction;
@@ -28,138 +40,182 @@ public sealed class FindImageDialog : Form
     private readonly ComboBox _cmbMousePos;
 
     private readonly CheckBox _chkSaveCoord;
-    private readonly ComboBox _cmbSaveX;
-    private readonly ComboBox _cmbSaveY;
+    private readonly TextBox _txtSaveX;
+    private readonly TextBox _txtSaveY;
 
     private readonly ComboBox _cmbTrueGoTo;
+
     private readonly NumericUpDown _numTimeoutSec;
     private readonly ComboBox _cmbFalseGoTo;
 
+    private readonly Button _btnOk;
+    private readonly Button _btnCancel;
+
+    // --- state ---
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
+    private Rectangle _definedScreenRect = Rectangle.Empty; // Confirm Area 用（画面座標）
+
     private ImageTemplate _template = new();
     private Image? _preview;
-    private Rectangle _definedScreenRect = Rectangle.Empty;
+
+    // Test 実行中ガード
+    private CancellationTokenSource? _testCts;
+    private bool _testing;
+    private bool _savedControlBox;
 
     public FindImageAction Result { get; private set; } = new();
+
+    public static FindImageAction? Show(IWin32Window owner, FindImageAction? initial)
+    {
+        using var dlg = new FindImageDialog(initial);
+        return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.Result : null;
+    }
 
     private FindImageDialog(FindImageAction? initial)
     {
         Text = "Find image";
         StartPosition = FormStartPosition.CenterParent;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false;
         MaximizeBox = false;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
 
-        Width = 520;
-        Height = 560;
+        // 仕様画像に近い横幅を確保（右側の Search area / Color tolerance が潰れないように）
+        // ※ユーザー環境で 520px 幅だと ComboBox/NumericUpDown が切れるケースがあったため拡大
+        ClientSize = new Size(640, 520);
+        MinimumSize = new Size(640, 520);
 
-        // === Group: Image to search ===
-        var grpImg = new GroupBox { Text = "Image to search", Dock = DockStyle.Top, Height = 220 };
-        var tblImg = new TableLayoutPanel
+        FormClosing += (_, __) => _testCts?.Cancel();
+
+        // --- Group: Image to search ---
+        var grpSpec = new GroupBox
+        {
+            Text = "Image to search",
+            Dock = DockStyle.Top,
+            Height = 175,
+            Padding = new Padding(10)
+        };
+
+        var tblSpec = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 4,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 1,
         };
-        tblImg.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
-        tblImg.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tblImg.RowStyles.Add(new RowStyle(SizeType.Absolute, 140));
-        tblImg.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        tblImg.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        tblImg.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
+        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        // left: template preview
+        var left = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 1,
+            RowCount = 2
+        };
+        left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        left.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
 
         _picTemplate = new PictureBox
         {
             BorderStyle = BorderStyle.FixedSingle,
-            Width = 200,
-            Height = 130,
             SizeMode = PictureBoxSizeMode.Zoom,
             Dock = DockStyle.Fill
         };
 
-        var pnlButtons = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Bottom,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            Height = 32
-        };
-        _btnCapture = new Button { Text = "Capture...", Width = 70, Height = 24 };
-        _btnOpen = new Button { Text = "Open...", Width = 60, Height = 24 };
-        _btnClear = new Button { Text = "Clear", Width = 55, Height = 24 };
-        pnlButtons.Controls.AddRange(new Control[] { _btnCapture, _btnOpen, _btnClear });
-
-        var pnlLeft = new Panel { Dock = DockStyle.Fill };
-        pnlLeft.Controls.Add(_picTemplate);
-        pnlLeft.Controls.Add(pnlButtons);
-
-        var lblArea = new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
-        _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
-        _btnDefineArea = new Button { Text = "Define", Width = 70, Height = 24 };
-        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 100, Height = 24 };
-
-        var lblTol = new Label { Text = "Color tolerance:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
-        _numTolerance = new NumericUpDown { Minimum = 0, Maximum = 100, Width = 80 };
-        var lblPercent = new Label { Text = "%", AutoSize = true, Margin = new Padding(6, 6, 0, 0) };
-        _btnTest = new Button { Text = "Test", Width = 70, Height = 24 };
-
-        var pnlArea = new FlowLayoutPanel
+        var pnlImgBtns = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            AutoSize = true
+            WrapContents = false
         };
-        pnlArea.Controls.Add(_cmbArea);
-        pnlArea.Controls.Add(_btnDefineArea);
-        pnlArea.Controls.Add(_btnConfirmArea);
+        _btnCapture = new Button { Text = "Capture...", Width = 78, Height = 26 };
+        _btnOpen = new Button { Text = "Open...", Width = 70, Height = 26 };
+        _btnClear = new Button { Text = "Clear", Width = 60, Height = 26 };
+        pnlImgBtns.Controls.AddRange(new Control[] { _btnCapture, _btnOpen, _btnClear });
+
+        left.Controls.Add(_picTemplate, 0, 0);
+        left.Controls.Add(pnlImgBtns, 0, 1);
+
+        // right: search area + tolerance
+        // 4列(AutoSize)だと右側のボタン幅が優先され、ComboBox/NumericUpDown が 0px になり得るため
+        // (ユーザー環境で「Search area が選べない / Color tolerance が入力できない」状態になる)
+        // 3列 + FlowLayoutPanel で確実に入力欄の幅を確保する。
+        var right = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 2
+        };
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110)); // label
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // input (stretch)
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));  // button (Define/Confirm/Test)
+
+        // Search area 行は Define/Confirm を縦に置くため高さを確保
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+
+        right.Controls.Add(new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
+
+        _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230, Margin = new Padding(0, 6, 0, 0) };
+        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
+
+        // Define/Confirm は常に見せる（非Area選択時は無効化）
+        _btnDefineArea = new Button { Text = "Define...", Width = 110, Height = 26 };
+        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 110, Height = 26 };
+
+        var pnlAreaButtons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            Margin = new Padding(0, 4, 0, 0)
+        };
+        pnlAreaButtons.Controls.Add(_btnDefineArea);
+        pnlAreaButtons.Controls.Add(_btnConfirmArea);
+
+        right.Controls.Add(_cmbArea, 1, 0);
+        right.Controls.Add(pnlAreaButtons, 2, 0);
+
+        right.Controls.Add(new Label { Text = "Color tolerance:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
 
         var pnlTol = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
-            AutoSize = true
+            Margin = new Padding(0, 4, 0, 0)
         };
+        _numTolerance = new NumericUpDown { Minimum = 0, Maximum = 100, Width = 70 };
+        _lblPercent = new Label { Text = "%", AutoSize = true, Margin = new Padding(6, 9, 0, 0) };
         pnlTol.Controls.Add(_numTolerance);
-        pnlTol.Controls.Add(lblPercent);
-        pnlTol.Controls.Add(_btnTest);
+        pnlTol.Controls.Add(_lblPercent);
 
-        var tblRight = new TableLayoutPanel
+        right.Controls.Add(pnlTol, 1, 1);
+
+        _btnTest = new Button { Text = "Test", Width = 80, Height = 26 };
+        right.Controls.Add(_btnTest, 2, 1);
+
+        tblSpec.Controls.Add(left, 0, 0);
+        tblSpec.Controls.Add(right, 1, 0);
+        grpSpec.Controls.Add(tblSpec);
+
+        // --- Group: If image is found ---
+        var grpFound = new GroupBox
         {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 3
+            Text = "If image is found",
+            Dock = DockStyle.Top,
+            Height = 150,
+            Padding = new Padding(10)
         };
-        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-        tblRight.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        tblRight.Controls.Add(lblArea, 0, 0);
-        tblRight.Controls.Add(pnlArea, 1, 0);
-        tblRight.Controls.Add(lblTol, 0, 1);
-        tblRight.Controls.Add(pnlTol, 1, 1);
 
-        tblImg.Controls.Add(pnlLeft, 0, 0);
-        tblImg.SetRowSpan(pnlLeft, 4);
-        tblImg.Controls.Add(tblRight, 1, 0);
-        grpImg.Controls.Add(tblImg);
-
-        // === Group: If image is found ===
-        var grpFound = new GroupBox { Text = "If image is found", Dock = DockStyle.Top, Height = 145 };
         var tblFound = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
-            RowCount = 3,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 3
         };
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
@@ -167,16 +223,24 @@ public sealed class FindImageDialog : Form
 
         _chkMouseAction = new CheckBox { Text = "Mouse action:", AutoSize = true };
         _cmbMouseAction = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
-        _cmbMouseAction.Items.AddRange(new object[] { "Positioning", "LeftClick", "RightClick", "MiddleClick", "DoubleClick" });
+        _cmbMouseAction.Items.AddRange(new object[]
+        {
+            nameof(MouseActionBehavior.Positioning),
+            nameof(MouseActionBehavior.LeftClick),
+            nameof(MouseActionBehavior.RightClick),
+            nameof(MouseActionBehavior.MiddleClick),
+            nameof(MouseActionBehavior.DoubleClick),
+        });
+
         _cmbMousePos = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
         _cmbMousePos.Items.AddRange(new object[] { "Centered", "Top-left", "Top-right", "Bottom-left", "Bottom-right" });
 
         _chkSaveCoord = new CheckBox { Text = "Save X to:", AutoSize = true };
-        _cmbSaveX = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Width = 120 };
-        var lblAndY = new Label { Text = "and Y to:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
-        _cmbSaveY = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Width = 120 };
+        _txtSaveX = new TextBox { Width = 120 };
+        var lblAndY = new Label { Text = "and Y to:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
+        _txtSaveY = new TextBox { Width = 120 };
 
-        var lblGoTo = new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+        var lblGoTo = new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
         _cmbTrueGoTo = CreateGoToCombo();
 
         tblFound.Controls.Add(_chkMouseAction, 0, 0);
@@ -185,9 +249,9 @@ public sealed class FindImageDialog : Form
         tblFound.SetColumnSpan(_cmbMousePos, 2);
 
         tblFound.Controls.Add(_chkSaveCoord, 0, 1);
-        tblFound.Controls.Add(_cmbSaveX, 1, 1);
+        tblFound.Controls.Add(_txtSaveX, 1, 1);
         tblFound.Controls.Add(lblAndY, 2, 1);
-        tblFound.Controls.Add(_cmbSaveY, 3, 1);
+        tblFound.Controls.Add(_txtSaveY, 3, 1);
 
         tblFound.Controls.Add(lblGoTo, 0, 2);
         tblFound.Controls.Add(_cmbTrueGoTo, 1, 2);
@@ -195,14 +259,20 @@ public sealed class FindImageDialog : Form
 
         grpFound.Controls.Add(tblFound);
 
-        // === Group: If image is not found ===
-        var grpNotFound = new GroupBox { Text = "If image is not found", Dock = DockStyle.Top, Height = 110 };
+        // --- Group: If image is not found ---
+        var grpNotFound = new GroupBox
+        {
+            Text = "If image is not found",
+            Dock = DockStyle.Top,
+            Height = 110,
+            Padding = new Padding(10)
+        };
+
         var tblNotFound = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
-            RowCount = 2,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 2
         };
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
@@ -211,23 +281,23 @@ public sealed class FindImageDialog : Form
         tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
 
-        tblNotFound.Controls.Add(new Label { Text = "Continue waiting", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 0);
+        tblNotFound.Controls.Add(new Label { Text = "Continue waiting", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
         _numTimeoutSec = new NumericUpDown { Minimum = 0, Maximum = 86400, Width = 80 };
         tblNotFound.Controls.Add(_numTimeoutSec, 1, 0);
-        tblNotFound.Controls.Add(new Label { Text = "seconds and then", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 2, 0);
+        tblNotFound.Controls.Add(new Label { Text = "seconds and then", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 2, 0);
 
-        tblNotFound.Controls.Add(new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 1);
+        tblNotFound.Controls.Add(new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
         _cmbFalseGoTo = CreateGoToCombo();
         tblNotFound.Controls.Add(_cmbFalseGoTo, 1, 1);
         tblNotFound.SetColumnSpan(_cmbFalseGoTo, 3);
 
         grpNotFound.Controls.Add(tblNotFound);
 
-        // buttons
-        var btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
-        var btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
-        AcceptButton = btnOk;
-        CancelButton = btnCancel;
+        // --- bottom buttons ---
+        _btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
+        _btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
+        AcceptButton = _btnOk;
+        CancelButton = _btnCancel;
 
         var pnlBottom = new FlowLayoutPanel
         {
@@ -236,71 +306,102 @@ public sealed class FindImageDialog : Form
             FlowDirection = FlowDirection.RightToLeft,
             Padding = new Padding(10)
         };
-        pnlBottom.Controls.Add(btnOk);
-        pnlBottom.Controls.Add(btnCancel);
+        pnlBottom.Controls.Add(_btnOk);
+        pnlBottom.Controls.Add(_btnCancel);
 
+        // root
         var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
         root.Controls.Add(grpNotFound);
         root.Controls.Add(grpFound);
-        root.Controls.Add(grpImg);
+        root.Controls.Add(grpSpec);
 
         Controls.Add(root);
         Controls.Add(pnlBottom);
 
-        // initial
+        // ---- initial ----
         var init = initial ?? CreateDefault();
-        _area = init.SearchArea ?? new SearchArea { Kind = SearchAreaKind.EntireDesktop };
         _template = init.Template ?? new ImageTemplate();
-        _numTolerance.Value = Math.Clamp(init.ColorTolerancePercent, 0, 100);
+        _area = init.SearchArea ?? init.Area ?? new SearchArea { Kind = SearchAreaKind.EntireDesktop };
 
         _cmbArea.SelectedItem = ToAreaText(_area);
+        _numTolerance.Value = Math.Clamp(init.ColorTolerancePercent, 0, 100);
+
         _chkMouseAction.Checked = init.MouseActionEnabled;
         _cmbMouseAction.SelectedItem = init.MouseAction.ToString();
         _cmbMousePos.SelectedItem = ToMousePosText(init.MousePosition);
+
         _chkSaveCoord.Checked = init.SaveCoordinateEnabled;
-        _cmbSaveX.Text = init.SaveXVariable ?? "X";
-        _cmbSaveY.Text = init.SaveYVariable ?? "Y";
+        _txtSaveX.Text = init.SaveXVariable ?? "X";
+        _txtSaveY.Text = init.SaveYVariable ?? "Y";
+
         SetGoToSelection(_cmbTrueGoTo, init.TrueGoTo);
         SetGoToSelection(_cmbFalseGoTo, init.FalseGoTo);
+
         _numTimeoutSec.Value = init.TimeoutMs <= 0 ? 0 : Math.Clamp(init.TimeoutMs / 1000, 0, 86400);
 
-        UpdatePreview();
+        LoadPreviewFromTemplate();
+
         ApplyEnableState();
         UpdateAreaButtons();
 
-        // events
+        // ---- events ----
         _chkMouseAction.CheckedChanged += (_, __) => ApplyEnableState();
         _chkSaveCoord.CheckedChanged += (_, __) => ApplyEnableState();
 
-        _cmbArea.SelectedIndexChanged += (_, __) => { OnAreaSelectionChanged(); UpdateAreaButtons(); };
+        _cmbArea.SelectedIndexChanged += (_, __) =>
+        {
+            OnAreaSelectionChanged();
+            UpdateAreaButtons();
+        };
+
         _cmbTrueGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbTrueGoTo);
         _cmbFalseGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbFalseGoTo);
 
-        _btnDefineArea.Click += (_, __) => DefineArea();
-        _btnConfirmArea.Click += (_, __) => ConfirmArea();
-        _btnTest.Click += async (_, __) => await TestAsync();
-
-        _btnOpen.Click += (_, __) => SelectTemplateFromFile();
         _btnCapture.Click += (_, __) => CaptureTemplate();
+        _btnOpen.Click += (_, __) => OpenTemplate();
         _btnClear.Click += (_, __) => ClearTemplate();
 
-        btnOk.Click += (_, __) =>
+        _btnDefineArea.Click += (_, __) => DefineArea();
+        _btnConfirmArea.Click += (_, __) => ConfirmArea();
+
+        _btnTest.Click += async (_, __) => await TestAsync();
+
+        _btnOk.Click += (_, __) => Result = BuildResult();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
         {
-            if (!TryBuildResult(out var action))
-            {
-                DialogResult = DialogResult.None;
-                return;
-            }
-            Result = action;
-        };
+            _preview?.Dispose();
+            _testCts?.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
     private void ApplyEnableState()
     {
         _cmbMouseAction.Enabled = _chkMouseAction.Checked;
         _cmbMousePos.Enabled = _chkMouseAction.Checked;
-        _cmbSaveX.Enabled = _chkSaveCoord.Checked;
-        _cmbSaveY.Enabled = _chkSaveCoord.Checked;
+
+        _txtSaveX.Enabled = _chkSaveCoord.Checked;
+        _txtSaveY.Enabled = _chkSaveCoord.Checked;
+    }
+
+    private void UpdateAreaButtons()
+    {
+        bool isArea = IsAreaSelection();
+
+        // Define/Confirm は常に表示し、Area 選択時だけ有効化する。
+        // （非表示にするとユーザーが「どこで確認するのか」迷いやすい）
+        _btnDefineArea.Enabled = isArea && !_testing;
+        _btnConfirmArea.Enabled = isArea && !_testing && _definedScreenRect != Rectangle.Empty;
+    }
+
+    private bool IsAreaSelection()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        return sel is "Area of desktop" or "Area of focused window";
     }
 
     private void OnAreaSelectionChanged()
@@ -309,39 +410,99 @@ public sealed class FindImageDialog : Form
         _area = sel switch
         {
             "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
-            "Area of desktop" => _area.Kind == SearchAreaKind.AreaOfDesktop ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
-            "Area of focused window" => _area.Kind == SearchAreaKind.AreaOfFocusedWindow ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
+            "Area of desktop" => new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
+            "Area of focused window" => new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
             _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
         };
+
+        if (!IsAreaSelection())
+            _definedScreenRect = Rectangle.Empty;
     }
 
-    private void UpdateAreaButtons()
+    private void CaptureTemplate()
     {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        bool isArea = sel is "Area of desktop" or "Area of focused window";
-        _btnDefineArea.Enabled = isArea;
+        using var f = new ScreenRegionCaptureForm();
+        if (f.ShowDialog(this) != DialogResult.OK)
+            return;
 
-        bool hasRect = _definedScreenRect != Rectangle.Empty || _area.Kind switch
+        var bytes = f.CapturedPngBytes;
+        if (bytes is null || bytes.Length == 0)
+            return;
+
+        _template = new ImageTemplate
         {
-            SearchAreaKind.AreaOfDesktop => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
-            SearchAreaKind.AreaOfFocusedWindow => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
-            _ => false
+            Kind = ImageTemplateKind.EmbeddedPng,
+            PngBytes = bytes,
+            FilePath = string.Empty
         };
-        _btnConfirmArea.Enabled = isArea && hasRect;
+
+        LoadPreviewFromTemplate();
+    }
+
+    private void OpenTemplate()
+    {
+        using var ofd = new OpenFileDialog
+        {
+            Filter = "Image files|*.png;*.jpg;*.jpeg;*.bmp|All files|*.*",
+            Title = "Open image"
+        };
+        if (ofd.ShowDialog(this) != DialogResult.OK)
+            return;
+
+        _template = new ImageTemplate
+        {
+            Kind = ImageTemplateKind.FilePath,
+            FilePath = ofd.FileName,
+            PngBytes = Array.Empty<byte>()
+        };
+
+        LoadPreviewFromTemplate();
+    }
+
+    private void ClearTemplate()
+    {
+        _template = new ImageTemplate();
+        LoadPreviewFromTemplate();
+    }
+
+    private void LoadPreviewFromTemplate()
+    {
+        _preview?.Dispose();
+        _preview = null;
+
+        try
+        {
+            if (_template.Kind == ImageTemplateKind.EmbeddedPng && _template.PngBytes is { Length: > 0 })
+            {
+                _preview = Image.FromStream(new MemoryStream(_template.PngBytes));
+            }
+            else if (_template.Kind == ImageTemplateKind.FilePath && !string.IsNullOrWhiteSpace(_template.FilePath) && File.Exists(_template.FilePath))
+            {
+                _preview = Image.FromFile(_template.FilePath);
+            }
+        }
+        catch
+        {
+            _preview?.Dispose();
+            _preview = null;
+        }
+
+        _picTemplate.Image = _preview;
     }
 
     private void DefineArea()
     {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is not ("Area of desktop" or "Area of focused window"))
+        using var f = new ScreenRegionCaptureForm();
+        if (f.ShowDialog(this) != DialogResult.OK)
             return;
 
-        using var cap = new ScreenRegionCaptureForm();
-        if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
+        var r = f.CapturedScreenRectangle;
+        if (r.Width <= 0 || r.Height <= 0)
             return;
 
-        var r = cap.CapturedScreenRectangle;
         _definedScreenRect = r;
+
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
         if (sel == "Area of desktop")
         {
             _area = new SearchArea
@@ -355,7 +516,7 @@ public sealed class FindImageDialog : Form
         }
         else
         {
-            // キャプチャ矩形の中心が属するウィンドウを対象に、相対座標に変換
+            // focused window 基準に相対化できれば相対化
             var center = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
             if (TryGetWindowRectFromPoint(center, out var win))
             {
@@ -370,7 +531,6 @@ public sealed class FindImageDialog : Form
             }
             else
             {
-                // フォールバック（絶対座標で保持）
                 _area = new SearchArea
                 {
                     Kind = SearchAreaKind.AreaOfFocusedWindow,
@@ -387,13 +547,13 @@ public sealed class FindImageDialog : Form
 
     private void ConfirmArea()
     {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is not ("Area of desktop" or "Area of focused window"))
+        if (!IsAreaSelection())
             return;
 
         var rect = _definedScreenRect != Rectangle.Empty
             ? _definedScreenRect
             : DetectionTestUtil.ResolveSearchRectangle(_area);
+
         if (rect.Width <= 0 || rect.Height <= 0)
             return;
 
@@ -405,59 +565,204 @@ public sealed class FindImageDialog : Form
         }
         finally
         {
-            if (wasVisible) { Show(); Activate(); }
+            SafeRestoreVisibility(wasVisible);
         }
     }
 
     private async Task TestAsync()
     {
-        if (!TryBuildResult(out var action))
-            return;
+        if (_testing) return;
 
-        // テストは副作用を避ける
-        var testAction = action with
+        bool hasTemplate = _template.Kind switch
         {
-            MouseActionEnabled = false,
-            SaveCoordinateEnabled = false
+            ImageTemplateKind.EmbeddedPng => _template.PngBytes is { Length: > 0 },
+            ImageTemplateKind.FilePath => !string.IsNullOrWhiteSpace(_template.FilePath),
+            _ => false
         };
 
-        var wasVisible = Visible;
+        if (!hasTemplate)
+        {
+            SafeMessage("Template image is not set.", MessageBoxIcon.Warning);
+            return;
+        }
 
+        _testing = true;
+        _testCts?.Cancel();
+        _testCts?.Dispose();
+        _testCts = new CancellationTokenSource();
+
+        SetTestingUi(true);
+
+        var wasVisible = Visible;
         try
         {
             UseWaitCursor = true;
-            _btnTest.Enabled = false;
 
+            // 自分が写り込むのを避ける
             Hide();
-            await Task.Delay(150);
+            await Task.Delay(150, _testCts.Token);
 
-            var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
+            if (IsDisposed || Disposing) return;
+
+            var rect = IsAreaSelection()
                 ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
                 : DetectionTestUtil.ResolveSearchRectangle(_area);
 
-            var (success, pt, _) = await DetectionTestUtil.TestFindImageAsync(testAction, rect, CancellationToken.None);
+            var action = BuildResult();
+            var testAction = action with
+            {
+                MouseActionEnabled = false,
+                SaveCoordinateEnabled = false
+            };
 
-            if (wasVisible) { Show(); Activate(); }
-            if (success && pt is not null)
-            {
-                MessageBox.Show(this, $"Found at ({pt.Value.X}, {pt.Value.Y}).", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(this, "Not found.", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            var (success, pt, _) = await DetectionTestUtil.TestFindImageAsync(testAction, rect, _testCts.Token);
+
+            if (IsDisposed || Disposing) return;
+
+            SafeRestoreVisibility(wasVisible);
+
+            SafeMessage(success && pt is not null
+                    ? $"Found at ({pt.Value.X}, {pt.Value.Y})."
+                    : "Not found.",
+                MessageBoxIcon.Information);
+        }
+        catch (OperationCanceledException)
+        {
+            // closing / canceled
         }
         catch (Exception ex)
         {
-            if (wasVisible && !Visible) { Show(); Activate(); }
-            MessageBox.Show(this, ex.Message, "Test", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (IsDisposed || Disposing) return;
+            SafeRestoreVisibility(wasVisible);
+            SafeMessage(ex.Message, MessageBoxIcon.Error);
         }
         finally
         {
-            if (wasVisible && !Visible) { Show(); Activate(); }
-            _btnTest.Enabled = true;
-            UseWaitCursor = false;
+            if (!IsDisposed && !Disposing)
+            {
+                UseWaitCursor = false;
+                SetTestingUi(false);
+                _testing = false;
+                UpdateAreaButtons();
+            }
         }
+    }
+
+    private void SetTestingUi(bool testing)
+    {
+        if (!testing)
+        {
+            ControlBox = _savedControlBox;
+        }
+        else
+        {
+            _savedControlBox = ControlBox;
+            ControlBox = false;
+        }
+
+        _btnOk.Enabled = !testing;
+        _btnCancel.Enabled = !testing;
+
+        _btnTest.Enabled = !testing;
+
+        _btnCapture.Enabled = !testing;
+        _btnOpen.Enabled = !testing;
+        _btnClear.Enabled = !testing;
+
+        _cmbArea.Enabled = !testing;
+        _numTolerance.Enabled = !testing;
+
+        _chkMouseAction.Enabled = !testing;
+        _cmbMouseAction.Enabled = !testing && _chkMouseAction.Checked;
+        _cmbMousePos.Enabled = !testing && _chkMouseAction.Checked;
+
+        _chkSaveCoord.Enabled = !testing;
+        _txtSaveX.Enabled = !testing && _chkSaveCoord.Checked;
+        _txtSaveY.Enabled = !testing && _chkSaveCoord.Checked;
+
+        _cmbTrueGoTo.Enabled = !testing;
+
+        _numTimeoutSec.Enabled = !testing;
+        _cmbFalseGoTo.Enabled = !testing;
+
+        UpdateAreaButtons();
+    }
+
+    private void SafeRestoreVisibility(bool wasVisible)
+    {
+        if (!wasVisible) return;
+        if (IsDisposed || Disposing) return;
+
+        if (!Visible) Show();
+        Activate();
+    }
+
+    private void SafeMessage(string msg, MessageBoxIcon icon)
+    {
+        if (IsDisposed || Disposing) return;
+
+        if (IsHandleCreated)
+            MessageBox.Show(this, msg, "Test", MessageBoxButtons.OK, icon);
+        else
+            MessageBox.Show(msg, "Test", MessageBoxButtons.OK, icon);
+    }
+
+    // --- result mapping ---
+    private FindImageAction BuildResult()
+    {
+        return new FindImageAction
+        {
+            Template = _template,
+
+            SearchArea = _area,
+            Area = _area,
+
+            ColorTolerancePercent = (int)_numTolerance.Value,
+
+            MouseActionEnabled = _chkMouseAction.Checked,
+            MouseAction = ParseMouseAction(_cmbMouseAction.SelectedItem?.ToString()),
+            MousePosition = ParseMousePos(_cmbMousePos.SelectedItem?.ToString()),
+
+            SaveCoordinateEnabled = _chkSaveCoord.Checked,
+            SaveXVariable = _txtSaveX.Text,
+            SaveYVariable = _txtSaveY.Text,
+
+            TrueGoTo = ParseGoToText(_cmbTrueGoTo.SelectedItem?.ToString()),
+
+            TimeoutMs = (int)_numTimeoutSec.Value <= 0 ? 0 : (int)_numTimeoutSec.Value * 1000,
+            FalseGoTo = ParseGoToText(_cmbFalseGoTo.SelectedItem?.ToString()),
+        };
+    }
+
+    private static FindImageAction CreateDefault()
+        => new()
+        {
+            Template = new ImageTemplate(),
+            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            ColorTolerancePercent = 0,
+
+            MouseActionEnabled = true,
+            MouseAction = MouseActionBehavior.Positioning,
+            MousePosition = DomainMousePosition.Center,
+
+            SaveCoordinateEnabled = false,
+            SaveXVariable = "X",
+            SaveYVariable = "Y",
+
+            TrueGoTo = GoToTarget.Next(),
+            FalseGoTo = GoToTarget.End(),
+
+            TimeoutMs = 120000
+        };
+
+    // --- combos ---
+    private static ComboBox CreateGoToCombo()
+    {
+        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
+        cmb.Items.AddRange(new object[] { "Next", "End", "Label..." });
+        cmb.SelectedItem = "Next";
+        return cmb;
     }
 
     private void OnGoToSelected(ComboBox cmb)
@@ -474,164 +779,31 @@ public sealed class FindImageDialog : Form
 
         var text = $"Label:{label}";
         if (!cmb.Items.Contains(text))
-            cmb.Items.Insert(3, text);
+            cmb.Items.Insert(2, text);
+
         cmb.SelectedItem = text;
     }
 
-    private void SelectTemplateFromFile()
+    private static void SetGoToSelection(ComboBox cmb, GoToTarget target)
     {
-        using var ofd = new OpenFileDialog
-        {
-            Title = "Select template image",
-            Filter = "Image files|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All files|*.*"
-        };
-        if (ofd.ShowDialog(this) != DialogResult.OK) return;
-
-        _template = new ImageTemplate { Kind = ImageTemplateKind.FilePath, FilePath = ofd.FileName };
-        UpdatePreview();
-    }
-
-    private void CaptureTemplate()
-    {
-        using var cap = new ScreenRegionCaptureForm();
-        if (cap.ShowDialog(this) != DialogResult.OK) return;
-        var bytes = cap.CapturedPngBytes;
-        if (bytes is null || bytes.Length == 0) return;
-
-        _template = new ImageTemplate { Kind = ImageTemplateKind.EmbeddedPng, PngBytes = bytes };
-        UpdatePreview();
-    }
-
-    private void ClearTemplate()
-    {
-        _template = new ImageTemplate();
-        UpdatePreview();
-    }
-
-    private void UpdatePreview()
-    {
-        _preview?.Dispose();
-        _preview = null;
-
-        try
-        {
-            _preview = LoadTemplateImage(_template);
-        }
-        catch
-        {
-            _preview = null;
-        }
-
-        _picTemplate.Image = _preview;
-    }
-
-    private static Image? LoadTemplateImage(ImageTemplate t)
-    {
-        if (t is null) return null;
-        if (t.Kind == ImageTemplateKind.FilePath)
-        {
-            if (string.IsNullOrWhiteSpace(t.FilePath) || !File.Exists(t.FilePath)) return null;
-            var bytes = File.ReadAllBytes(t.FilePath);
-            using var ms = new MemoryStream(bytes);
-            using var img = Image.FromStream(ms);
-            return (Image)img.Clone();
-        }
-
-        if (t.Kind == ImageTemplateKind.EmbeddedPng)
-        {
-            if (t.PngBytes is null || t.PngBytes.Length == 0) return null;
-            using var ms = new MemoryStream(t.PngBytes);
-            using var img = Image.FromStream(ms);
-            return (Image)img.Clone();
-        }
-
-        return null;
-    }
-
-    private bool TryBuildResult(out FindImageAction action)
-    {
-        // template required
-        if (_template.Kind == ImageTemplateKind.FilePath && string.IsNullOrWhiteSpace(_template.FilePath))
-        {
-            MessageBox.Show(this, "Please select a template image.", "Find image", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            action = new FindImageAction();
-            return false;
-        }
-        if (_template.Kind == ImageTemplateKind.EmbeddedPng && (_template.PngBytes is null || _template.PngBytes.Length == 0))
-        {
-            MessageBox.Show(this, "Please capture a template image.", "Find image", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            action = new FindImageAction();
-            return false;
-        }
-
-        action = new FindImageAction
-        {
-            SearchArea = _area,
-            Area = _area,
-            ColorTolerancePercent = (int)_numTolerance.Value,
-            Template = _template,
-            MouseActionEnabled = _chkMouseAction.Checked,
-            MouseAction = ParseMouseAction(_cmbMouseAction.SelectedItem?.ToString()),
-            MousePosition = ParseMousePos(_cmbMousePos.SelectedItem?.ToString()),
-            SaveCoordinateEnabled = _chkSaveCoord.Checked,
-            SaveXVariable = string.IsNullOrWhiteSpace(_cmbSaveX.Text) ? "X" : _cmbSaveX.Text.Trim(),
-            SaveYVariable = string.IsNullOrWhiteSpace(_cmbSaveY.Text) ? "Y" : _cmbSaveY.Text.Trim(),
-            TrueGoTo = FromGoToText(_cmbTrueGoTo.SelectedItem?.ToString()),
-            FalseGoTo = FromGoToText(_cmbFalseGoTo.SelectedItem?.ToString()),
-            TimeoutMs = (int)_numTimeoutSec.Value * 1000
-        };
-
-        return true;
-    }
-
-    private static FindImageAction CreateDefault()
-        => new()
-        {
-            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            ColorTolerancePercent = 0,
-            Template = new ImageTemplate { Kind = ImageTemplateKind.FilePath, FilePath = string.Empty },
-            MouseActionEnabled = true,
-            MouseAction = MouseActionBehavior.Positioning,
-            MousePosition = DomainMousePosition.Center,
-            SaveCoordinateEnabled = false,
-            SaveXVariable = "X",
-            SaveYVariable = "Y",
-            TrueGoTo = GoToTarget.Next(),
-            FalseGoTo = GoToTarget.End(),
-            TimeoutMs = 120_000
-        };
-
-    private static ComboBox CreateGoToCombo()
-    {
-        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-        cmb.Items.AddRange(new object[] { "Next", "End", "Start", "Label..." });
-        cmb.SelectedIndex = 0;
-        return cmb;
-    }
-
-    private static void SetGoToSelection(ComboBox cmb, GoToTarget t)
-    {
-        var text = ToGoToText(t);
-        if (text.StartsWith("Label:", StringComparison.Ordinal) && !cmb.Items.Contains(text))
-            cmb.Items.Insert(3, text);
-        cmb.SelectedItem = text.StartsWith("Label:", StringComparison.Ordinal) ? text : text;
+        var text = ToGoToText(target);
+        if (!cmb.Items.Contains(text) && text.StartsWith("Label:", StringComparison.Ordinal))
+            cmb.Items.Insert(2, text);
+        cmb.SelectedItem = text;
     }
 
     private static string ToGoToText(GoToTarget t)
         => t.Kind switch
         {
             GoToKind.End => "End",
-            GoToKind.Start => "Start",
             GoToKind.Label => $"Label:{t.Label}",
             _ => "Next"
         };
 
-    private static GoToTarget FromGoToText(string? text)
+    private static GoToTarget ParseGoToText(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return GoToTarget.Next();
+        text ??= "Next";
         if (text == "End") return GoToTarget.End();
-        if (text == "Start") return GoToTarget.Start();
         if (text.StartsWith("Label:", StringComparison.Ordinal))
             return GoToTarget.ToLabel(text["Label:".Length..]);
         return GoToTarget.Next();
@@ -676,43 +848,23 @@ public sealed class FindImageDialog : Form
             _ => DomainMousePosition.Center
         };
 
-    // ===== Win32: window rect from point =====
+    // --- P/Invoke: focused window rect ---
     [StructLayout(LayoutKind.Sequential)]
-    private struct POINT
-    {
-        public int X;
-        public int Y;
-        public POINT(int x, int y) { X = x; Y = y; }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
+    private struct RECT { public int Left, Top, Right, Bottom; }
 
     [DllImport("user32.dll")]
-    private static extern IntPtr WindowFromPoint(POINT pt);
+    private static extern IntPtr WindowFromPoint(Point pt);
 
     [DllImport("user32.dll")]
     private static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
 
-    private static bool TryGetWindowRectFromPoint(Point screenPoint, out Rectangle rect)
+    private static bool TryGetWindowRectFromPoint(Point pt, out Rectangle rect)
     {
-        rect = Rectangle.Empty;
-        var hwnd = WindowFromPoint(new POINT(screenPoint.X, screenPoint.Y));
-        if (hwnd == IntPtr.Zero) return false;
-        if (!GetWindowRect(hwnd, out var r)) return false;
-        rect = new Rectangle(r.Left, r.Top, Math.Max(0, r.Right - r.Left), Math.Max(0, r.Bottom - r.Top));
+        rect = default;
+        var h = WindowFromPoint(pt);
+        if (h == IntPtr.Zero) return false;
+        if (!GetWindowRect(h, out var r)) return false;
+        rect = Rectangle.FromLTRB(r.Left, r.Top, r.Right, r.Bottom);
         return rect.Width > 0 && rect.Height > 0;
-    }
-
-    public static FindImageAction? Show(IWin32Window owner, FindImageAction? initial)
-    {
-        using var dlg = new FindImageDialog(initial);
-        return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.Result : null;
     }
 }

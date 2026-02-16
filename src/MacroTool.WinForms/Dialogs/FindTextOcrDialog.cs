@@ -1,4 +1,9 @@
-﻿using System.Runtime.InteropServices;
+using System;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using MacroTool.Domain.Macros;
 
 // WinForms の Control.MousePosition（Point）と、ドメイン enum の MousePosition が衝突するため別名を付ける
@@ -8,13 +13,16 @@ namespace MacroTool.WinForms.Dialogs;
 
 /// <summary>
 /// Find text (OCR)（2-7-2）設定ダイアログ。
-/// UI仕様: docs/images/2-7-2_FindText.png（Help ボタンは不要）
+/// UI仕様の見た目に寄せつつ、
+/// - マクロ追加前の Test
+/// - Area of desktop / Area of focused window の Define / Confirm Area
+/// を追加。
 /// </summary>
 public sealed class FindTextOcrDialog : Form
 {
     private readonly TextBox _txtText;
-    private readonly CheckBox _chkRegex;
     private readonly ComboBox _cmbLang;
+
     private readonly ComboBox _cmbArea;
     private readonly Button _btnDefineArea;
     private readonly Button _btnConfirmArea;
@@ -23,98 +31,149 @@ public sealed class FindTextOcrDialog : Form
     private readonly CheckBox _chkMouseAction;
     private readonly ComboBox _cmbMouseAction;
     private readonly ComboBox _cmbMousePos;
+
     private readonly CheckBox _chkSaveCoord;
-    private readonly ComboBox _cmbSaveX;
-    private readonly ComboBox _cmbSaveY;
+    private readonly TextBox _txtSaveX;
+    private readonly TextBox _txtSaveY;
+
     private readonly ComboBox _cmbTrueGoTo;
     private readonly NumericUpDown _numTimeoutSec;
     private readonly ComboBox _cmbFalseGoTo;
 
+    private readonly Button _btnOk;
+    private readonly Button _btnCancel;
+
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
     private Rectangle _definedScreenRect = Rectangle.Empty;
 
+    // Test 実行中ガード
+    private CancellationTokenSource? _testCts;
+    private bool _testing;
+    private bool _savedControlBox;
+
     public FindTextOcrAction Result { get; private set; } = new();
+
+    public static FindTextOcrAction? Show(IWin32Window owner, FindTextOcrAction? initial)
+    {
+        using var dlg = new FindTextOcrDialog(initial);
+        return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.Result : null;
+    }
 
     private FindTextOcrDialog(FindTextOcrAction? initial)
     {
         Text = "Find text (OCR)";
         StartPosition = FormStartPosition.CenterParent;
+        FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false;
         MaximizeBox = false;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
 
-        Width = 520;
-        Height = 620;
+        // 右側入力欄が潰れないように横幅を確保
+        ClientSize = new Size(660, 560);
+        MinimumSize = new Size(660, 560);
 
-        // === Group: Text to search for ===
-        var grpText = new GroupBox { Text = "Text to search for", Dock = DockStyle.Top, Height = 210 };
-        var tblText = new TableLayoutPanel
+        FormClosing += (_, __) => _testCts?.Cancel();
+
+        // --- Group: Text to search ---
+        var grpSpec = new GroupBox
+        {
+            Text = "Text to search",
+            Dock = DockStyle.Top,
+            Height = 185,
+            Padding = new Padding(10)
+        };
+
+        var tblSpec = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 5,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 1
         };
-        tblText.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
-        tblText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
+        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-        tblText.Controls.Add(new Label { Text = "Text:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 0);
-        _txtText = new TextBox { Dock = DockStyle.Fill };
-        tblText.Controls.Add(_txtText, 1, 0);
+        // left: multiline text
+        var left = new Panel { Dock = DockStyle.Fill };
+        _txtText = new TextBox
+        {
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical,
+            Dock = DockStyle.Fill
+        };
+        left.Controls.Add(_txtText);
 
-        _chkRegex = new CheckBox { Text = "Treat as regular expression", AutoSize = true, Enabled = false };
-        tblText.Controls.Add(_chkRegex, 1, 1);
+        // right: language + area + test
+        // 4列(AutoSize)だとボタン幅が優先され、ComboBox が 0px になり得るため
+        // 3列 + FlowLayoutPanel で確実に入力欄の幅を確保する。
+        var right = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 3,
+            RowCount = 3
+        };
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
 
-        tblText.Controls.Add(new Label { Text = "Language:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 2);
-        _cmbLang = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 200 };
-        _cmbLang.Items.AddRange(new object[] { "English", "Japanese" });
-        tblText.Controls.Add(_cmbLang, 1, 2);
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        // Search area 行は Define/Confirm を縦に置くため高さを確保
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
+        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
 
-        tblText.Controls.Add(new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 3);
-        _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
+        right.Controls.Add(new Label { Text = "Language:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
+        _cmbLang = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 170 };
+        _cmbLang.Items.AddRange(new object[] { nameof(OcrLanguage.English), nameof(OcrLanguage.Japanese) });
+        right.Controls.Add(_cmbLang, 1, 0);
+        right.SetColumnSpan(_cmbLang, 2);
+
+        right.Controls.Add(new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
+
+        _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230, Margin = new Padding(0, 6, 0, 0) };
         _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
-        _btnDefineArea = new Button { Text = "Define", Width = 70, Height = 24 };
-        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 100, Height = 24 };
-        var pnlArea = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
-        pnlArea.Controls.Add(_cmbArea);
-        pnlArea.Controls.Add(_btnDefineArea);
-        pnlArea.Controls.Add(_btnConfirmArea);
-        tblText.Controls.Add(pnlArea, 1, 3);
 
-        // Test
-        _btnTest = new Button { Text = "Test", Width = 90, Height = 24 };
-        tblText.Controls.Add(new Label { Text = "", AutoSize = true }, 0, 4);
-        tblText.Controls.Add(_btnTest, 1, 4);
+        // Define/Confirm は常に見せる（非Area選択時は無効化）
+        _btnDefineArea = new Button { Text = "Define...", Width = 78, Height = 26 };
+        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 100, Height = 26 };
 
-        grpText.Controls.Add(tblText);
+        var pnlAreaButtons = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            Margin = new Padding(0, 4, 0, 0)
+        };
+        _btnDefineArea.Width = 110;
+        _btnConfirmArea.Width = 110;
+        pnlAreaButtons.Controls.Add(_btnDefineArea);
+        pnlAreaButtons.Controls.Add(_btnConfirmArea);
 
-        // === Group: Optimize recognition for (UI only / future options) ===
-        var grpOpt = new GroupBox { Text = "Optimize recognition for", Dock = DockStyle.Top, Height = 125 };
-        var flpOpt = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, Padding = new Padding(10), AutoScroll = true };
-        flpOpt.Controls.Add(new CheckBox { Text = "a single line of text", AutoSize = true, Enabled = false });
-        flpOpt.Controls.Add(new CheckBox { Text = "a single word", AutoSize = true, Enabled = false });
-        flpOpt.Controls.Add(new CheckBox { Text = "a single character", AutoSize = true, Enabled = false });
-        flpOpt.Controls.Add(new CheckBox { Text = "a number", AutoSize = true, Enabled = false });
-        flpOpt.Controls.Add(new CheckBox { Text = "some other purpose", AutoSize = true, Enabled = false });
-        grpOpt.Controls.Add(flpOpt);
+        right.Controls.Add(_cmbArea, 1, 1);
+        right.Controls.Add(pnlAreaButtons, 2, 1);
 
-        // === Group: If text is found ===
-        var grpFound = new GroupBox { Text = "If text is found", Dock = DockStyle.Top, Height = 145 };
+        _btnTest = new Button { Text = "Test", Width = 80, Height = 26 };
+        right.Controls.Add(_btnTest, 2, 2);
+
+        tblSpec.Controls.Add(left, 0, 0);
+        tblSpec.Controls.Add(right, 1, 0);
+        grpSpec.Controls.Add(tblSpec);
+
+        // --- Group: If text is found ---
+        var grpFound = new GroupBox
+        {
+            Text = "If text is found",
+            Dock = DockStyle.Top,
+            Height = 150,
+            Padding = new Padding(10)
+        };
+
         var tblFound = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
-            RowCount = 3,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 3
         };
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
         tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
@@ -122,16 +181,24 @@ public sealed class FindTextOcrDialog : Form
 
         _chkMouseAction = new CheckBox { Text = "Mouse action:", AutoSize = true };
         _cmbMouseAction = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
-        _cmbMouseAction.Items.AddRange(new object[] { "Positioning", "LeftClick", "RightClick", "MiddleClick", "DoubleClick" });
+        _cmbMouseAction.Items.AddRange(new object[]
+        {
+            nameof(MouseActionBehavior.Positioning),
+            nameof(MouseActionBehavior.LeftClick),
+            nameof(MouseActionBehavior.RightClick),
+            nameof(MouseActionBehavior.MiddleClick),
+            nameof(MouseActionBehavior.DoubleClick),
+        });
+
         _cmbMousePos = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
         _cmbMousePos.Items.AddRange(new object[] { "Centered", "Top-left", "Top-right", "Bottom-left", "Bottom-right" });
 
         _chkSaveCoord = new CheckBox { Text = "Save X to:", AutoSize = true };
-        _cmbSaveX = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Width = 120 };
-        var lblAndY = new Label { Text = "and Y to:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
-        _cmbSaveY = new ComboBox { DropDownStyle = ComboBoxStyle.DropDown, Width = 120 };
+        _txtSaveX = new TextBox { Width = 120 };
+        var lblAndY = new Label { Text = "and Y to:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
+        _txtSaveY = new TextBox { Width = 120 };
 
-        var lblGoTo = new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+        var lblGoTo = new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
         _cmbTrueGoTo = CreateGoToCombo();
 
         tblFound.Controls.Add(_chkMouseAction, 0, 0);
@@ -140,9 +207,9 @@ public sealed class FindTextOcrDialog : Form
         tblFound.SetColumnSpan(_cmbMousePos, 2);
 
         tblFound.Controls.Add(_chkSaveCoord, 0, 1);
-        tblFound.Controls.Add(_cmbSaveX, 1, 1);
+        tblFound.Controls.Add(_txtSaveX, 1, 1);
         tblFound.Controls.Add(lblAndY, 2, 1);
-        tblFound.Controls.Add(_cmbSaveY, 3, 1);
+        tblFound.Controls.Add(_txtSaveY, 3, 1);
 
         tblFound.Controls.Add(lblGoTo, 0, 2);
         tblFound.Controls.Add(_cmbTrueGoTo, 1, 2);
@@ -150,14 +217,20 @@ public sealed class FindTextOcrDialog : Form
 
         grpFound.Controls.Add(tblFound);
 
-        // === Group: If text is not found ===
-        var grpNotFound = new GroupBox { Text = "If text is not found", Dock = DockStyle.Top, Height = 110 };
+        // --- Group: If text is not found ---
+        var grpNotFound = new GroupBox
+        {
+            Text = "If text is not found",
+            Dock = DockStyle.Top,
+            Height = 110,
+            Padding = new Padding(10)
+        };
+
         var tblNotFound = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 4,
-            RowCount = 2,
-            Padding = new Padding(10, 10, 10, 10)
+            RowCount = 2
         };
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
@@ -166,23 +239,23 @@ public sealed class FindTextOcrDialog : Form
         tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
 
-        tblNotFound.Controls.Add(new Label { Text = "Continue waiting", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 0);
+        tblNotFound.Controls.Add(new Label { Text = "Continue waiting", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
         _numTimeoutSec = new NumericUpDown { Minimum = 0, Maximum = 86400, Width = 80 };
         tblNotFound.Controls.Add(_numTimeoutSec, 1, 0);
-        tblNotFound.Controls.Add(new Label { Text = "seconds and then", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 2, 0);
+        tblNotFound.Controls.Add(new Label { Text = "seconds and then", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 2, 0);
 
-        tblNotFound.Controls.Add(new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 1);
+        tblNotFound.Controls.Add(new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
         _cmbFalseGoTo = CreateGoToCombo();
         tblNotFound.Controls.Add(_cmbFalseGoTo, 1, 1);
         tblNotFound.SetColumnSpan(_cmbFalseGoTo, 3);
 
         grpNotFound.Controls.Add(tblNotFound);
 
-        // buttons
-        var btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
-        var btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
-        AcceptButton = btnOk;
-        CancelButton = btnCancel;
+        // --- bottom buttons ---
+        _btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
+        _btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
+        AcceptButton = _btnOk;
+        CancelButton = _btnCancel;
 
         var pnlBottom = new FlowLayoutPanel
         {
@@ -191,43 +264,53 @@ public sealed class FindTextOcrDialog : Form
             FlowDirection = FlowDirection.RightToLeft,
             Padding = new Padding(10)
         };
-        pnlBottom.Controls.Add(btnOk);
-        pnlBottom.Controls.Add(btnCancel);
+        pnlBottom.Controls.Add(_btnOk);
+        pnlBottom.Controls.Add(_btnCancel);
 
+        // root
         var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
         root.Controls.Add(grpNotFound);
         root.Controls.Add(grpFound);
-        root.Controls.Add(grpOpt);
-        root.Controls.Add(grpText);
+        root.Controls.Add(grpSpec);
 
         Controls.Add(root);
         Controls.Add(pnlBottom);
 
-        // initial
+        // ---- initial ----
         var init = initial ?? CreateDefault();
-        _area = init.SearchArea ?? new SearchArea { Kind = SearchAreaKind.EntireDesktop };
 
         _txtText.Text = init.TextToSearchFor ?? string.Empty;
-        _cmbLang.SelectedItem = init.Language == OcrLanguage.Japanese ? "Japanese" : "English";
+        _cmbLang.SelectedItem = init.Language.ToString();
+
+        _area = init.SearchArea ?? init.Area ?? new SearchArea { Kind = SearchAreaKind.EntireDesktop };
         _cmbArea.SelectedItem = ToAreaText(_area);
 
         _chkMouseAction.Checked = init.MouseActionEnabled;
         _cmbMouseAction.SelectedItem = init.MouseAction.ToString();
         _cmbMousePos.SelectedItem = ToMousePosText(init.MousePosition);
+
         _chkSaveCoord.Checked = init.SaveCoordinateEnabled;
-        _cmbSaveX.Text = init.SaveXVariable ?? "X";
-        _cmbSaveY.Text = init.SaveYVariable ?? "Y";
+        _txtSaveX.Text = init.SaveXVariable ?? "X";
+        _txtSaveY.Text = init.SaveYVariable ?? "Y";
+
         SetGoToSelection(_cmbTrueGoTo, init.TrueGoTo);
         SetGoToSelection(_cmbFalseGoTo, init.FalseGoTo);
+
         _numTimeoutSec.Value = init.TimeoutMs <= 0 ? 0 : Math.Clamp(init.TimeoutMs / 1000, 0, 86400);
 
         ApplyEnableState();
         UpdateAreaButtons();
 
-        // events
+        // ---- events ----
         _chkMouseAction.CheckedChanged += (_, __) => ApplyEnableState();
         _chkSaveCoord.CheckedChanged += (_, __) => ApplyEnableState();
-        _cmbArea.SelectedIndexChanged += (_, __) => { OnAreaSelectionChanged(); UpdateAreaButtons(); };
+
+        _cmbArea.SelectedIndexChanged += (_, __) =>
+        {
+            OnAreaSelectionChanged();
+            UpdateAreaButtons();
+        };
+
         _cmbTrueGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbTrueGoTo);
         _cmbFalseGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbFalseGoTo);
 
@@ -235,18 +318,40 @@ public sealed class FindTextOcrDialog : Form
         _btnConfirmArea.Click += (_, __) => ConfirmArea();
         _btnTest.Click += async (_, __) => await TestAsync();
 
-        btnOk.Click += (_, __) =>
+        _btnOk.Click += (_, __) => Result = BuildResult();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
         {
-            Result = BuildResult();
-        };
+            _testCts?.Dispose();
+        }
+        base.Dispose(disposing);
     }
 
     private void ApplyEnableState()
     {
         _cmbMouseAction.Enabled = _chkMouseAction.Checked;
         _cmbMousePos.Enabled = _chkMouseAction.Checked;
-        _cmbSaveX.Enabled = _chkSaveCoord.Checked;
-        _cmbSaveY.Enabled = _chkSaveCoord.Checked;
+
+        _txtSaveX.Enabled = _chkSaveCoord.Checked;
+        _txtSaveY.Enabled = _chkSaveCoord.Checked;
+    }
+
+    private void UpdateAreaButtons()
+    {
+        bool isArea = IsAreaSelection();
+
+        // Define/Confirm は常に表示し、Area 選択時だけ有効化する。
+        _btnDefineArea.Enabled = isArea && !_testing;
+        _btnConfirmArea.Enabled = isArea && !_testing && _definedScreenRect != Rectangle.Empty;
+    }
+
+    private bool IsAreaSelection()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        return sel is "Area of desktop" or "Area of focused window";
     }
 
     private void OnAreaSelectionChanged()
@@ -255,39 +360,28 @@ public sealed class FindTextOcrDialog : Form
         _area = sel switch
         {
             "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
-            "Area of desktop" => _area.Kind == SearchAreaKind.AreaOfDesktop ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
-            "Area of focused window" => _area.Kind == SearchAreaKind.AreaOfFocusedWindow ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
+            "Area of desktop" => new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
+            "Area of focused window" => new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
             _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
         };
-    }
 
-    private void UpdateAreaButtons()
-    {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        bool isArea = sel is "Area of desktop" or "Area of focused window";
-        _btnDefineArea.Enabled = isArea;
-
-        bool hasRect = _definedScreenRect != Rectangle.Empty || _area.Kind switch
-        {
-            SearchAreaKind.AreaOfDesktop => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
-            SearchAreaKind.AreaOfFocusedWindow => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
-            _ => false
-        };
-        _btnConfirmArea.Enabled = isArea && hasRect;
+        if (!IsAreaSelection())
+            _definedScreenRect = Rectangle.Empty;
     }
 
     private void DefineArea()
     {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is not ("Area of desktop" or "Area of focused window"))
+        using var f = new ScreenRegionCaptureForm();
+        if (f.ShowDialog(this) != DialogResult.OK)
             return;
 
-        using var cap = new ScreenRegionCaptureForm();
-        if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
+        var r = f.CapturedScreenRectangle;
+        if (r.Width <= 0 || r.Height <= 0)
             return;
 
-        var r = cap.CapturedScreenRectangle;
         _definedScreenRect = r;
+
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
         if (sel == "Area of desktop")
         {
             _area = new SearchArea
@@ -331,13 +425,13 @@ public sealed class FindTextOcrDialog : Form
 
     private void ConfirmArea()
     {
-        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is not ("Area of desktop" or "Area of focused window"))
+        if (!IsAreaSelection())
             return;
 
         var rect = _definedScreenRect != Rectangle.Empty
             ? _definedScreenRect
             : DetectionTestUtil.ResolveSearchRectangle(_area);
+
         if (rect.Width <= 0 || rect.Height <= 0)
             return;
 
@@ -349,56 +443,191 @@ public sealed class FindTextOcrDialog : Form
         }
         finally
         {
-            if (wasVisible) { Show(); Activate(); }
+            SafeRestoreVisibility(wasVisible);
         }
     }
 
     private async Task TestAsync()
     {
-        var action = BuildResult();
-        var testAction = action with
+        if (_testing) return;
+
+        if (string.IsNullOrWhiteSpace(_txtText.Text))
         {
-            MouseActionEnabled = false,
-            SaveCoordinateEnabled = false
-        };
+            SafeMessage("Text is empty.", MessageBoxIcon.Warning);
+            return;
+        }
+
+        _testing = true;
+        _testCts?.Cancel();
+        _testCts?.Dispose();
+        _testCts = new CancellationTokenSource();
+
+        SetTestingUi(true);
 
         var wasVisible = Visible;
-
         try
         {
             UseWaitCursor = true;
-            _btnTest.Enabled = false;
 
+            // 自分が写り込むのを避ける
             Hide();
-            await Task.Delay(150);
+            await Task.Delay(150, _testCts.Token);
 
-            var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
+            if (IsDisposed || Disposing) return;
+
+            var rect = IsAreaSelection()
                 ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
                 : DetectionTestUtil.ResolveSearchRectangle(_area);
 
-            var (success, pt, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, CancellationToken.None);
+            var action = BuildResult();
+            var testAction = action with
+            {
+                MouseActionEnabled = false,
+                SaveCoordinateEnabled = false
+            };
 
-            if (wasVisible) { Show(); Activate(); }
-            if (success && pt is not null)
-            {
-                MessageBox.Show(this, $"Found at ({pt.Value.X}, {pt.Value.Y}).", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(this, "Not found.", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            var (success, pt, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, _testCts.Token);
+
+            if (IsDisposed || Disposing) return;
+
+            SafeRestoreVisibility(wasVisible);
+
+            SafeMessage(success && pt is not null
+                    ? $"Found at ({pt.Value.X}, {pt.Value.Y})."
+                    : "Not found.",
+                MessageBoxIcon.Information);
+        }
+        catch (OperationCanceledException)
+        {
+            // closing / canceled
         }
         catch (Exception ex)
         {
-            if (wasVisible && !Visible) { Show(); Activate(); }
-            MessageBox.Show(this, ex.Message, "Test", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (IsDisposed || Disposing) return;
+            SafeRestoreVisibility(wasVisible);
+            SafeMessage(ex.Message, MessageBoxIcon.Error);
         }
         finally
         {
-            if (wasVisible && !Visible) { Show(); Activate(); }
-            _btnTest.Enabled = true;
-            UseWaitCursor = false;
+            if (!IsDisposed && !Disposing)
+            {
+                UseWaitCursor = false;
+                SetTestingUi(false);
+                _testing = false;
+                UpdateAreaButtons();
+            }
         }
+    }
+
+    private void SetTestingUi(bool testing)
+    {
+        if (!testing)
+        {
+            ControlBox = _savedControlBox;
+        }
+        else
+        {
+            _savedControlBox = ControlBox;
+            ControlBox = false;
+        }
+
+        _btnOk.Enabled = !testing;
+        _btnCancel.Enabled = !testing;
+
+        _btnTest.Enabled = !testing;
+        _txtText.Enabled = !testing;
+        _cmbLang.Enabled = !testing;
+        _cmbArea.Enabled = !testing;
+
+        _chkMouseAction.Enabled = !testing;
+        _cmbMouseAction.Enabled = !testing && _chkMouseAction.Checked;
+        _cmbMousePos.Enabled = !testing && _chkMouseAction.Checked;
+
+        _chkSaveCoord.Enabled = !testing;
+        _txtSaveX.Enabled = !testing && _chkSaveCoord.Checked;
+        _txtSaveY.Enabled = !testing && _chkSaveCoord.Checked;
+
+        _cmbTrueGoTo.Enabled = !testing;
+        _numTimeoutSec.Enabled = !testing;
+        _cmbFalseGoTo.Enabled = !testing;
+
+        UpdateAreaButtons();
+    }
+
+    private void SafeRestoreVisibility(bool wasVisible)
+    {
+        if (!wasVisible) return;
+        if (IsDisposed || Disposing) return;
+
+        if (!Visible) Show();
+        Activate();
+    }
+
+    private void SafeMessage(string msg, MessageBoxIcon icon)
+    {
+        if (IsDisposed || Disposing) return;
+
+        if (IsHandleCreated)
+            MessageBox.Show(this, msg, "Test", MessageBoxButtons.OK, icon);
+        else
+            MessageBox.Show(msg, "Test", MessageBoxButtons.OK, icon);
+    }
+
+    // --- result mapping ---
+    private FindTextOcrAction BuildResult()
+    {
+        return new FindTextOcrAction
+        {
+            TextToSearchFor = _txtText.Text,
+            Language = ParseLanguage(_cmbLang.SelectedItem?.ToString()),
+
+            SearchArea = _area,
+            Area = _area,
+
+            MouseActionEnabled = _chkMouseAction.Checked,
+            MouseAction = ParseMouseAction(_cmbMouseAction.SelectedItem?.ToString()),
+            MousePosition = ParseMousePos(_cmbMousePos.SelectedItem?.ToString()),
+
+            SaveCoordinateEnabled = _chkSaveCoord.Checked,
+            SaveXVariable = _txtSaveX.Text,
+            SaveYVariable = _txtSaveY.Text,
+
+            TrueGoTo = ParseGoToText(_cmbTrueGoTo.SelectedItem?.ToString()),
+
+            TimeoutMs = (int)_numTimeoutSec.Value <= 0 ? 0 : (int)_numTimeoutSec.Value * 1000,
+            FalseGoTo = ParseGoToText(_cmbFalseGoTo.SelectedItem?.ToString()),
+        };
+    }
+
+    private static FindTextOcrAction CreateDefault()
+        => new()
+        {
+            TextToSearchFor = string.Empty,
+            Language = OcrLanguage.English,
+            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
+
+            MouseActionEnabled = true,
+            MouseAction = MouseActionBehavior.Positioning,
+            MousePosition = DomainMousePosition.Center,
+
+            SaveCoordinateEnabled = false,
+            SaveXVariable = "X",
+            SaveYVariable = "Y",
+
+            TrueGoTo = GoToTarget.Next(),
+            FalseGoTo = GoToTarget.End(),
+
+            TimeoutMs = 120000
+        };
+
+    // --- combos ---
+    private static ComboBox CreateGoToCombo()
+    {
+        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
+        cmb.Items.AddRange(new object[] { "Next", "End", "Label..." });
+        cmb.SelectedItem = "Next";
+        return cmb;
     }
 
     private void OnGoToSelected(ComboBox cmb)
@@ -415,62 +644,16 @@ public sealed class FindTextOcrDialog : Form
 
         var text = $"Label:{label}";
         if (!cmb.Items.Contains(text))
-            cmb.Items.Insert(3, text);
+            cmb.Items.Insert(2, text);
+
         cmb.SelectedItem = text;
     }
 
-    private FindTextOcrAction BuildResult()
+    private static void SetGoToSelection(ComboBox cmb, GoToTarget target)
     {
-        var lang = _cmbLang.SelectedItem?.ToString() == "Japanese" ? OcrLanguage.Japanese : OcrLanguage.English;
-        return new FindTextOcrAction
-        {
-            TextToSearchFor = _txtText.Text ?? string.Empty,
-            Language = lang,
-            SearchArea = _area,
-            Area = _area,
-            MouseActionEnabled = _chkMouseAction.Checked,
-            MouseAction = ParseMouseAction(_cmbMouseAction.SelectedItem?.ToString()),
-            MousePosition = ParseMousePos(_cmbMousePos.SelectedItem?.ToString()),
-            SaveCoordinateEnabled = _chkSaveCoord.Checked,
-            SaveXVariable = string.IsNullOrWhiteSpace(_cmbSaveX.Text) ? "X" : _cmbSaveX.Text.Trim(),
-            SaveYVariable = string.IsNullOrWhiteSpace(_cmbSaveY.Text) ? "Y" : _cmbSaveY.Text.Trim(),
-            TrueGoTo = FromGoToText(_cmbTrueGoTo.SelectedItem?.ToString()),
-            FalseGoTo = FromGoToText(_cmbFalseGoTo.SelectedItem?.ToString()),
-            TimeoutMs = (int)_numTimeoutSec.Value * 1000
-        };
-    }
-
-    private static FindTextOcrAction CreateDefault()
-        => new()
-        {
-            TextToSearchFor = "",
-            Language = OcrLanguage.English,
-            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            MouseActionEnabled = true,
-            MouseAction = MouseActionBehavior.Positioning,
-            MousePosition = DomainMousePosition.Center,
-            SaveCoordinateEnabled = false,
-            SaveXVariable = "X",
-            SaveYVariable = "Y",
-            TrueGoTo = GoToTarget.Next(),
-            FalseGoTo = GoToTarget.End(),
-            TimeoutMs = 120_000
-        };
-
-    private static ComboBox CreateGoToCombo()
-    {
-        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-        cmb.Items.AddRange(new object[] { "Next", "End", "Start", "Label..." });
-        cmb.SelectedIndex = 0;
-        return cmb;
-    }
-
-    private static void SetGoToSelection(ComboBox cmb, GoToTarget t)
-    {
-        var text = ToGoToText(t);
-        if (text.StartsWith("Label:", StringComparison.Ordinal) && !cmb.Items.Contains(text))
-            cmb.Items.Insert(3, text);
+        var text = ToGoToText(target);
+        if (!cmb.Items.Contains(text) && text.StartsWith("Label:", StringComparison.Ordinal))
+            cmb.Items.Insert(2, text);
         cmb.SelectedItem = text;
     }
 
@@ -478,16 +661,14 @@ public sealed class FindTextOcrDialog : Form
         => t.Kind switch
         {
             GoToKind.End => "End",
-            GoToKind.Start => "Start",
             GoToKind.Label => $"Label:{t.Label}",
             _ => "Next"
         };
 
-    private static GoToTarget FromGoToText(string? text)
+    private static GoToTarget ParseGoToText(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return GoToTarget.Next();
+        text ??= "Next";
         if (text == "End") return GoToTarget.End();
-        if (text == "Start") return GoToTarget.Start();
         if (text.StartsWith("Label:", StringComparison.Ordinal))
             return GoToTarget.ToLabel(text["Label:".Length..]);
         return GoToTarget.Next();
@@ -500,6 +681,13 @@ public sealed class FindTextOcrDialog : Form
             SearchAreaKind.AreaOfDesktop => "Area of desktop",
             SearchAreaKind.AreaOfFocusedWindow => "Area of focused window",
             _ => "Entire desktop"
+        };
+
+    private static OcrLanguage ParseLanguage(string? text)
+        => text switch
+        {
+            nameof(OcrLanguage.Japanese) => OcrLanguage.Japanese,
+            _ => OcrLanguage.English
         };
 
     private static MouseActionBehavior ParseMouseAction(string? text)
@@ -532,43 +720,23 @@ public sealed class FindTextOcrDialog : Form
             _ => DomainMousePosition.Center
         };
 
-    // ===== Win32: window rect from point =====
+    // --- P/Invoke: focused window rect ---
     [StructLayout(LayoutKind.Sequential)]
-    private struct POINT
-    {
-        public int X;
-        public int Y;
-        public POINT(int x, int y) { X = x; Y = y; }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct RECT
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
-    }
+    private struct RECT { public int Left, Top, Right, Bottom; }
 
     [DllImport("user32.dll")]
-    private static extern IntPtr WindowFromPoint(POINT pt);
+    private static extern IntPtr WindowFromPoint(Point pt);
 
     [DllImport("user32.dll")]
     private static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
 
-    private static bool TryGetWindowRectFromPoint(Point screenPoint, out Rectangle rect)
+    private static bool TryGetWindowRectFromPoint(Point pt, out Rectangle rect)
     {
-        rect = Rectangle.Empty;
-        var hwnd = WindowFromPoint(new POINT(screenPoint.X, screenPoint.Y));
-        if (hwnd == IntPtr.Zero) return false;
-        if (!GetWindowRect(hwnd, out var r)) return false;
-        rect = new Rectangle(r.Left, r.Top, Math.Max(0, r.Right - r.Left), Math.Max(0, r.Bottom - r.Top));
+        rect = default;
+        var h = WindowFromPoint(pt);
+        if (h == IntPtr.Zero) return false;
+        if (!GetWindowRect(h, out var r)) return false;
+        rect = Rectangle.FromLTRB(r.Left, r.Top, r.Right, r.Bottom);
         return rect.Width > 0 && rect.Height > 0;
-    }
-
-    public static FindTextOcrAction? Show(IWin32Window owner, FindTextOcrAction? initial)
-    {
-        using var dlg = new FindTextOcrDialog(initial);
-        return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.Result : null;
     }
 }
