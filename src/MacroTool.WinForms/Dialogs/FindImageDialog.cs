@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MacroTool.Domain.Macros;
+using MacroTool.WinForms.Properties;
 
 // WinForms の Control.MousePosition（Point）と、ドメイン enum の MousePosition が衝突するため別名を付ける
 using DomainMousePosition = MacroTool.Domain.Macros.MousePosition;
@@ -127,9 +128,19 @@ public sealed class FindImageDialog : Form
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false
         };
-        _btnCapture = new Button { Text = "Capture...", Width = 78, Height = 26 };
-        _btnOpen = new Button { Text = "Open...", Width = 70, Height = 26 };
-        _btnClear = new Button { Text = "Clear", Width = 60, Height = 26 };
+        _btnCapture = new Button { Text = "Capture...", Width = 90, Height = 26 };
+        _btnOpen = new Button { Text = "Open...", Width = 80, Height = 26 };
+        _btnClear = new Button { Text = "Clear", Width = 70, Height = 26 };
+
+        // アイコン指定（要望：Capture / Folder / Clear に変更）
+        _btnCapture.Image = Resources.Capture;
+        _btnOpen.Image = Resources.Folder;
+        _btnClear.Image = Resources.Clear;
+        foreach (var b in new[] { _btnCapture, _btnOpen, _btnClear })
+        {
+            b.ImageAlign = ContentAlignment.MiddleLeft;
+            b.TextImageRelation = TextImageRelation.ImageBeforeText;
+        }
         pnlImgBtns.Controls.AddRange(new Control[] { _btnCapture, _btnOpen, _btnClear });
 
         left.Controls.Add(_picTemplate, 0, 0);
