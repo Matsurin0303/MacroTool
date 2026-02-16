@@ -18,7 +18,10 @@ public sealed class FindImageDialog : Form
     private readonly Button _btnClear;
 
     private readonly ComboBox _cmbArea;
+    private readonly Button _btnDefineArea;
+    private readonly Button _btnConfirmArea;
     private readonly NumericUpDown _numTolerance;
+    private readonly Button _btnTest;
 
     private readonly CheckBox _chkMouseAction;
     private readonly ComboBox _cmbMouseAction;
@@ -35,6 +38,7 @@ public sealed class FindImageDialog : Form
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
     private ImageTemplate _template = new();
     private Image? _preview;
+    private Rectangle _definedScreenRect = Rectangle.Empty;
 
     public FindImageAction Result { get; private set; } = new();
 
@@ -92,30 +96,52 @@ public sealed class FindImageDialog : Form
 
         var lblArea = new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
         _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop...", "Area of focused window..." });
+        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
+        _btnDefineArea = new Button { Text = "Define", Width = 70, Height = 24 };
+        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 100, Height = 24 };
 
         var lblTol = new Label { Text = "Color tolerance:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
         _numTolerance = new NumericUpDown { Minimum = 0, Maximum = 100, Width = 80 };
         var lblPercent = new Label { Text = "%", AutoSize = true, Margin = new Padding(6, 6, 0, 0) };
+        _btnTest = new Button { Text = "Test", Width = 70, Height = 24 };
+
+        var pnlArea = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = true
+        };
+        pnlArea.Controls.Add(_cmbArea);
+        pnlArea.Controls.Add(_btnDefineArea);
+        pnlArea.Controls.Add(_btnConfirmArea);
+
+        var pnlTol = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            AutoSize = true
+        };
+        pnlTol.Controls.Add(_numTolerance);
+        pnlTol.Controls.Add(lblPercent);
+        pnlTol.Controls.Add(_btnTest);
 
         var tblRight = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 2,
             RowCount = 3
         };
         tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
         tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         tblRight.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         tblRight.Controls.Add(lblArea, 0, 0);
-        tblRight.Controls.Add(_cmbArea, 1, 0);
-        tblRight.SetColumnSpan(_cmbArea, 2);
+        tblRight.Controls.Add(pnlArea, 1, 0);
         tblRight.Controls.Add(lblTol, 0, 1);
-        tblRight.Controls.Add(_numTolerance, 1, 1);
-        tblRight.Controls.Add(lblPercent, 2, 1);
+        tblRight.Controls.Add(pnlTol, 1, 1);
 
         tblImg.Controls.Add(pnlLeft, 0, 0);
         tblImg.SetRowSpan(pnlLeft, 4);
@@ -240,14 +266,19 @@ public sealed class FindImageDialog : Form
 
         UpdatePreview();
         ApplyEnableState();
+        UpdateAreaButtons();
 
         // events
         _chkMouseAction.CheckedChanged += (_, __) => ApplyEnableState();
         _chkSaveCoord.CheckedChanged += (_, __) => ApplyEnableState();
 
-        _cmbArea.SelectedIndexChanged += (_, __) => OnAreaChanged();
+        _cmbArea.SelectedIndexChanged += (_, __) => { OnAreaSelectionChanged(); UpdateAreaButtons(); };
         _cmbTrueGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbTrueGoTo);
         _cmbFalseGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbFalseGoTo);
+
+        _btnDefineArea.Click += (_, __) => DefineArea();
+        _btnConfirmArea.Click += (_, __) => ConfirmArea();
+        _btnTest.Click += async (_, __) => await TestAsync();
 
         _btnOpen.Click += (_, __) => SelectTemplateFromFile();
         _btnCapture.Click += (_, __) => CaptureTemplate();
@@ -272,64 +303,161 @@ public sealed class FindImageDialog : Form
         _cmbSaveY.Enabled = _chkSaveCoord.Checked;
     }
 
-    private void OnAreaChanged()
+    private void OnAreaSelectionChanged()
     {
         var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is "Area of desktop..." or "Area of focused window...")
+        _area = sel switch
         {
-            using var cap = new ScreenRegionCaptureForm();
-            if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
-            {
-                _cmbArea.SelectedItem = ToAreaText(_area);
-                return;
-            }
+            "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
+            "Area of desktop" => _area.Kind == SearchAreaKind.AreaOfDesktop ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
+            "Area of focused window" => _area.Kind == SearchAreaKind.AreaOfFocusedWindow ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
+            _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
+        };
+    }
 
-            var r = cap.CapturedScreenRectangle;
-            if (sel == "Area of desktop...")
+    private void UpdateAreaButtons()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        bool isArea = sel is "Area of desktop" or "Area of focused window";
+        _btnDefineArea.Enabled = isArea;
+
+        bool hasRect = _definedScreenRect != Rectangle.Empty || _area.Kind switch
+        {
+            SearchAreaKind.AreaOfDesktop => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
+            SearchAreaKind.AreaOfFocusedWindow => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
+            _ => false
+        };
+        _btnConfirmArea.Enabled = isArea && hasRect;
+    }
+
+    private void DefineArea()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        if (sel is not ("Area of desktop" or "Area of focused window"))
+            return;
+
+        using var cap = new ScreenRegionCaptureForm();
+        if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
+            return;
+
+        var r = cap.CapturedScreenRectangle;
+        _definedScreenRect = r;
+        if (sel == "Area of desktop")
+        {
+            _area = new SearchArea
+            {
+                Kind = SearchAreaKind.AreaOfDesktop,
+                X1 = r.Left,
+                Y1 = r.Top,
+                X2 = r.Right,
+                Y2 = r.Bottom
+            };
+        }
+        else
+        {
+            // キャプチャ矩形の中心が属するウィンドウを対象に、相対座標に変換
+            var center = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
+            if (TryGetWindowRectFromPoint(center, out var win))
             {
                 _area = new SearchArea
                 {
-                    Kind = SearchAreaKind.AreaOfDesktop,
+                    Kind = SearchAreaKind.AreaOfFocusedWindow,
+                    X1 = r.Left - win.Left,
+                    Y1 = r.Top - win.Top,
+                    X2 = r.Right - win.Left,
+                    Y2 = r.Bottom - win.Top
+                };
+            }
+            else
+            {
+                // フォールバック（絶対座標で保持）
+                _area = new SearchArea
+                {
+                    Kind = SearchAreaKind.AreaOfFocusedWindow,
                     X1 = r.Left,
                     Y1 = r.Top,
                     X2 = r.Right,
                     Y2 = r.Bottom
                 };
             }
-            else
-            {
-                var center = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
-                if (TryGetWindowRectFromPoint(center, out var win))
-                {
-                    _area = new SearchArea
-                    {
-                        Kind = SearchAreaKind.AreaOfFocusedWindow,
-                        X1 = r.Left - win.Left,
-                        Y1 = r.Top - win.Top,
-                        X2 = r.Right - win.Left,
-                        Y2 = r.Bottom - win.Top
-                    };
-                }
-                else
-                {
-                    _area = new SearchArea
-                    {
-                        Kind = SearchAreaKind.AreaOfFocusedWindow,
-                        X1 = r.Left,
-                        Y1 = r.Top,
-                        X2 = r.Right,
-                        Y2 = r.Bottom
-                    };
-                }
-            }
-            return;
         }
 
-        _area = sel switch
+        UpdateAreaButtons();
+    }
+
+    private void ConfirmArea()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        if (sel is not ("Area of desktop" or "Area of focused window"))
+            return;
+
+        var rect = _definedScreenRect != Rectangle.Empty
+            ? _definedScreenRect
+            : DetectionTestUtil.ResolveSearchRectangle(_area);
+        if (rect.Width <= 0 || rect.Height <= 0)
+            return;
+
+        var wasVisible = Visible;
+        try
         {
-            "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
-            _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
+            Hide();
+            AreaPreviewForm.ShowPreview(this, rect);
+        }
+        finally
+        {
+            if (wasVisible) { Show(); Activate(); }
+        }
+    }
+
+    private async Task TestAsync()
+    {
+        if (!TryBuildResult(out var action))
+            return;
+
+        // テストは副作用を避ける
+        var testAction = action with
+        {
+            MouseActionEnabled = false,
+            SaveCoordinateEnabled = false
         };
+
+        var wasVisible = Visible;
+
+        try
+        {
+            UseWaitCursor = true;
+            _btnTest.Enabled = false;
+
+            Hide();
+            await Task.Delay(150);
+
+            var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
+                ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
+                : DetectionTestUtil.ResolveSearchRectangle(_area);
+
+            var (success, pt, _) = await DetectionTestUtil.TestFindImageAsync(testAction, rect, CancellationToken.None);
+
+            if (wasVisible) { Show(); Activate(); }
+            if (success && pt is not null)
+            {
+                MessageBox.Show(this, $"Found at ({pt.Value.X}, {pt.Value.Y}).", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(this, "Not found.", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (wasVisible && !Visible) { Show(); Activate(); }
+            MessageBox.Show(this, ex.Message, "Test", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            if (wasVisible && !Visible) { Show(); Activate(); }
+            _btnTest.Enabled = true;
+            UseWaitCursor = false;
+        }
     }
 
     private void OnGoToSelected(ComboBox cmb)
@@ -513,8 +641,8 @@ public sealed class FindImageDialog : Form
         => a.Kind switch
         {
             SearchAreaKind.FocusedWindow => "Focused window",
-            SearchAreaKind.AreaOfDesktop => "Area of desktop...",
-            SearchAreaKind.AreaOfFocusedWindow => "Area of focused window...",
+            SearchAreaKind.AreaOfDesktop => "Area of desktop",
+            SearchAreaKind.AreaOfFocusedWindow => "Area of focused window",
             _ => "Entire desktop"
         };
 

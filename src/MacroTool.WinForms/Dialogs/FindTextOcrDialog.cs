@@ -16,6 +16,9 @@ public sealed class FindTextOcrDialog : Form
     private readonly CheckBox _chkRegex;
     private readonly ComboBox _cmbLang;
     private readonly ComboBox _cmbArea;
+    private readonly Button _btnDefineArea;
+    private readonly Button _btnConfirmArea;
+    private readonly Button _btnTest;
 
     private readonly CheckBox _chkMouseAction;
     private readonly ComboBox _cmbMouseAction;
@@ -28,6 +31,7 @@ public sealed class FindTextOcrDialog : Form
     private readonly ComboBox _cmbFalseGoTo;
 
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
+    private Rectangle _definedScreenRect = Rectangle.Empty;
 
     public FindTextOcrAction Result { get; private set; } = new();
 
@@ -43,16 +47,17 @@ public sealed class FindTextOcrDialog : Form
         Height = 620;
 
         // === Group: Text to search for ===
-        var grpText = new GroupBox { Text = "Text to search for", Dock = DockStyle.Top, Height = 175 };
+        var grpText = new GroupBox { Text = "Text to search for", Dock = DockStyle.Top, Height = 210 };
         var tblText = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 4,
+            RowCount = 5,
             Padding = new Padding(10, 10, 10, 10)
         };
         tblText.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
         tblText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         tblText.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
@@ -72,8 +77,19 @@ public sealed class FindTextOcrDialog : Form
 
         tblText.Controls.Add(new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 6, 0, 0) }, 0, 3);
         _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
-        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop...", "Area of focused window..." });
-        tblText.Controls.Add(_cmbArea, 1, 3);
+        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
+        _btnDefineArea = new Button { Text = "Define", Width = 70, Height = 24 };
+        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 100, Height = 24 };
+        var pnlArea = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, AutoSize = true };
+        pnlArea.Controls.Add(_cmbArea);
+        pnlArea.Controls.Add(_btnDefineArea);
+        pnlArea.Controls.Add(_btnConfirmArea);
+        tblText.Controls.Add(pnlArea, 1, 3);
+
+        // Test
+        _btnTest = new Button { Text = "Test", Width = 90, Height = 24 };
+        tblText.Controls.Add(new Label { Text = "", AutoSize = true }, 0, 4);
+        tblText.Controls.Add(_btnTest, 1, 4);
 
         grpText.Controls.Add(tblText);
 
@@ -206,13 +222,18 @@ public sealed class FindTextOcrDialog : Form
         _numTimeoutSec.Value = init.TimeoutMs <= 0 ? 0 : Math.Clamp(init.TimeoutMs / 1000, 0, 86400);
 
         ApplyEnableState();
+        UpdateAreaButtons();
 
         // events
         _chkMouseAction.CheckedChanged += (_, __) => ApplyEnableState();
         _chkSaveCoord.CheckedChanged += (_, __) => ApplyEnableState();
-        _cmbArea.SelectedIndexChanged += (_, __) => OnAreaChanged();
+        _cmbArea.SelectedIndexChanged += (_, __) => { OnAreaSelectionChanged(); UpdateAreaButtons(); };
         _cmbTrueGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbTrueGoTo);
         _cmbFalseGoTo.SelectedIndexChanged += (_, __) => OnGoToSelected(_cmbFalseGoTo);
+
+        _btnDefineArea.Click += (_, __) => DefineArea();
+        _btnConfirmArea.Click += (_, __) => ConfirmArea();
+        _btnTest.Click += async (_, __) => await TestAsync();
 
         btnOk.Click += (_, __) =>
         {
@@ -228,64 +249,156 @@ public sealed class FindTextOcrDialog : Form
         _cmbSaveY.Enabled = _chkSaveCoord.Checked;
     }
 
-    private void OnAreaChanged()
+    private void OnAreaSelectionChanged()
     {
         var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
-        if (sel is "Area of desktop..." or "Area of focused window...")
+        _area = sel switch
         {
-            using var cap = new ScreenRegionCaptureForm();
-            if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
-            {
-                _cmbArea.SelectedItem = ToAreaText(_area);
-                return;
-            }
+            "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
+            "Area of desktop" => _area.Kind == SearchAreaKind.AreaOfDesktop ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfDesktop },
+            "Area of focused window" => _area.Kind == SearchAreaKind.AreaOfFocusedWindow ? _area : new SearchArea { Kind = SearchAreaKind.AreaOfFocusedWindow },
+            _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
+        };
+    }
 
-            var r = cap.CapturedScreenRectangle;
-            if (sel == "Area of desktop...")
+    private void UpdateAreaButtons()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        bool isArea = sel is "Area of desktop" or "Area of focused window";
+        _btnDefineArea.Enabled = isArea;
+
+        bool hasRect = _definedScreenRect != Rectangle.Empty || _area.Kind switch
+        {
+            SearchAreaKind.AreaOfDesktop => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
+            SearchAreaKind.AreaOfFocusedWindow => (Math.Abs(_area.X2 - _area.X1) > 0) && (Math.Abs(_area.Y2 - _area.Y1) > 0),
+            _ => false
+        };
+        _btnConfirmArea.Enabled = isArea && hasRect;
+    }
+
+    private void DefineArea()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        if (sel is not ("Area of desktop" or "Area of focused window"))
+            return;
+
+        using var cap = new ScreenRegionCaptureForm();
+        if (cap.ShowDialog(this) != DialogResult.OK || cap.CapturedScreenRectangle == Rectangle.Empty)
+            return;
+
+        var r = cap.CapturedScreenRectangle;
+        _definedScreenRect = r;
+        if (sel == "Area of desktop")
+        {
+            _area = new SearchArea
+            {
+                Kind = SearchAreaKind.AreaOfDesktop,
+                X1 = r.Left,
+                Y1 = r.Top,
+                X2 = r.Right,
+                Y2 = r.Bottom
+            };
+        }
+        else
+        {
+            var center = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
+            if (TryGetWindowRectFromPoint(center, out var win))
             {
                 _area = new SearchArea
                 {
-                    Kind = SearchAreaKind.AreaOfDesktop,
+                    Kind = SearchAreaKind.AreaOfFocusedWindow,
+                    X1 = r.Left - win.Left,
+                    Y1 = r.Top - win.Top,
+                    X2 = r.Right - win.Left,
+                    Y2 = r.Bottom - win.Top
+                };
+            }
+            else
+            {
+                _area = new SearchArea
+                {
+                    Kind = SearchAreaKind.AreaOfFocusedWindow,
                     X1 = r.Left,
                     Y1 = r.Top,
                     X2 = r.Right,
                     Y2 = r.Bottom
                 };
             }
-            else
-            {
-                var center = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
-                if (TryGetWindowRectFromPoint(center, out var win))
-                {
-                    _area = new SearchArea
-                    {
-                        Kind = SearchAreaKind.AreaOfFocusedWindow,
-                        X1 = r.Left - win.Left,
-                        Y1 = r.Top - win.Top,
-                        X2 = r.Right - win.Left,
-                        Y2 = r.Bottom - win.Top
-                    };
-                }
-                else
-                {
-                    _area = new SearchArea
-                    {
-                        Kind = SearchAreaKind.AreaOfFocusedWindow,
-                        X1 = r.Left,
-                        Y1 = r.Top,
-                        X2 = r.Right,
-                        Y2 = r.Bottom
-                    };
-                }
-            }
-            return;
         }
 
-        _area = sel switch
+        UpdateAreaButtons();
+    }
+
+    private void ConfirmArea()
+    {
+        var sel = _cmbArea.SelectedItem?.ToString() ?? "Entire desktop";
+        if (sel is not ("Area of desktop" or "Area of focused window"))
+            return;
+
+        var rect = _definedScreenRect != Rectangle.Empty
+            ? _definedScreenRect
+            : DetectionTestUtil.ResolveSearchRectangle(_area);
+        if (rect.Width <= 0 || rect.Height <= 0)
+            return;
+
+        var wasVisible = Visible;
+        try
         {
-            "Focused window" => new SearchArea { Kind = SearchAreaKind.FocusedWindow },
-            _ => new SearchArea { Kind = SearchAreaKind.EntireDesktop }
+            Hide();
+            AreaPreviewForm.ShowPreview(this, rect);
+        }
+        finally
+        {
+            if (wasVisible) { Show(); Activate(); }
+        }
+    }
+
+    private async Task TestAsync()
+    {
+        var action = BuildResult();
+        var testAction = action with
+        {
+            MouseActionEnabled = false,
+            SaveCoordinateEnabled = false
         };
+
+        var wasVisible = Visible;
+
+        try
+        {
+            UseWaitCursor = true;
+            _btnTest.Enabled = false;
+
+            Hide();
+            await Task.Delay(150);
+
+            var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
+                ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
+                : DetectionTestUtil.ResolveSearchRectangle(_area);
+
+            var (success, pt, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, CancellationToken.None);
+
+            if (wasVisible) { Show(); Activate(); }
+            if (success && pt is not null)
+            {
+                MessageBox.Show(this, $"Found at ({pt.Value.X}, {pt.Value.Y}).", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(this, "Not found.", "Test", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (wasVisible && !Visible) { Show(); Activate(); }
+            MessageBox.Show(this, ex.Message, "Test", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            if (wasVisible && !Visible) { Show(); Activate(); }
+            _btnTest.Enabled = true;
+            UseWaitCursor = false;
+        }
     }
 
     private void OnGoToSelected(ComboBox cmb)
@@ -384,8 +497,8 @@ public sealed class FindTextOcrDialog : Form
         => a.Kind switch
         {
             SearchAreaKind.FocusedWindow => "Focused window",
-            SearchAreaKind.AreaOfDesktop => "Area of desktop...",
-            SearchAreaKind.AreaOfFocusedWindow => "Area of focused window...",
+            SearchAreaKind.AreaOfDesktop => "Area of desktop",
+            SearchAreaKind.AreaOfFocusedWindow => "Area of focused window",
             _ => "Entire desktop"
         };
 
