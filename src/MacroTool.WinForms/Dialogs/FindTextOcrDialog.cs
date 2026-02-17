@@ -44,10 +44,32 @@ public partial class FindTextOcrDialog : Form
         InitializeComponent();
 
         // デザイナではロジック/イベントを極力実行しない（例外やデザイナフリーズ回避）
-        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+        if (IsDesignTime())
             return;
 
         InitializeRuntime(null);
+    }
+
+    private static bool IsDesignTime()
+    {
+        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            return true;
+
+        // VS の out-of-proc デザイナでは UsageMode が Runtime になるケースがあるため保険
+        try
+        {
+            var pn = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+            if (pn.Equals("devenv", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (pn.Contains("DesignToolsServer", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return false;
     }
 
     private FindTextOcrDialog(FindTextOcrAction? initial)
@@ -296,6 +318,10 @@ public partial class FindTextOcrDialog : Form
         _cmbLang.Enabled = !testing;
         _cmbArea.Enabled = !testing;
         _txtText.Enabled = !testing;
+        // 仕様上は存在するが v1.0 では未処理のオプション（UIのみ）
+        _chkRegex.Enabled = !testing;
+        _chkOptimizeContrast.Enabled = !testing;
+        _chkOptimizeShortText.Enabled = !testing;
         _numTimeoutSec.Enabled = !testing;
         _cmbTrueGoTo.Enabled = !testing;
         _cmbFalseGoTo.Enabled = !testing;

@@ -38,6 +38,19 @@
       <DependentUpon>FindTextOcrDialog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+
+  <!-- VS デザイナで FindImageDialog を正しく開くための関連付け -->
+  <ItemGroup>
+    <Compile Update="Dialogs\FindImageDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Dialogs\FindImageDialog.Designer.cs">
+      <DependentUpon>FindImageDialog.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Dialogs\FindImageDialog.resx">
+      <DependentUpon>FindImageDialog.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

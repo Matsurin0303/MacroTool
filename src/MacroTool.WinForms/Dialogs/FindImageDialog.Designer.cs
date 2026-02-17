@@ -4,18 +4,21 @@ using System.Windows.Forms;
 
 namespace MacroTool.WinForms.Dialogs;
 
-public partial class FindTextOcrDialog
+public partial class FindImageDialog
 {
     private IContainer? components = null;
 
-    // code-behind 側でリソース解放を行うためのフック（FindTextOcrDialog.cs 側に実装）
+    // code-behind 側でリソース解放を行うためのフック（FindImageDialog.cs 側に実装）
     partial void DisposeManagedResources();
 
     // ===== Containers =====
     private Label lblDesc;
+
     private GroupBox grpSpec;
     private TableLayoutPanel tblSpec;
-    private TableLayoutPanel tblAreaRow;
+    private TableLayoutPanel tblLeft;
+    private FlowLayoutPanel pnlImgBtns;
+    private TableLayoutPanel tblRight;
     private FlowLayoutPanel pnlAreaBtns;
 
     private GroupBox grpFound;
@@ -27,26 +30,28 @@ public partial class FindTextOcrDialog
     private FlowLayoutPanel pnlBottom;
 
     // ===== Labels =====
-    private Label lblText;
-    private Label lblLangTitle;
-    private Label lblAreaTitle;
+    private Label lblImg;
+    private Label lblSearchArea;
+    private Label lblTolerance;
+
     private Label lblAndY;
     private Label lblGoToFound;
+
     private Label lblContinueWaiting;
     private Label lblSecondsAndThen;
     private Label lblGoToNotFound;
 
     // ===== UI controls (code-behind から参照するためフィールド化) =====
-    private TextBox _txtText;
-    private CheckBox _chkRegex;
-    private ComboBox _cmbLang;
-
-    private CheckBox _chkOptimizeContrast;
-    private CheckBox _chkOptimizeShortText;
+    private PictureBox _picTemplate;
+    private Button _btnCapture;
+    private Button _btnOpen;
+    private Button _btnClear;
 
     private ComboBox _cmbArea;
     private Button _btnDefineArea;
     private Button _btnConfirmArea;
+
+    private NumericUpDown _numTolerance;
     private Button _btnTest;
 
     private CheckBox _chkMouseAction;
@@ -58,6 +63,7 @@ public partial class FindTextOcrDialog
     private TextBox _txtSaveY;
 
     private ComboBox _cmbTrueGoTo;
+
     private NumericUpDown _numTimeoutSec;
     private ComboBox _cmbFalseGoTo;
 
@@ -79,20 +85,22 @@ public partial class FindTextOcrDialog
         lblDesc = new Label();
         grpSpec = new GroupBox();
         tblSpec = new TableLayoutPanel();
-        lblText = new Label();
-        _txtText = new TextBox();
-        _chkRegex = new CheckBox();
-        lblLangTitle = new Label();
-        _cmbLang = new ComboBox();
-        lblAreaTitle = new Label();
-        tblAreaRow = new TableLayoutPanel();
+        tblLeft = new TableLayoutPanel();
+        lblImg = new Label();
+        _picTemplate = new PictureBox();
+        pnlImgBtns = new FlowLayoutPanel();
+        _btnCapture = new Button();
+        _btnOpen = new Button();
+        _btnClear = new Button();
+        tblRight = new TableLayoutPanel();
+        lblSearchArea = new Label();
         _cmbArea = new ComboBox();
         pnlAreaBtns = new FlowLayoutPanel();
         _btnDefineArea = new Button();
         _btnConfirmArea = new Button();
+        lblTolerance = new Label();
+        _numTolerance = new NumericUpDown();
         _btnTest = new Button();
-        _chkOptimizeContrast = new CheckBox();
-        _chkOptimizeShortText = new CheckBox();
         grpFound = new GroupBox();
         tblFound = new TableLayoutPanel();
         _chkMouseAction = new CheckBox();
@@ -116,8 +124,12 @@ public partial class FindTextOcrDialog
         _btnCancel = new Button();
         grpSpec.SuspendLayout();
         tblSpec.SuspendLayout();
-        tblAreaRow.SuspendLayout();
+        tblLeft.SuspendLayout();
+        ((ISupportInitialize)_picTemplate).BeginInit();
+        pnlImgBtns.SuspendLayout();
+        tblRight.SuspendLayout();
         pnlAreaBtns.SuspendLayout();
+        ((ISupportInitialize)_numTolerance).BeginInit();
         grpFound.SuspendLayout();
         tblFound.SuspendLayout();
         grpNotFound.SuspendLayout();
@@ -129,12 +141,12 @@ public partial class FindTextOcrDialog
         // lblDesc
         // 
         lblDesc.Dock = DockStyle.Top;
-        lblDesc.Location = new Point(0, 618);
+        lblDesc.Location = new Point(0, 455);
         lblDesc.Name = "lblDesc";
         lblDesc.Padding = new Padding(10, 8, 10, 0);
-        lblDesc.Size = new Size(700, 47);
+        lblDesc.Size = new Size(720, 34);
         lblDesc.TabIndex = 4;
-        lblDesc.Text = "Searches the position of the defined text with on-screen character recognition (OCR)\r\nin the selected screen area.";
+        lblDesc.Text = "Finds position of the defined image in the selected screen area.";
         // 
         // grpSpec
         // 
@@ -143,140 +155,160 @@ public partial class FindTextOcrDialog
         grpSpec.Location = new Point(0, 0);
         grpSpec.Name = "grpSpec";
         grpSpec.Padding = new Padding(10);
-        grpSpec.Size = new Size(700, 387);
+        grpSpec.Size = new Size(720, 185);
         grpSpec.TabIndex = 3;
         grpSpec.TabStop = false;
-        grpSpec.Text = "What and where to search for:";
+        grpSpec.Text = "Image specifications:";
         // 
         // tblSpec
         // 
-        tblSpec.ColumnCount = 1;
+        tblSpec.ColumnCount = 2;
+        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 270F));
         tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tblSpec.Controls.Add(lblText, 0, 0);
-        tblSpec.Controls.Add(_txtText, 0, 1);
-        tblSpec.Controls.Add(_chkRegex, 0, 2);
-        tblSpec.Controls.Add(lblLangTitle, 0, 3);
-        tblSpec.Controls.Add(_cmbLang, 0, 4);
-        tblSpec.Controls.Add(lblAreaTitle, 0, 5);
-        tblSpec.Controls.Add(tblAreaRow, 0, 6);
-        tblSpec.Controls.Add(_chkOptimizeContrast, 0, 7);
-        tblSpec.Controls.Add(_chkOptimizeShortText, 0, 8);
+        tblSpec.Controls.Add(tblLeft, 0, 0);
+        tblSpec.Controls.Add(tblRight, 1, 0);
         tblSpec.Dock = DockStyle.Fill;
         tblSpec.Location = new Point(10, 26);
         tblSpec.Name = "tblSpec";
-        tblSpec.RowCount = 9;
+        tblSpec.RowCount = 1;
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 108F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 76F));
-        tblSpec.Size = new Size(680, 351);
+        tblSpec.Size = new Size(700, 149);
         tblSpec.TabIndex = 0;
         // 
-        // lblText
+        // tblLeft
         // 
-        lblText.AutoSize = true;
-        lblText.Location = new Point(3, 0);
-        lblText.Name = "lblText";
-        lblText.Size = new Size(251, 15);
-        lblText.TabIndex = 0;
-        lblText.Text = "Text to search for (right-click to add variables):";
+        tblLeft.ColumnCount = 1;
+        tblLeft.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+        tblLeft.Controls.Add(lblImg, 0, 0);
+        tblLeft.Controls.Add(_picTemplate, 0, 1);
+        tblLeft.Controls.Add(pnlImgBtns, 0, 2);
+        tblLeft.Dock = DockStyle.Fill;
+        tblLeft.Location = new Point(3, 3);
+        tblLeft.Name = "tblLeft";
+        tblLeft.RowCount = 3;
+        tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 18F));
+        tblLeft.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        tblLeft.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        tblLeft.Size = new Size(264, 143);
+        tblLeft.TabIndex = 0;
         // 
-        // _txtText
+        // lblImg
         // 
-        _txtText.Dock = DockStyle.Fill;
-        _txtText.Location = new Point(3, 23);
-        _txtText.Multiline = true;
-        _txtText.Name = "_txtText";
-        _txtText.ScrollBars = ScrollBars.Vertical;
-        _txtText.Size = new Size(674, 58);
-        _txtText.TabIndex = 1;
+        lblImg.AutoSize = true;
+        lblImg.Location = new Point(0, 0);
+        lblImg.Margin = new Padding(0);
+        lblImg.Name = "lblImg";
+        lblImg.Size = new Size(42, 15);
+        lblImg.TabIndex = 0;
+        lblImg.Text = "Image:";
         // 
-        // _chkRegex
+        // _picTemplate
         // 
-        _chkRegex.AutoSize = true;
-        _chkRegex.Location = new Point(3, 87);
-        _chkRegex.Name = "_chkRegex";
-        _chkRegex.Size = new Size(85, 18);
-        _chkRegex.TabIndex = 2;
-        _chkRegex.Text = "RegEx term";
+        _picTemplate.BorderStyle = BorderStyle.FixedSingle;
+        _picTemplate.Dock = DockStyle.Fill;
+        _picTemplate.Location = new Point(3, 21);
+        _picTemplate.Name = "_picTemplate";
+        _picTemplate.Size = new Size(258, 85);
+        _picTemplate.SizeMode = PictureBoxSizeMode.Zoom;
+        _picTemplate.TabIndex = 1;
+        _picTemplate.TabStop = false;
         // 
-        // lblLangTitle
+        // pnlImgBtns
         // 
-        lblLangTitle.AutoSize = true;
-        lblLangTitle.Location = new Point(0, 114);
-        lblLangTitle.Margin = new Padding(0, 6, 0, 0);
-        lblLangTitle.Name = "lblLangTitle";
-        lblLangTitle.Size = new Size(119, 14);
-        lblLangTitle.TabIndex = 3;
-        lblLangTitle.Text = "Language of the text:";
+        pnlImgBtns.Controls.Add(_btnCapture);
+        pnlImgBtns.Controls.Add(_btnOpen);
+        pnlImgBtns.Controls.Add(_btnClear);
+        pnlImgBtns.Dock = DockStyle.Fill;
+        pnlImgBtns.Location = new Point(0, 109);
+        pnlImgBtns.Margin = new Padding(0);
+        pnlImgBtns.Name = "pnlImgBtns";
+        pnlImgBtns.Size = new Size(264, 34);
+        pnlImgBtns.TabIndex = 2;
+        pnlImgBtns.WrapContents = false;
         // 
-        // _cmbLang
+        // _btnCapture
         // 
-        _cmbLang.Anchor = AnchorStyles.Left;
-        _cmbLang.DropDownStyle = ComboBoxStyle.DropDownList;
-        _cmbLang.Items.AddRange(new object[] { "English", "Japanese" });
-        _cmbLang.Location = new Point(3, 132);
-        _cmbLang.Name = "_cmbLang";
-        _cmbLang.Size = new Size(200, 23);
-        _cmbLang.TabIndex = 4;
+        _btnCapture.Image = Properties.Resources.Capture;
+        _btnCapture.Location = new Point(0, 0);
+        _btnCapture.Margin = new Padding(0, 0, 6, 0);
+        _btnCapture.Name = "_btnCapture";
+        _btnCapture.Size = new Size(28, 28);
+        _btnCapture.TabIndex = 0;
         // 
-        // lblAreaTitle
+        // _btnOpen
         // 
-        lblAreaTitle.AutoSize = true;
-        lblAreaTitle.Location = new Point(0, 166);
-        lblAreaTitle.Margin = new Padding(0, 6, 0, 0);
-        lblAreaTitle.Name = "lblAreaTitle";
-        lblAreaTitle.Size = new Size(125, 15);
-        lblAreaTitle.TabIndex = 5;
-        lblAreaTitle.Text = "Define the search area:";
+        _btnOpen.Image = Properties.Resources.Folder;
+        _btnOpen.Location = new Point(34, 0);
+        _btnOpen.Margin = new Padding(0, 0, 6, 0);
+        _btnOpen.Name = "_btnOpen";
+        _btnOpen.Size = new Size(28, 28);
+        _btnOpen.TabIndex = 1;
         // 
-        // tblAreaRow
+        // _btnClear
         // 
-        tblAreaRow.ColumnCount = 2;
-        tblAreaRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        tblAreaRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 122F));
-        tblAreaRow.Controls.Add(_cmbArea, 0, 0);
-        tblAreaRow.Controls.Add(pnlAreaBtns, 1, 0);
-        tblAreaRow.Dock = DockStyle.Fill;
-        tblAreaRow.Location = new Point(3, 189);
-        tblAreaRow.Name = "tblAreaRow";
-        tblAreaRow.RowCount = 1;
-        tblAreaRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tblAreaRow.Size = new Size(674, 102);
-        tblAreaRow.TabIndex = 6;
+        _btnClear.Image = Properties.Resources.Clear;
+        _btnClear.Location = new Point(68, 0);
+        _btnClear.Margin = new Padding(0);
+        _btnClear.Name = "_btnClear";
+        _btnClear.Size = new Size(28, 28);
+        _btnClear.TabIndex = 2;
+        // 
+        // tblRight
+        // 
+        tblRight.ColumnCount = 3;
+        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 155F));
+        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        tblRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 125F));
+        tblRight.Controls.Add(lblSearchArea, 0, 0);
+        tblRight.Controls.Add(_cmbArea, 1, 0);
+        tblRight.Controls.Add(pnlAreaBtns, 2, 0);
+        tblRight.Controls.Add(lblTolerance, 0, 1);
+        tblRight.Controls.Add(_numTolerance, 1, 1);
+        tblRight.Controls.Add(_btnTest, 2, 1);
+        tblRight.Dock = DockStyle.Fill;
+        tblRight.Location = new Point(273, 3);
+        tblRight.Name = "tblRight";
+        tblRight.RowCount = 2;
+        tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
+        tblRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        tblRight.Size = new Size(424, 143);
+        tblRight.TabIndex = 1;
+        // 
+        // lblSearchArea
+        // 
+        lblSearchArea.AutoSize = true;
+        lblSearchArea.Location = new Point(0, 9);
+        lblSearchArea.Margin = new Padding(0, 9, 0, 0);
+        lblSearchArea.Name = "lblSearchArea";
+        lblSearchArea.Size = new Size(125, 15);
+        lblSearchArea.TabIndex = 0;
+        lblSearchArea.Text = "Define the search area:";
         // 
         // _cmbArea
         // 
-        _cmbArea.Dock = DockStyle.Top;
         _cmbArea.DropDownStyle = ComboBoxStyle.DropDownList;
         _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
-        _cmbArea.Location = new Point(3, 3);
+        _cmbArea.Location = new Point(155, 6);
+        _cmbArea.Margin = new Padding(0, 6, 0, 0);
         _cmbArea.Name = "_cmbArea";
-        _cmbArea.Size = new Size(546, 23);
-        _cmbArea.TabIndex = 0;
+        _cmbArea.Size = new Size(121, 23);
+        _cmbArea.TabIndex = 1;
         // 
         // pnlAreaBtns
         // 
         pnlAreaBtns.Controls.Add(_btnDefineArea);
         pnlAreaBtns.Controls.Add(_btnConfirmArea);
-        pnlAreaBtns.Controls.Add(_btnTest);
         pnlAreaBtns.Dock = DockStyle.Fill;
         pnlAreaBtns.FlowDirection = FlowDirection.TopDown;
-        pnlAreaBtns.Location = new Point(552, 4);
+        pnlAreaBtns.Location = new Point(299, 4);
         pnlAreaBtns.Margin = new Padding(0, 4, 0, 0);
         pnlAreaBtns.Name = "pnlAreaBtns";
-        pnlAreaBtns.Size = new Size(122, 98);
-        pnlAreaBtns.TabIndex = 1;
+        pnlAreaBtns.Size = new Size(125, 60);
+        pnlAreaBtns.TabIndex = 2;
         pnlAreaBtns.WrapContents = false;
         // 
         // _btnDefineArea
         // 
-        _btnDefineArea.Enabled = false;
         _btnDefineArea.Location = new Point(3, 3);
         _btnDefineArea.Name = "_btnDefineArea";
         _btnDefineArea.Size = new Size(110, 26);
@@ -285,50 +317,49 @@ public partial class FindTextOcrDialog
         // 
         // _btnConfirmArea
         // 
-        _btnConfirmArea.Enabled = false;
         _btnConfirmArea.Location = new Point(3, 35);
         _btnConfirmArea.Name = "_btnConfirmArea";
         _btnConfirmArea.Size = new Size(110, 26);
         _btnConfirmArea.TabIndex = 1;
         _btnConfirmArea.Text = "Confirm Area";
         // 
+        // lblTolerance
+        // 
+        lblTolerance.AutoSize = true;
+        lblTolerance.Location = new Point(0, 73);
+        lblTolerance.Margin = new Padding(0, 9, 0, 0);
+        lblTolerance.Name = "lblTolerance";
+        lblTolerance.Size = new Size(90, 15);
+        lblTolerance.TabIndex = 3;
+        lblTolerance.Text = "Color tolerance:";
+        // 
+        // _numTolerance
+        // 
+        _numTolerance.Location = new Point(155, 70);
+        _numTolerance.Margin = new Padding(0, 6, 0, 0);
+        _numTolerance.Name = "_numTolerance";
+        _numTolerance.Size = new Size(80, 23);
+        _numTolerance.TabIndex = 4;
+        // 
         // _btnTest
         // 
-        _btnTest.Location = new Point(3, 67);
+        _btnTest.Location = new Point(302, 67);
         _btnTest.Name = "_btnTest";
-        _btnTest.Size = new Size(110, 26);
-        _btnTest.TabIndex = 2;
+        _btnTest.Size = new Size(80, 26);
+        _btnTest.TabIndex = 5;
         _btnTest.Text = "Test";
-        // 
-        // _chkOptimizeContrast
-        // 
-        _chkOptimizeContrast.AutoSize = true;
-        _chkOptimizeContrast.Location = new Point(3, 297);
-        _chkOptimizeContrast.Name = "_chkOptimizeContrast";
-        _chkOptimizeContrast.Size = new Size(197, 19);
-        _chkOptimizeContrast.TabIndex = 7;
-        _chkOptimizeContrast.Text = "Optimize contrast and sharpness";
-        // 
-        // _chkOptimizeShortText
-        // 
-        _chkOptimizeShortText.AutoSize = true;
-        _chkOptimizeShortText.Location = new Point(3, 323);
-        _chkOptimizeShortText.Name = "_chkOptimizeShortText";
-        _chkOptimizeShortText.Size = new Size(249, 19);
-        _chkOptimizeShortText.TabIndex = 8;
-        _chkOptimizeShortText.Text = "Optimize for single characters or short text";
         // 
         // grpFound
         // 
         grpFound.Controls.Add(tblFound);
         grpFound.Dock = DockStyle.Top;
-        grpFound.Location = new Point(0, 387);
+        grpFound.Location = new Point(0, 185);
         grpFound.Name = "grpFound";
         grpFound.Padding = new Padding(10);
-        grpFound.Size = new Size(700, 130);
+        grpFound.Size = new Size(720, 150);
         grpFound.TabIndex = 2;
         grpFound.TabStop = false;
-        grpFound.Text = "If text is found";
+        grpFound.Text = "If image is found";
         // 
         // tblFound
         // 
@@ -353,14 +384,12 @@ public partial class FindTextOcrDialog
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
         tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        tblFound.Size = new Size(680, 94);
+        tblFound.Size = new Size(700, 114);
         tblFound.TabIndex = 0;
         // 
         // _chkMouseAction
         // 
         _chkMouseAction.AutoSize = true;
-        _chkMouseAction.Checked = true;
-        _chkMouseAction.CheckState = CheckState.Checked;
         _chkMouseAction.Location = new Point(3, 3);
         _chkMouseAction.Name = "_chkMouseAction";
         _chkMouseAction.Size = new Size(101, 19);
@@ -397,18 +426,16 @@ public partial class FindTextOcrDialog
         // 
         // _txtSaveX
         // 
-        _txtSaveX.Enabled = false;
         _txtSaveX.Location = new Point(143, 33);
         _txtSaveX.Name = "_txtSaveX";
         _txtSaveX.Size = new Size(120, 23);
         _txtSaveX.TabIndex = 4;
-        _txtSaveX.Text = "X";
         // 
         // lblAndY
         // 
         lblAndY.AutoSize = true;
-        lblAndY.Location = new Point(280, 38);
-        lblAndY.Margin = new Padding(0, 8, 0, 0);
+        lblAndY.Location = new Point(280, 39);
+        lblAndY.Margin = new Padding(0, 9, 0, 0);
         lblAndY.Name = "lblAndY";
         lblAndY.Size = new Size(54, 15);
         lblAndY.TabIndex = 5;
@@ -416,18 +443,16 @@ public partial class FindTextOcrDialog
         // 
         // _txtSaveY
         // 
-        _txtSaveY.Enabled = false;
         _txtSaveY.Location = new Point(373, 33);
         _txtSaveY.Name = "_txtSaveY";
         _txtSaveY.Size = new Size(120, 23);
         _txtSaveY.TabIndex = 6;
-        _txtSaveY.Text = "Y";
         // 
         // lblGoToFound
         // 
         lblGoToFound.AutoSize = true;
-        lblGoToFound.Location = new Point(0, 68);
-        lblGoToFound.Margin = new Padding(0, 8, 0, 0);
+        lblGoToFound.Location = new Point(0, 69);
+        lblGoToFound.Margin = new Padding(0, 9, 0, 0);
         lblGoToFound.Name = "lblGoToFound";
         lblGoToFound.Size = new Size(36, 15);
         lblGoToFound.TabIndex = 7;
@@ -447,20 +472,20 @@ public partial class FindTextOcrDialog
         // 
         grpNotFound.Controls.Add(tblNotFound);
         grpNotFound.Dock = DockStyle.Top;
-        grpNotFound.Location = new Point(0, 517);
+        grpNotFound.Location = new Point(0, 335);
         grpNotFound.Name = "grpNotFound";
         grpNotFound.Padding = new Padding(10);
-        grpNotFound.Size = new Size(700, 101);
+        grpNotFound.Size = new Size(720, 120);
         grpNotFound.TabIndex = 1;
         grpNotFound.TabStop = false;
-        grpNotFound.Text = "If text is not found";
+        grpNotFound.Text = "If image is not found";
         // 
         // tblNotFound
         // 
         tblNotFound.ColumnCount = 4;
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
+        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
+        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
         tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tblNotFound.Controls.Add(lblContinueWaiting, 0, 0);
         tblNotFound.Controls.Add(_numTimeoutSec, 1, 0);
@@ -471,16 +496,16 @@ public partial class FindTextOcrDialog
         tblNotFound.Location = new Point(10, 26);
         tblNotFound.Name = "tblNotFound";
         tblNotFound.RowCount = 2;
-        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-        tblNotFound.Size = new Size(680, 65);
+        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
+        tblNotFound.Size = new Size(700, 84);
         tblNotFound.TabIndex = 0;
         // 
         // lblContinueWaiting
         // 
         lblContinueWaiting.AutoSize = true;
-        lblContinueWaiting.Location = new Point(0, 8);
-        lblContinueWaiting.Margin = new Padding(0, 8, 0, 0);
+        lblContinueWaiting.Location = new Point(0, 9);
+        lblContinueWaiting.Margin = new Padding(0, 9, 0, 0);
         lblContinueWaiting.Name = "lblContinueWaiting";
         lblContinueWaiting.Size = new Size(97, 15);
         lblContinueWaiting.TabIndex = 0;
@@ -488,18 +513,17 @@ public partial class FindTextOcrDialog
         // 
         // _numTimeoutSec
         // 
-        _numTimeoutSec.Location = new Point(143, 3);
+        _numTimeoutSec.Location = new Point(173, 3);
         _numTimeoutSec.Maximum = new decimal(new int[] { 86400, 0, 0, 0 });
         _numTimeoutSec.Name = "_numTimeoutSec";
         _numTimeoutSec.Size = new Size(80, 23);
         _numTimeoutSec.TabIndex = 1;
-        _numTimeoutSec.Value = new decimal(new int[] { 120, 0, 0, 0 });
         // 
         // lblSecondsAndThen
         // 
         lblSecondsAndThen.AutoSize = true;
-        lblSecondsAndThen.Location = new Point(230, 8);
-        lblSecondsAndThen.Margin = new Padding(0, 8, 0, 0);
+        lblSecondsAndThen.Location = new Point(260, 9);
+        lblSecondsAndThen.Margin = new Padding(0, 9, 0, 0);
         lblSecondsAndThen.Name = "lblSecondsAndThen";
         lblSecondsAndThen.Size = new Size(100, 15);
         lblSecondsAndThen.TabIndex = 2;
@@ -508,8 +532,8 @@ public partial class FindTextOcrDialog
         // lblGoToNotFound
         // 
         lblGoToNotFound.AutoSize = true;
-        lblGoToNotFound.Location = new Point(0, 38);
-        lblGoToNotFound.Margin = new Padding(0, 8, 0, 0);
+        lblGoToNotFound.Location = new Point(0, 37);
+        lblGoToNotFound.Margin = new Padding(0, 9, 0, 0);
         lblGoToNotFound.Name = "lblGoToNotFound";
         lblGoToNotFound.Size = new Size(36, 15);
         lblGoToNotFound.TabIndex = 3;
@@ -519,8 +543,8 @@ public partial class FindTextOcrDialog
         // 
         tblNotFound.SetColumnSpan(_cmbFalseGoTo, 3);
         _cmbFalseGoTo.DropDownStyle = ComboBoxStyle.DropDownList;
-        _cmbFalseGoTo.Items.AddRange(new object[] { "End", "Next", "Label..." });
-        _cmbFalseGoTo.Location = new Point(143, 33);
+        _cmbFalseGoTo.Items.AddRange(new object[] { "Next", "End", "Label..." });
+        _cmbFalseGoTo.Location = new Point(173, 31);
         _cmbFalseGoTo.Name = "_cmbFalseGoTo";
         _cmbFalseGoTo.Size = new Size(240, 23);
         _cmbFalseGoTo.TabIndex = 4;
@@ -531,16 +555,16 @@ public partial class FindTextOcrDialog
         pnlBottom.Controls.Add(_btnCancel);
         pnlBottom.Dock = DockStyle.Bottom;
         pnlBottom.FlowDirection = FlowDirection.RightToLeft;
-        pnlBottom.Location = new Point(0, 667);
+        pnlBottom.Location = new Point(0, 491);
         pnlBottom.Name = "pnlBottom";
         pnlBottom.Padding = new Padding(10);
-        pnlBottom.Size = new Size(700, 55);
+        pnlBottom.Size = new Size(720, 55);
         pnlBottom.TabIndex = 0;
         // 
         // _btnOk
         // 
         _btnOk.DialogResult = DialogResult.OK;
-        _btnOk.Location = new Point(587, 13);
+        _btnOk.Location = new Point(607, 13);
         _btnOk.Name = "_btnOk";
         _btnOk.Size = new Size(90, 28);
         _btnOk.TabIndex = 0;
@@ -549,19 +573,19 @@ public partial class FindTextOcrDialog
         // _btnCancel
         // 
         _btnCancel.DialogResult = DialogResult.Cancel;
-        _btnCancel.Location = new Point(491, 13);
+        _btnCancel.Location = new Point(511, 13);
         _btnCancel.Name = "_btnCancel";
         _btnCancel.Size = new Size(90, 28);
         _btnCancel.TabIndex = 1;
         _btnCancel.Text = "Cancel";
         // 
-        // FindTextOcrDialog
+        // FindImageDialog
         // 
         AcceptButton = _btnOk;
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         CancelButton = _btnCancel;
-        ClientSize = new Size(700, 722);
+        ClientSize = new Size(720, 546);
         Controls.Add(lblDesc);
         Controls.Add(pnlBottom);
         Controls.Add(grpNotFound);
@@ -570,15 +594,20 @@ public partial class FindTextOcrDialog
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        MinimumSize = new Size(716, 599);
-        Name = "FindTextOcrDialog";
+        MinimumSize = new Size(720, 520);
+        Name = "FindImageDialog";
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Find text (OCR)";
+        Text = "Search image";
         grpSpec.ResumeLayout(false);
         tblSpec.ResumeLayout(false);
-        tblSpec.PerformLayout();
-        tblAreaRow.ResumeLayout(false);
+        tblLeft.ResumeLayout(false);
+        tblLeft.PerformLayout();
+        ((ISupportInitialize)_picTemplate).EndInit();
+        pnlImgBtns.ResumeLayout(false);
+        tblRight.ResumeLayout(false);
+        tblRight.PerformLayout();
         pnlAreaBtns.ResumeLayout(false);
+        ((ISupportInitialize)_numTolerance).EndInit();
         grpFound.ResumeLayout(false);
         tblFound.ResumeLayout(false);
         tblFound.PerformLayout();

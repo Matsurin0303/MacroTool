@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -6,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MacroTool.Domain.Macros;
-using MacroTool.WinForms.Properties;
 
 // WinForms の Control.MousePosition（Point）と、ドメイン enum の MousePosition が衝突するため別名を付ける
 using DomainMousePosition = MacroTool.Domain.Macros.MousePosition;
@@ -15,44 +15,12 @@ namespace MacroTool.WinForms.Dialogs;
 
 /// <summary>
 /// Find image（2-7-1）設定ダイアログ。
-/// UI仕様の見た目に寄せつつ、
-/// - マクロ追加前の Test
-/// - Area of desktop / Area of focused window の Define / Confirm Area
-/// を追加。
+/// 
+/// VS の WinForms デザイナで表示できるよう、UI は .Designer.cs 側の InitializeComponent() に配置。
+/// 実処理（Capture/Open/Clear / Define/Confirm/Test / OK）は本ファイルに集約。
 /// </summary>
-public sealed class FindImageDialog : Form
+public partial class FindImageDialog : Form
 {
-    // --- UI ---
-    private readonly PictureBox _picTemplate;
-    private readonly Button _btnCapture;
-    private readonly Button _btnOpen;
-    private readonly Button _btnClear;
-
-    private readonly ComboBox _cmbArea;
-    private readonly Button _btnDefineArea;
-    private readonly Button _btnConfirmArea;
-
-    private readonly NumericUpDown _numTolerance;
-    private readonly Label _lblPercent;
-    private readonly Button _btnTest;
-
-    private readonly CheckBox _chkMouseAction;
-    private readonly ComboBox _cmbMouseAction;
-    private readonly ComboBox _cmbMousePos;
-
-    private readonly CheckBox _chkSaveCoord;
-    private readonly TextBox _txtSaveX;
-    private readonly TextBox _txtSaveY;
-
-    private readonly ComboBox _cmbTrueGoTo;
-
-    private readonly NumericUpDown _numTimeoutSec;
-    private readonly ComboBox _cmbFalseGoTo;
-
-    private readonly Button _btnOk;
-    private readonly Button _btnCancel;
-
-    // --- state ---
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
     private Rectangle _definedScreenRect = Rectangle.Empty; // Confirm Area 用（画面座標）
 
@@ -72,267 +40,68 @@ public sealed class FindImageDialog : Form
         return dlg.ShowDialog(owner) == DialogResult.OK ? dlg.Result : null;
     }
 
+    /// <summary>
+    /// デザイナ用（VS で [デザイン] を開くため）。
+    /// </summary>
+    public FindImageDialog()
+    {
+        InitializeComponent();
+
+        // デザイナではロジック/イベントを極力実行しない（例外やデザイナフリーズ回避）
+        if (IsDesignTime())
+            return;
+
+        InitializeRuntime(null);
+    }
+
+    private static bool IsDesignTime()
+    {
+        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            return true;
+
+        // VS の out-of-proc デザイナでは UsageMode が Runtime になるケースがあるため保険
+        try
+        {
+            var pn = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+            if (pn.Equals("devenv", StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (pn.Contains("DesignToolsServer", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return false;
+    }
+
     private FindImageDialog(FindImageAction? initial)
     {
-        Text = "Find image";
-        StartPosition = FormStartPosition.CenterParent;
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MinimizeBox = false;
-        MaximizeBox = false;
+        InitializeComponent();
+        InitializeRuntime(initial);
+    }
 
-        // 仕様画像に近い横幅を確保（右側の Search area / Color tolerance が潰れないように）
-        // ※ユーザー環境で 520px 幅だと ComboBox/NumericUpDown が切れるケースがあったため拡大
-        ClientSize = new Size(640, 520);
-        MinimumSize = new Size(640, 520);
+    partial void DisposeManagedResources()
+    {
+        try { _testCts?.Cancel(); } catch { /* ignore */ }
+        _testCts?.Dispose();
+        _testCts = null;
 
+        _preview?.Dispose();
+        _preview = null;
+    }
+
+    private void InitializeRuntime(FindImageAction? initial)
+    {
+        // 破棄中に Test が帰ってくるのを止める
         FormClosing += (_, __) => _testCts?.Cancel();
 
-        // --- Group: Image to search ---
-        var grpSpec = new GroupBox
-        {
-            Text = "Image to search",
-            Dock = DockStyle.Top,
-            Height = 175,
-            Padding = new Padding(10)
-        };
-
-        var tblSpec = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1,
-        };
-        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 260));
-        tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-
-        // left: template preview
-        var left = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 2
-        };
-        left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        left.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-
-        _picTemplate = new PictureBox
-        {
-            BorderStyle = BorderStyle.FixedSingle,
-            SizeMode = PictureBoxSizeMode.Zoom,
-            Dock = DockStyle.Fill
-        };
-
-        var pnlImgBtns = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false
-        };
-        _btnCapture = new Button { Text = "Capture...", Width = 90, Height = 26 };
-        _btnOpen = new Button { Text = "Open...", Width = 80, Height = 26 };
-        _btnClear = new Button { Text = "Clear", Width = 70, Height = 26 };
-
-        // アイコン指定（要望：Capture / Folder / Clear に変更）
-        _btnCapture.Image = Resources.Capture;
-        _btnOpen.Image = Resources.Folder;
-        _btnClear.Image = Resources.Clear;
-        foreach (var b in new[] { _btnCapture, _btnOpen, _btnClear })
-        {
-            b.ImageAlign = ContentAlignment.MiddleLeft;
-            b.TextImageRelation = TextImageRelation.ImageBeforeText;
-        }
-        pnlImgBtns.Controls.AddRange(new Control[] { _btnCapture, _btnOpen, _btnClear });
-
-        left.Controls.Add(_picTemplate, 0, 0);
-        left.Controls.Add(pnlImgBtns, 0, 1);
-
-        // right: search area + tolerance
-        // 4列(AutoSize)だと右側のボタン幅が優先され、ComboBox/NumericUpDown が 0px になり得るため
-        // (ユーザー環境で「Search area が選べない / Color tolerance が入力できない」状態になる)
-        // 3列 + FlowLayoutPanel で確実に入力欄の幅を確保する。
-        var right = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 3,
-            RowCount = 2
-        };
-        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110)); // label
-        right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); // input (stretch)
-        right.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));  // button (Define/Confirm/Test)
-
-        // Search area 行は Define/Confirm を縦に置くため高さを確保
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 64));
-        right.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-
-        right.Controls.Add(new Label { Text = "Search area:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
-
-        _cmbArea = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230, Margin = new Padding(0, 6, 0, 0) };
-        _cmbArea.Items.AddRange(new object[] { "Entire desktop", "Focused window", "Area of desktop", "Area of focused window" });
-
-        // Define/Confirm は常に見せる（非Area選択時は無効化）
-        _btnDefineArea = new Button { Text = "Define...", Width = 110, Height = 26 };
-        _btnConfirmArea = new Button { Text = "Confirm Area", Width = 110, Height = 26 };
-
-        var pnlAreaButtons = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            Margin = new Padding(0, 4, 0, 0)
-        };
-        pnlAreaButtons.Controls.Add(_btnDefineArea);
-        pnlAreaButtons.Controls.Add(_btnConfirmArea);
-
-        right.Controls.Add(_cmbArea, 1, 0);
-        right.Controls.Add(pnlAreaButtons, 2, 0);
-
-        right.Controls.Add(new Label { Text = "Color tolerance:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
-
-        var pnlTol = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            Margin = new Padding(0, 4, 0, 0)
-        };
-        _numTolerance = new NumericUpDown { Minimum = 0, Maximum = 100, Width = 70 };
-        _lblPercent = new Label { Text = "%", AutoSize = true, Margin = new Padding(6, 9, 0, 0) };
-        pnlTol.Controls.Add(_numTolerance);
-        pnlTol.Controls.Add(_lblPercent);
-
-        right.Controls.Add(pnlTol, 1, 1);
-
-        _btnTest = new Button { Text = "Test", Width = 80, Height = 26 };
-        right.Controls.Add(_btnTest, 2, 1);
-
-        tblSpec.Controls.Add(left, 0, 0);
-        tblSpec.Controls.Add(right, 1, 0);
-        grpSpec.Controls.Add(tblSpec);
-
-        // --- Group: If image is found ---
-        var grpFound = new GroupBox
-        {
-            Text = "If image is found",
-            Dock = DockStyle.Top,
-            Height = 150,
-            Padding = new Padding(10)
-        };
-
-        var tblFound = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 4,
-            RowCount = 3
-        };
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-        tblFound.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        tblFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-
-        _chkMouseAction = new CheckBox { Text = "Mouse action:", AutoSize = true };
-        _cmbMouseAction = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
-        _cmbMouseAction.Items.AddRange(new object[]
-        {
-            nameof(MouseActionBehavior.Positioning),
-            nameof(MouseActionBehavior.LeftClick),
-            nameof(MouseActionBehavior.RightClick),
-            nameof(MouseActionBehavior.MiddleClick),
-            nameof(MouseActionBehavior.DoubleClick),
-        });
-
-        _cmbMousePos = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 130 };
-        _cmbMousePos.Items.AddRange(new object[] { "Centered", "Top-left", "Top-right", "Bottom-left", "Bottom-right" });
-
-        _chkSaveCoord = new CheckBox { Text = "Save X to:", AutoSize = true };
-        _txtSaveX = new TextBox { Width = 120 };
-        var lblAndY = new Label { Text = "and Y to:", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
-        _txtSaveY = new TextBox { Width = 120 };
-
-        var lblGoTo = new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) };
-        _cmbTrueGoTo = CreateGoToCombo();
-
-        tblFound.Controls.Add(_chkMouseAction, 0, 0);
-        tblFound.Controls.Add(_cmbMouseAction, 1, 0);
-        tblFound.Controls.Add(_cmbMousePos, 2, 0);
-        tblFound.SetColumnSpan(_cmbMousePos, 2);
-
-        tblFound.Controls.Add(_chkSaveCoord, 0, 1);
-        tblFound.Controls.Add(_txtSaveX, 1, 1);
-        tblFound.Controls.Add(lblAndY, 2, 1);
-        tblFound.Controls.Add(_txtSaveY, 3, 1);
-
-        tblFound.Controls.Add(lblGoTo, 0, 2);
-        tblFound.Controls.Add(_cmbTrueGoTo, 1, 2);
-        tblFound.SetColumnSpan(_cmbTrueGoTo, 3);
-
-        grpFound.Controls.Add(tblFound);
-
-        // --- Group: If image is not found ---
-        var grpNotFound = new GroupBox
-        {
-            Text = "If image is not found",
-            Dock = DockStyle.Top,
-            Height = 110,
-            Padding = new Padding(10)
-        };
-
-        var tblNotFound = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 4,
-            RowCount = 2
-        };
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-        tblNotFound.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        tblNotFound.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-
-        tblNotFound.Controls.Add(new Label { Text = "Continue waiting", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 0);
-        _numTimeoutSec = new NumericUpDown { Minimum = 0, Maximum = 86400, Width = 80 };
-        tblNotFound.Controls.Add(_numTimeoutSec, 1, 0);
-        tblNotFound.Controls.Add(new Label { Text = "seconds and then", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 2, 0);
-
-        tblNotFound.Controls.Add(new Label { Text = "Go to", AutoSize = true, Margin = new Padding(0, 9, 0, 0) }, 0, 1);
-        _cmbFalseGoTo = CreateGoToCombo();
-        tblNotFound.Controls.Add(_cmbFalseGoTo, 1, 1);
-        tblNotFound.SetColumnSpan(_cmbFalseGoTo, 3);
-
-        grpNotFound.Controls.Add(tblNotFound);
-
-        // --- bottom buttons ---
-        _btnOk = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 90 };
-        _btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 90 };
-        AcceptButton = _btnOk;
-        CancelButton = _btnCancel;
-
-        var pnlBottom = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Bottom,
-            Height = 50,
-            FlowDirection = FlowDirection.RightToLeft,
-            Padding = new Padding(10)
-        };
-        pnlBottom.Controls.Add(_btnOk);
-        pnlBottom.Controls.Add(_btnCancel);
-
-        // root
-        var root = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
-        root.Controls.Add(grpNotFound);
-        root.Controls.Add(grpFound);
-        root.Controls.Add(grpSpec);
-
-        Controls.Add(root);
-        Controls.Add(pnlBottom);
-
-        // ---- initial ----
         var init = initial ?? CreateDefault();
+
         _template = init.Template ?? new ImageTemplate();
         _area = init.SearchArea ?? init.Area ?? new SearchArea { Kind = SearchAreaKind.EntireDesktop };
+        _definedScreenRect = Rectangle.Empty;
 
         _cmbArea.SelectedItem = ToAreaText(_area);
         _numTolerance.Value = Math.Clamp(init.ColorTolerancePercent, 0, 100);
@@ -378,25 +147,20 @@ public sealed class FindImageDialog : Form
         _btnTest.Click += async (_, __) => await TestAsync();
 
         _btnOk.Click += (_, __) => Result = BuildResult();
-    }
 
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _preview?.Dispose();
-            _testCts?.Dispose();
-        }
-        base.Dispose(disposing);
+        // 初期状態の補正
+        if (_cmbMouseAction.SelectedIndex < 0) _cmbMouseAction.SelectedIndex = 0;
+        if (_cmbMousePos.SelectedIndex < 0) _cmbMousePos.SelectedIndex = 0;
+        if (_cmbArea.SelectedIndex < 0) _cmbArea.SelectedIndex = 0;
     }
 
     private void ApplyEnableState()
     {
-        _cmbMouseAction.Enabled = _chkMouseAction.Checked;
-        _cmbMousePos.Enabled = _chkMouseAction.Checked;
+        _cmbMouseAction.Enabled = _chkMouseAction.Checked && !_testing;
+        _cmbMousePos.Enabled = _chkMouseAction.Checked && !_testing;
 
-        _txtSaveX.Enabled = _chkSaveCoord.Checked;
-        _txtSaveY.Enabled = _chkSaveCoord.Checked;
+        _txtSaveX.Enabled = _chkSaveCoord.Checked && !_testing;
+        _txtSaveY.Enabled = _chkSaveCoord.Checked && !_testing;
     }
 
     private void UpdateAreaButtons()
@@ -404,7 +168,6 @@ public sealed class FindImageDialog : Form
         bool isArea = IsAreaSelection();
 
         // Define/Confirm は常に表示し、Area 選択時だけ有効化する。
-        // （非表示にするとユーザーが「どこで確認するのか」迷いやすい）
         _btnDefineArea.Enabled = isArea && !_testing;
         _btnConfirmArea.Enabled = isArea && !_testing && _definedScreenRect != Rectangle.Empty;
     }
@@ -766,15 +529,6 @@ public sealed class FindImageDialog : Form
 
             TimeoutMs = 120000
         };
-
-    // --- combos ---
-    private static ComboBox CreateGoToCombo()
-    {
-        var cmb = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
-        cmb.Items.AddRange(new object[] { "Next", "End", "Label..." });
-        cmb.SelectedItem = "Next";
-        return cmb;
-    }
 
     private void OnGoToSelected(ComboBox cmb)
     {
