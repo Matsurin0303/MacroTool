@@ -30,6 +30,19 @@ public partial class FindTextOcrDialog : Form
     private bool _testing;
     private bool _savedControlBox;
 
+    private void ClearTestResult()
+    {
+        if (IsDisposed || Disposing) return;
+        _lblTestResult.Text = string.Empty;
+    }
+
+    private void SetTestResult(bool detected)
+    {
+        if (IsDisposed || Disposing) return;
+        _lblTestResult.ForeColor = detected ? Color.Green : Color.Red;
+        _lblTestResult.Text = detected ? "Detected" : "Not Detected";
+    }
+
     public FindTextOcrAction Result { get; private set; } = new();
 
     public static FindTextOcrAction? Show(IWin32Window owner, FindTextOcrAction? initial)
@@ -133,21 +146,14 @@ public partial class FindTextOcrDialog : Form
         _btnOk.Click += (_, __) => Result = BuildResult();
         _txtText.TextChanged += (_, __) => ClearTestResult();
         _cmbLang.SelectedIndexChanged += (_, __) => ClearTestResult();
-        _cmbArea.SelectedIndexChanged += (_, __) => ClearTestResult();
+        _cmbArea.SelectedIndexChanged += (_, __) =>
+        {
+            OnAreaSelectionChanged();
+            UpdateAreaButtons();
+            ClearTestResult();
+        };
     }
 
-    private void ClearTestResult()
-    {
-        if (IsDisposed || Disposing) return;
-        _lblTestResult.Text = string.Empty;
-    }
-
-    private void SetTestResult(bool detected)
-    {
-        if (IsDisposed || Disposing) return;
-        _lblTestResult.ForeColor = detected? Color.Green : Color.Red;
-        _lblTestResult.Text = detected? "Detected" : "Not Detected";
-    }
 
 
     private void ApplyEnableState()
@@ -252,60 +258,47 @@ public partial class FindTextOcrDialog : Form
     private async Task TestAsync()
     {
         if (_testing) return;
-        if (string.IsNullOrWhiteSpace(_txtText.Text))
-        {
-            SafeMessage("Text to search is empty.", MessageBoxIcon.Warning);
-            return;
-        }
 
         _testing = true;
         _testCts?.Cancel();
         _testCts?.Dispose();
         _testCts = new CancellationTokenSource();
 
-
         SetTestingUi(true);
-
-        var wasVisible = Visible;
         ClearTestResult();
+
         try
         {
             UseWaitCursor = true;
 
-            Hide();
-            await Task.Delay(10);
+            // 画面を消さない（仕様）
+            await Task.Yield();
             if (IsDisposed || Disposing) return;
+
             var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
                 ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
                 : DetectionTestUtil.ResolveSearchRectangle(_area);
 
             var action = BuildResult();
+
+            // Testは「現在の条件」で「1秒だけ」検知（Timeoutだけ上書き）
             var testAction = action with
             {
-                MouseActionEnabled = false,
-                SaveCoordinateEnabled = false,
-                TimeoutMs = TestTimeoutMs, // Testは常に1秒
+                TimeoutMs = TestTimeoutMs
             };
 
-            // 「閉じる」で止めたいので linked token を使う（例外は DetectionTestUtil 側で出さない実装にする）
-            using var timeoutCts = new CancellationTokenSource(TestTimeoutMs);
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(_testCts.Token, timeoutCts.Token);
-
-            var (success, _, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, linked.Token);
+            var (success, _, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, CancellationToken.None);
             if (IsDisposed || Disposing) return;
 
             SetTestResult(success);
         }
-        catch (OperationCanceledException)
-        {
-            // closing / canceled（表示更新不要）
-        }
         catch (Exception ex)
         {
             if (IsDisposed || Disposing) return;
-            SafeRestoreVisibility(wasVisible);
-            SafeMessage(ex.Message, MessageBoxIcon.Error);
+
+            // エラー時は仕様上「Not Detected」扱いにしておく（必要ならメッセージ表示）
             SetTestResult(false);
+            SafeMessage(ex.Message, MessageBoxIcon.Error);
         }
         finally
         {
