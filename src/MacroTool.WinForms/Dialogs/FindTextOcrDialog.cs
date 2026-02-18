@@ -20,6 +20,8 @@ namespace MacroTool.WinForms.Dialogs;
 /// </summary>
 public partial class FindTextOcrDialog : Form
 {
+    private const int TestTimeoutMs = 1000;
+
     private SearchArea _area = new() { Kind = SearchAreaKind.EntireDesktop };
     private Rectangle _definedScreenRect = Rectangle.Empty;
 
@@ -129,7 +131,24 @@ public partial class FindTextOcrDialog : Form
         _btnTest.Click += async (_, __) => await TestAsync();
 
         _btnOk.Click += (_, __) => Result = BuildResult();
+        _txtText.TextChanged += (_, __) => ClearTestResult();
+        _cmbLang.SelectedIndexChanged += (_, __) => ClearTestResult();
+        _cmbArea.SelectedIndexChanged += (_, __) => ClearTestResult();
     }
+
+    private void ClearTestResult()
+    {
+        if (IsDisposed || Disposing) return;
+        _lblTestResult.Text = string.Empty;
+    }
+
+    private void SetTestResult(bool detected)
+    {
+        if (IsDisposed || Disposing) return;
+        _lblTestResult.ForeColor = detected? Color.Green : Color.Red;
+        _lblTestResult.Text = detected? "Detected" : "Not Detected";
+    }
+
 
     private void ApplyEnableState()
     {
@@ -244,17 +263,18 @@ public partial class FindTextOcrDialog : Form
         _testCts?.Dispose();
         _testCts = new CancellationTokenSource();
 
+
         SetTestingUi(true);
 
         var wasVisible = Visible;
+        ClearTestResult();
         try
         {
             UseWaitCursor = true;
 
             Hide();
-            await Task.Delay(150, _testCts.Token);
+            await Task.Delay(10);
             if (IsDisposed || Disposing) return;
-
             var rect = (_cmbArea.SelectedItem?.ToString() ?? "") is "Area of desktop" or "Area of focused window"
                 ? (_definedScreenRect != Rectangle.Empty ? _definedScreenRect : DetectionTestUtil.ResolveSearchRectangle(_area))
                 : DetectionTestUtil.ResolveSearchRectangle(_area);
@@ -263,28 +283,29 @@ public partial class FindTextOcrDialog : Form
             var testAction = action with
             {
                 MouseActionEnabled = false,
-                SaveCoordinateEnabled = false
+                SaveCoordinateEnabled = false,
+                TimeoutMs = TestTimeoutMs, // Testは常に1秒
             };
 
-            var (success, pt, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, _testCts.Token);
+            // 「閉じる」で止めたいので linked token を使う（例外は DetectionTestUtil 側で出さない実装にする）
+            using var timeoutCts = new CancellationTokenSource(TestTimeoutMs);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(_testCts.Token, timeoutCts.Token);
+
+            var (success, _, _) = await DetectionTestUtil.TestFindTextOcrAsync(testAction, rect, linked.Token);
             if (IsDisposed || Disposing) return;
 
-            SafeRestoreVisibility(wasVisible);
-
-            if (success && pt is not null)
-                SafeMessage($"Found at ({pt.Value.X}, {pt.Value.Y})", MessageBoxIcon.Information);
-            else
-                SafeMessage("Not found.", MessageBoxIcon.Information);
+            SetTestResult(success);
         }
         catch (OperationCanceledException)
         {
-            // closing / canceled
+            // closing / canceled（表示更新不要）
         }
         catch (Exception ex)
         {
             if (IsDisposed || Disposing) return;
             SafeRestoreVisibility(wasVisible);
             SafeMessage(ex.Message, MessageBoxIcon.Error);
+            SetTestResult(false);
         }
         finally
         {

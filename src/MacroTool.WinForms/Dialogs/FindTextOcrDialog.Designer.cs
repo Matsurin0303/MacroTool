@@ -114,6 +114,7 @@ public partial class FindTextOcrDialog
         pnlBottom = new FlowLayoutPanel();
         _btnOk = new Button();
         _btnCancel = new Button();
+        _lblTestResult = new Label();
         grpSpec.SuspendLayout();
         tblSpec.SuspendLayout();
         tblAreaRow.SuspendLayout();
@@ -129,7 +130,7 @@ public partial class FindTextOcrDialog
         // lblDesc
         // 
         lblDesc.Dock = DockStyle.Top;
-        lblDesc.Location = new Point(0, 618);
+        lblDesc.Location = new Point(0, 652);
         lblDesc.Name = "lblDesc";
         lblDesc.Padding = new Padding(10, 8, 10, 0);
         lblDesc.Size = new Size(700, 47);
@@ -143,7 +144,7 @@ public partial class FindTextOcrDialog
         grpSpec.Location = new Point(0, 0);
         grpSpec.Name = "grpSpec";
         grpSpec.Padding = new Padding(10);
-        grpSpec.Size = new Size(700, 387);
+        grpSpec.Size = new Size(700, 421);
         grpSpec.TabIndex = 3;
         grpSpec.TabStop = false;
         grpSpec.Text = "What and where to search for:";
@@ -171,10 +172,10 @@ public partial class FindTextOcrDialog
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 108F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 76F));
-        tblSpec.Size = new Size(680, 351);
+        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 135F));
+        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
+        tblSpec.Size = new Size(680, 385);
         tblSpec.TabIndex = 0;
         // 
         // lblText
@@ -247,7 +248,7 @@ public partial class FindTextOcrDialog
         tblAreaRow.Name = "tblAreaRow";
         tblAreaRow.RowCount = 1;
         tblAreaRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        tblAreaRow.Size = new Size(674, 102);
+        tblAreaRow.Size = new Size(674, 129);
         tblAreaRow.TabIndex = 6;
         // 
         // _cmbArea
@@ -265,12 +266,13 @@ public partial class FindTextOcrDialog
         pnlAreaBtns.Controls.Add(_btnDefineArea);
         pnlAreaBtns.Controls.Add(_btnConfirmArea);
         pnlAreaBtns.Controls.Add(_btnTest);
+        pnlAreaBtns.Controls.Add(_lblTestResult);
         pnlAreaBtns.Dock = DockStyle.Fill;
         pnlAreaBtns.FlowDirection = FlowDirection.TopDown;
         pnlAreaBtns.Location = new Point(552, 4);
         pnlAreaBtns.Margin = new Padding(0, 4, 0, 0);
         pnlAreaBtns.Name = "pnlAreaBtns";
-        pnlAreaBtns.Size = new Size(122, 98);
+        pnlAreaBtns.Size = new Size(122, 125);
         pnlAreaBtns.TabIndex = 1;
         pnlAreaBtns.WrapContents = false;
         // 
@@ -303,7 +305,7 @@ public partial class FindTextOcrDialog
         // _chkOptimizeContrast
         // 
         _chkOptimizeContrast.AutoSize = true;
-        _chkOptimizeContrast.Location = new Point(3, 297);
+        _chkOptimizeContrast.Location = new Point(3, 324);
         _chkOptimizeContrast.Name = "_chkOptimizeContrast";
         _chkOptimizeContrast.Size = new Size(197, 19);
         _chkOptimizeContrast.TabIndex = 7;
@@ -312,7 +314,7 @@ public partial class FindTextOcrDialog
         // _chkOptimizeShortText
         // 
         _chkOptimizeShortText.AutoSize = true;
-        _chkOptimizeShortText.Location = new Point(3, 323);
+        _chkOptimizeShortText.Location = new Point(3, 354);
         _chkOptimizeShortText.Name = "_chkOptimizeShortText";
         _chkOptimizeShortText.Size = new Size(249, 19);
         _chkOptimizeShortText.TabIndex = 8;
@@ -322,7 +324,7 @@ public partial class FindTextOcrDialog
         // 
         grpFound.Controls.Add(tblFound);
         grpFound.Dock = DockStyle.Top;
-        grpFound.Location = new Point(0, 387);
+        grpFound.Location = new Point(0, 421);
         grpFound.Name = "grpFound";
         grpFound.Padding = new Padding(10);
         grpFound.Size = new Size(700, 130);
@@ -447,7 +449,7 @@ public partial class FindTextOcrDialog
         // 
         grpNotFound.Controls.Add(tblNotFound);
         grpNotFound.Dock = DockStyle.Top;
-        grpNotFound.Location = new Point(0, 517);
+        grpNotFound.Location = new Point(0, 551);
         grpNotFound.Name = "grpNotFound";
         grpNotFound.Padding = new Padding(10);
         grpNotFound.Size = new Size(700, 101);
@@ -531,7 +533,7 @@ public partial class FindTextOcrDialog
         pnlBottom.Controls.Add(_btnCancel);
         pnlBottom.Dock = DockStyle.Bottom;
         pnlBottom.FlowDirection = FlowDirection.RightToLeft;
-        pnlBottom.Location = new Point(0, 667);
+        pnlBottom.Location = new Point(0, 712);
         pnlBottom.Name = "pnlBottom";
         pnlBottom.Padding = new Padding(10);
         pnlBottom.Size = new Size(700, 55);
@@ -555,13 +557,21 @@ public partial class FindTextOcrDialog
         _btnCancel.TabIndex = 1;
         _btnCancel.Text = "Cancel";
         // 
+        // _lblTestResult
+        // 
+        _lblTestResult.Location = new Point(3, 96);
+        _lblTestResult.Name = "_lblTestResult";
+        _lblTestResult.Size = new Size(110, 18);
+        _lblTestResult.TabIndex = 3;
+        _lblTestResult.TextAlign = ContentAlignment.MiddleCenter;
+        // 
         // FindTextOcrDialog
         // 
         AcceptButton = _btnOk;
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         CancelButton = _btnCancel;
-        ClientSize = new Size(700, 722);
+        ClientSize = new Size(700, 767);
         Controls.Add(lblDesc);
         Controls.Add(pnlBottom);
         Controls.Add(grpNotFound);
@@ -589,4 +599,5 @@ public partial class FindTextOcrDialog
         pnlBottom.ResumeLayout(false);
         ResumeLayout(false);
     }
+    private Label _lblTestResult;
 }

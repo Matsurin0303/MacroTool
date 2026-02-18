@@ -38,7 +38,8 @@ internal static class DetectionTestUtil
 
         while (true)
         {
-            token.ThrowIfCancellationRequested();
+            if (token.IsCancellationRequested)
+                return (false, null, rect);
 
             using var screen = Capture(rect);
             if (TryFindTemplate(screen, template, action.ColorTolerancePercent, out var foundTopLeft))
@@ -52,7 +53,9 @@ internal static class DetectionTestUtil
                 return (false, null, rect);
 
             // テストは UI なので少し短め
-            await Task.Delay(150, token);
+            await Task.Delay(150);
+            if (token.IsCancellationRequested)
+                return (false, null, rect);
         }
     }
 
@@ -73,7 +76,8 @@ internal static class DetectionTestUtil
 
         while (true)
         {
-            token.ThrowIfCancellationRequested();
+            if (token.IsCancellationRequested)
+                return (false, null, rect);
 
             using var screen = Capture(rect);
             var found = await TryFindTextByOcrAsync(screen, action.TextToSearchFor ?? string.Empty, action.Language, token);
@@ -87,7 +91,9 @@ internal static class DetectionTestUtil
             if (timeout > 0 && start.ElapsedMilliseconds >= timeout)
                 return (false, null, rect);
 
-            await Task.Delay(200, token);
+            await Task.Delay(200);
+            if (token.IsCancellationRequested)
+                return (false, null, rect);
         }
     }
 
@@ -252,7 +258,8 @@ internal static class DetectionTestUtil
             softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
         }
 
-        token.ThrowIfCancellationRequested();
+        if (token.IsCancellationRequested)
+            return null;
 
         var language = lang == OcrLanguage.Japanese ? new Language("ja-JP") : new Language("en-US");
         var engine = OcrEngine.TryCreateFromLanguage(language) ?? OcrEngine.TryCreateFromUserProfileLanguages();
