@@ -55,11 +55,6 @@
             tabPage5 = new TabPage();
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
-            recordAndEditToolStripMenuItem = new ToolStripMenuItem();
-            playbackToolStripMenuItem = new ToolStripMenuItem();
-            viewToolStripMenuItem = new ToolStripMenuItem();
-            helpToolStripMenuItem = new ToolStripMenuItem();
-            registerLicenseKeyToolStripMenuItem = new ToolStripMenuItem();
             newToolStripMenuItem = new ToolStripMenuItem();
             openToolStripMenuItem = new ToolStripMenuItem();
             recentFilesToolStripMenuItem = new ToolStripMenuItem();
@@ -70,6 +65,11 @@
             settingsToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem3 = new ToolStripSeparator();
             exitToolStripMenuItem = new ToolStripMenuItem();
+            recordAndEditToolStripMenuItem = new ToolStripMenuItem();
+            playbackToolStripMenuItem = new ToolStripMenuItem();
+            viewToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            registerLicenseKeyToolStripMenuItem = new ToolStripMenuItem();
             gridActions = new DataGridView();
             colNo = new DataGridViewTextBoxColumn();
             colIcon = new DataGridViewImageColumn();
@@ -87,8 +87,8 @@
             mnuCopy = new ToolStripMenuItem();
             mnuCut = new ToolStripMenuItem();
             mnuPaste = new ToolStripMenuItem();
-            mnuDelete = new ToolStripMenuItem();
             ToolStripSeparator = new ToolStripSeparator();
+            mnuDelete = new ToolStripMenuItem();
             tableLayoutPanel1.SuspendLayout();
             pnlRibbon.SuspendLayout();
             tabRibbon.SuspendLayout();
@@ -349,37 +349,6 @@
             fileToolStripMenuItem.Size = new Size(37, 20);
             fileToolStripMenuItem.Text = "File";
             // 
-            // recordAndEditToolStripMenuItem
-            // 
-            recordAndEditToolStripMenuItem.Name = "recordAndEditToolStripMenuItem";
-            recordAndEditToolStripMenuItem.Size = new Size(104, 20);
-            recordAndEditToolStripMenuItem.Text = "Record and Edit";
-            // 
-            // playbackToolStripMenuItem
-            // 
-            playbackToolStripMenuItem.Name = "playbackToolStripMenuItem";
-            playbackToolStripMenuItem.Size = new Size(66, 20);
-            playbackToolStripMenuItem.Text = "Playback";
-            // 
-            // viewToolStripMenuItem
-            // 
-            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            viewToolStripMenuItem.Size = new Size(44, 20);
-            viewToolStripMenuItem.Text = "View";
-            // 
-            // helpToolStripMenuItem
-            // 
-            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            helpToolStripMenuItem.Size = new Size(44, 20);
-            helpToolStripMenuItem.Text = "Help";
-            // 
-            // registerLicenseKeyToolStripMenuItem
-            // 
-            registerLicenseKeyToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
-            registerLicenseKeyToolStripMenuItem.Name = "registerLicenseKeyToolStripMenuItem";
-            registerLicenseKeyToolStripMenuItem.Size = new Size(141, 20);
-            registerLicenseKeyToolStripMenuItem.Text = "Register license key...";
-            // 
             // newToolStripMenuItem
             // 
             newToolStripMenuItem.Name = "newToolStripMenuItem";
@@ -399,8 +368,7 @@
             // recentFilesToolStripMenuItem
             // 
             recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
-            recentFilesToolStripMenuItem.Size = new Size(180, 22);
-            // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
+            recentFilesToolStripMenuItem.Size = new Size(145, 22);
             recentFilesToolStripMenuItem.Text = "Recent files";
             // 
             // toolStripMenuItem1
@@ -420,7 +388,6 @@
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             saveAsToolStripMenuItem.Size = new Size(180, 22);
-            // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
             saveAsToolStripMenuItem.Text = "Save As...";
             saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
@@ -446,6 +413,37 @@
             exitToolStripMenuItem.Size = new Size(180, 22);
             exitToolStripMenuItem.Text = "Exit";
             exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // recordAndEditToolStripMenuItem
+            // 
+            recordAndEditToolStripMenuItem.Name = "recordAndEditToolStripMenuItem";
+            recordAndEditToolStripMenuItem.Size = new Size(102, 20);
+            recordAndEditToolStripMenuItem.Text = "Record and Edit";
+            // 
+            // playbackToolStripMenuItem
+            // 
+            playbackToolStripMenuItem.Name = "playbackToolStripMenuItem";
+            playbackToolStripMenuItem.Size = new Size(66, 20);
+            playbackToolStripMenuItem.Text = "Playback";
+            // 
+            // viewToolStripMenuItem
+            // 
+            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            viewToolStripMenuItem.Size = new Size(44, 20);
+            viewToolStripMenuItem.Text = "View";
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // registerLicenseKeyToolStripMenuItem
+            // 
+            registerLicenseKeyToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            registerLicenseKeyToolStripMenuItem.Name = "registerLicenseKeyToolStripMenuItem";
+            registerLicenseKeyToolStripMenuItem.Size = new Size(129, 20);
+            registerLicenseKeyToolStripMenuItem.Text = "Register license key...";
             // 
             // gridActions
             // 
@@ -591,17 +589,17 @@
             mnuPaste.Size = new Size(142, 22);
             mnuPaste.Text = "Paste";
             // 
+            // ToolStripSeparator
+            // 
+            ToolStripSeparator.Name = "ToolStripSeparator";
+            ToolStripSeparator.Size = new Size(139, 6);
+            // 
             // mnuDelete
             // 
             mnuDelete.Name = "mnuDelete";
             mnuDelete.ShortcutKeyDisplayString = "Del";
             mnuDelete.Size = new Size(142, 22);
             mnuDelete.Text = "Delete";
-            // 
-            // ToolStripSeparator
-            // 
-            ToolStripSeparator.Name = "ToolStripSeparator";
-            ToolStripSeparator.Size = new Size(139, 6);
             // 
             // Form1
             // 

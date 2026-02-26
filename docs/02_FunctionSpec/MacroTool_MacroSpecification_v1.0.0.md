@@ -1,11 +1,9 @@
-﻿# MacroTool マクロ動作機能仕様書
-
+# MacroTool マクロ動作機能仕様書
 - Version: Macro_v1.0.0  
 - 作成日: 2026-02-12  
 - 開発環境: Visual Studio 2026  
 - 開発言語: C#  
 - 設計思想: ドメイン駆動設計（DDD） + テスト駆動開発（TDD）  
-
 > 本書「3. 機能一覧」は、添付 Excel（Macro仕様書_v3.xlsx）の **v1.0 シート**を反映している。  
 > 「状態」列は指定により **全て空欄**。  
 
@@ -99,7 +97,6 @@
 | 1-9-8 | OK | OKボタン | 設定の保存 |  | docs/images/1-9-4_UserInterface.png |  |
 | 1-9-9 | Cancel | Cancelボタン | 設定のキャンセル |  | docs/images/1-9-4_UserInterface.png |  |
 | 1-10 | Exit | ツールを終了する |  |  | docs/images/1_File.png |  |
-
 ---
 
 ### 3.2 Record and Edit（記録・編集）
@@ -114,7 +111,6 @@
 | 2-2 | Record | マクロを記録する |  |  | docs/images/2_RecordAndEdit.png |  |
 | 2-2-1 | Insert Record | 選択行からマクロを記録する |  |  | docs/images/2_RecordAndEdit.png |  |
 | 2-3 | Stop | マクロの再生を停止 |  |  | docs/images/2_RecordAndEdit.png |  |
-
 ---
 
 ### 3.3 Mouse（マウス操作）
@@ -144,7 +140,6 @@
 | 2-4-3-2 | Value | 値 | ホイール時の値 |  | docs/images/2-4-3_Wheel.png |  |
 | 2-4-3-3 | OK | OKボタン | 動作の追加 |  | docs/images/2-4-3_Wheel.png |  |
 | 2-4-3-4 | Cancel | Cancelボタン | Cancel |  | docs/images/2-4-3_Wheel.png |  |
-
 ---
 
 ### 3.4 Text/Key（テキスト・キーボード）
@@ -162,7 +157,6 @@
 | 2-5-2-1 | Press hotkey now | ホットキーの表示 | 入力されているホットキーを表示 | 例：Ctrl+Z | docs/images/2-5-2_Text.png |  |
 | 2-5-2-2 | OK | OKボタン | 動作の追加、入力されたホットキーに相当する複数のKey press項目を追加 | Ctrl+Zの場合、「Ctrl Down」, 「Z press」, 「Ctrl Up」の3つのKey press動作を追加する | docs/images/2-5-2_Text.png |  |
 | 2-5-2-3 | Cancel | Cancelボタン | Cancel |  | docs/images/2-5-2_Text.png |  |
-
 ---
 
 ### 3.5 Wait（待機）
@@ -192,7 +186,6 @@
 | 2-6-5-4 | If false Go to | 検出失敗時の動作 | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 | docs/images/2-6-5_WaitForTextInput.png |  |
 | 2-6-5-5 | OK | OKボタン | 動作の追加 |  | docs/images/2-6-5_WaitForTextInput.png |  |
 | 2-6-5-6 | Cancel | Cancelボタン | Cancel |  | docs/images/2-6-5_WaitForTextInput.png |  |
-
 ---
 
 ### 3.6 検出（Detection）
@@ -243,7 +236,6 @@
 | 2-7-2-12 | If false Go to | 検出失敗時の動作 | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 | docs/images/2-7-2_FindText.png |  |
 | 2-7-2-13 | OK | OKボタン | 動作の追加 |  | docs/images/2-7-2_FindText.png |  |
 | 2-7-2-14 | Cancel | Cancelボタン | Cancel |  | docs/images/2-7-2_FindText.png |  |
-
 ---
 
 ### 3.7 制御（Control Flow）
@@ -270,7 +262,6 @@
 | 2-8-4-1 | Embed macro file path | マクロファイルの指定パス | 指定したマクロファイルを起動する |  | docs/images/2-8-4_EnableMacroFile.png |  |
 | 2-8-5 | Execute program | プログラムの実行画面 |  |  | docs/images/2-8-5_ExecuteProgram.png |  |
 | 2-8-5-1 | Execute program path | プログラムの指定パス | 指定したプログラムを起動する |  | docs/images/2-8-5_ExecuteProgram.png |  |
-
 ---
 
 ### 3.8 Playback（再生欄）
@@ -306,4 +297,5 @@ GoTo 指定可能値は以下とする：
 - Labelは一意（重複時は末尾に数字付与。数字付きの場合はインクリメント）
 
 ---
+
 以上
