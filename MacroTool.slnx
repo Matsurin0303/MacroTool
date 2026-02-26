@@ -4,7 +4,7 @@
     <Platform Name="x64" />
   </Configurations>
   <Folder Name="/docs/">
-    <File Path="docs/MacroTool_MacroSpecification_v1.0.md" />
+    <Project Path="MacroTool.Docs/MacroTool.Docs.csproj" Id="5b0f492e-7063-4e24-983f-8d082c6efeaf" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/MacroTool.Application/MacroTool.Application.csproj" Id="5dc883c0-9d8f-45f2-9cf1-982869c3461f" />
