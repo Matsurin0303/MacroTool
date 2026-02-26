@@ -5,9 +5,6 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/MacroTool.Application/MacroTool.Application.csproj" Id="5dc883c0-9d8f-45f2-9cf1-982869c3461f" />
-    <Project Path="src/MacroTool.Docs/_MacroTool.Docs.csproj" Id="5b0f492e-7063-4e24-983f-8d082c6efeaf">
-      <Build Solution="Debug|Any CPU" Project="false" />
-    </Project>
     <Project Path="src/MacroTool.Domain/MacroTool.Domain.csproj" Id="6ee4b508-29c4-433a-8d20-7c83cda1f5c4" />
     <Project Path="src/MacroTool.Infrastructure.Windows/MacroTool.Infrastructure.Windows.csproj" Id="dcebdd44-dab7-40ae-8e7f-6edf804f20cd" />
     <Project Path="src/MacroTool.WinForms/MacroTool.WinForms.csproj">
