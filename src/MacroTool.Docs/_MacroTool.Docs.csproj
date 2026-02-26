@@ -7,7 +7,7 @@
     <ProjectGuid>{5B0F492E-7063-4E24-983F-8D082C6EFEAF}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>MacroTool.Docs</RootNamespace>
-    <AssemblyName>MacroTool.Docs</AssemblyName>
+    <AssemblyName>_MacroTool.Docs</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -36,12 +36,41 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-  <!-- このリポジトリ内の docs を丸ごとリンク表示 -->
-  <None Include="..\docs\**\*.md" Link="docs\%(RecursiveDir)%(Filename)%(Extension)" />
-  <None Include="..\docs\images\**\*.png" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
-  <None Include="..\docs\images\**\*.jpg" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
-  <None Include="..\docs\images\**\*.jpeg" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
-  <None Include="..\docs\images\**\*.gif" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
-</ItemGroup>
+    <!-- このリポジトリ内の docs を丸ごとリンク表示 -->
+    <None Include="..\..\docs\00_Index.md">
+      <Link>docs\00_Index.md</Link>
+    </None>
+    <None Include="..\..\docs\01_ProductSpec.md">
+      <Link>docs\01_ProductSpec.md</Link>
+    </None>
+    <None Include="..\..\docs\02_FunctionSpec\MacroTool_MacroSpecification_v1.0.0.md">
+      <Link>docs\02_FunctionSpec\MacroTool_MacroSpecification_v1.0.0.md</Link>
+    </None>
+    <None Include="..\..\docs\03_UI\UI_Spec.md">
+      <Link>docs\03_UI\UI_Spec.md</Link>
+    </None>
+    <None Include="..\..\docs\04_Domain\Domain_Model.md">
+      <Link>docs\04_Domain\Domain_Model.md</Link>
+    </None>
+    <None Include="..\..\docs\05_Playback\Playback_Spec.md">
+      <Link>docs\05_Playback\Playback_Spec.md</Link>
+    </None>
+    <None Include="..\..\docs\06_Persistence\FileFormat_Spec.md">
+      <Link>docs\06_Persistence\FileFormat_Spec.md</Link>
+    </None>
+    <None Include="..\..\docs\07_NFR\NonFunctional_Spec.md">
+      <Link>docs\07_NFR\NonFunctional_Spec.md</Link>
+    </None>
+    <None Include="..\..\docs\08_Test\Test_Strategy.md">
+      <Link>docs\08_Test\Test_Strategy.md</Link>
+    </None>
+    <None Include="..\..\docs\Versioning.md">
+      <Link>docs\Versioning.md</Link>
+    </None>
+    <None Include="..\..\docs\images\**\*.png" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\docs\images\**\*.jpg" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\docs\images\**\*.jpeg" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\..\docs\images\**\*.gif" Link="docs\images\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
