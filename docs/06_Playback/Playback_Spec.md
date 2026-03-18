@@ -187,6 +187,15 @@ Playbackの終了理由は以下とする。
 - `FindImage` / `FindText` / `WaitForTextInput` のタイムアウトおよびポーリング間隔には適用しない
 - `MouseClick` / `MouseMove` / `MouseWheel` / `KeyPress` には適用しない
 
+
+## 7.8 Detection 実行ルール
+- `FindImage` / `FindTextOcr` は、各ポーリング時点の**最新画面**を対象として再評価する
+- `WaitingMs` 経過まで未検出の場合は、エラーにせず `FalseGoTo` 側へ分岐する
+- 画像読込失敗、OCR 実行失敗、画像検出サービス失敗などの処理異常は `StepErrored` とする
+- `FindImage` で複数候補が存在する場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
+- `FindTextOcr` は前後空白を除去して完全一致で判定し、複数候補が存在する場合は最も左上の候補を採用する
+- 検出成功時の代表点は `MousePosition` で算出し、マウス操作と `Save Coordinate` の保存座標に共通使用する
+
 ## 8. 補足
 
 - Macro_v1.0.0 では Pause / Resume は実装しない

@@ -99,6 +99,8 @@
 - 再生開始前の検証失敗は `ValidationRejected` として扱う。
 - Step単位の制御失敗は `StepFailed`、継続不能な異常は `StepErrored` として扱う。
 - 停止要求はエラーではなく `Cancelled` / `Aborted` の終了理由とする。
+- `FindImage` / `FindTextOcr` / `WaitForTextInput` の `WaitingMs` 経過による未検出 / 未成立は、エラーではなく `FalseGoTo` 側への通常分岐として扱う。
+- OCR 実行失敗、画像読込失敗、画像検出サービス失敗など、検出処理そのものが実行できない場合は `ApplicationError` もしくは `StepErrored` として扱う。
 
 ---
 

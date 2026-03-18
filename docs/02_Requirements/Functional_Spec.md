@@ -241,14 +241,14 @@
 | 2-6-5-5 | OK | OKボタン | Button | 動作の追加 |  |
 | 2-6-5-6 | Cancel | Cancelボタン | Button | Cancel |  |
 | 2-7 | Image/OCR | 画像検索、OCRに関わる動作 | ToolStripDropDownButton |  |  |
-| 2-7-1 | Find image | 画像検出動作画面 | Form | Capture bitmap と Load bitmap の優先順位は最新のもの、保存先はなし。 |  |
+| 2-7-1 | Find image | 画像検出動作画面 | Form | Capture bitmap と Load bitmap の優先順位は最新のもの、保存先はなし。複数候補がある場合は一致度が最も高い候補を採用し、同点時は左上を優先する。 |  |
 | 2-7-1-1 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-1-1-1から2-7-1-1-5までが表示される。Area of Desktop は仮想デスクトップ基準の物理ピクセル、Area of Focused window はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる。 |
 | 2-7-1-1-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-1-1-2から2-7-1-1-5までの値が自動入力される。背景は見えるまま、赤枠のみ表示、枠内は透過。Esc または右クリックでキャンセル。モニタをまたぐドラッグを許可。 |
 | 2-7-1-1-2 | X1 | 監視対象エリアの左上X座標 | TextBox | 監視対象エリアの左上X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Xを自動入力。 |
 | 2-7-1-1-3 | Y1 | 監視対象エリアの左上Y座標 | TextBox | 監視対象エリアの左上Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Yを自動入力。 |
 | 2-7-1-1-4 | X2 | 監視対象エリアの右下X座標 | TextBox | 監視対象エリアの右下X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Xを自動入力。 |
 | 2-7-1-1-5 | Y2 | 監視対象エリアの右下Y座標 | TextBox | 監視対象エリアの右下Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Yを自動入力。0サイズ矩形は確定しない。 |
-| 2-7-1-2 | Color tolerance | 色許容度 | TextBox | 0-100% | 0で完全一致 |
+| 2-7-1-2 | Color tolerance | 色許容度 | TextBox | 0-100% | 0で最も厳密、100で最も緩い。 |
 | 2-7-1-3 | Test | 検出テスト | Button | 検出した場合は緑文字でDetectedと表示され、検出した対象へマウスカーソルを移動する。未検出の場合は赤文字でNot Detectedと表示する。検出時間は固定で1秒とする。2-7-1-7から2-7-1-11までの設定は反映しない。 |  |
 | 2-7-1-4 | Capture bitmap | 検出対象の画像切り取り | Button | 検出対象の画像を切り取り | すでに画像がある場合は上書き |
 | 2-7-1-5 | Load bitmap from file | 検出対象の画像読み取り | Button | ファイルから検出対象の画像を開く | すでに画像がある場合は上書き |
@@ -256,15 +256,15 @@
 | 2-7-1-7-1 | Mouse action behavior | 検出成功時のマウス動作 | ComboBox | Positioning, Left-Click, Right-Click, Middle-Click, Double-Click |  |
 | 2-7-1-7-2 | Mouse position | 検出成功時のマウス位置 | ComboBox | Center, Top-Left, Top-Right, Bottom-Left, Bottom-Right | Centerの場合、検出矩形の中心 |
 | 2-7-1-8 | Save Coordinate behavior | 検出成功時の座標保存のOn, OFF | CheckBox | チェックボックス |  |
-| 2-7-1-8-1 | Save Coordinate X | 検出成功時のX座標の保存指定 | TextBox | Variableに保存 |  |
-| 2-7-1-8-2 | Save Coordinate Y | 検出成功時のY座標の保存指定 | TextBox | Variableに保存 |  |
+| 2-7-1-8-1 | Save Coordinate X | 検出成功時のX座標の保存指定 | TextBox | Variableに保存 | `Mouse position` で算出した代表点のXを保存する。 |
+| 2-7-1-8-2 | Save Coordinate Y | 検出成功時のY座標の保存指定 | TextBox | Variableに保存 | `Mouse position` で算出した代表点のYを保存する。 |
 | 2-7-1-9 | If true Go to | 検出成功時の動作 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 |
-| 2-7-1-10 | Waiting ms | 検出までの待機時間(ms) | TextBox | 単位はms |  |
+| 2-7-1-10 | Waiting ms | 検出までの待機時間(ms) | TextBox | 単位はms | 時間内に未検出なら `If false Go to` へ分岐し、タイムアウト自体はエラーにしない。 |
 | 2-7-1-11 | If false Go to | 検出失敗時の動作 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 |
 | 2-7-1-12 | OK | OKボタン | Button | 動作の追加 |  |
 | 2-7-1-13 | Cancel | Cancelボタン | Button | Cancel |  |
-| 2-7-2 | Find text (OCR) | テキスト検出動作画面 | Form | OCRはWinOCRを使用 |  |
-| 2-7-2-1 | Text to search for | 検出対象テキスト | TextBox | 完全一致 |  |
+| 2-7-2 | Find text (OCR) | テキスト検出動作画面 | Form | OCRはWinOCRを使用。前後空白を除去して完全一致で判定し、複数候補がある場合は最も左上の候補を採用する。 |  |
+| 2-7-2-1 | Text to search for | 検出対象テキスト | TextBox | 前後空白を除去して完全一致 |  |
 | 2-7-2-3 | Language | 検出対象言語 | ComboBox | English, Japanese |  |
 | 2-7-2-4 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-2-4-1から2-7-2-4-5までが表示される。Area of Desktop は仮想デスクトップ基準の物理ピクセル、Area of Focused window はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる。 |
 | 2-7-2-4-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-2-4-2から2-7-2-4-5までの値が自動入力される。背景は見えるまま、赤枠のみ表示、枠内は透過。Esc または右クリックでキャンセル。モニタをまたぐドラッグを許可。 |
@@ -277,10 +277,10 @@
 | 2-7-2-8-1 | Mouse action behavior | 検出成功時のマウス動作 | ComboBox | Positioning, Left-Click, Right-Click, Middle-Click, Double-Click |  |
 | 2-7-2-8-2 | Mouse position | 検出成功時のマウス位置 | ComboBox | Center, Top-Left, Top-Right, Bottom-Left, Bottom-Right |  |
 | 2-7-2-9 | Save Coordinate behavior | 検出成功時の座標保存のOn, OFF | CheckBox | チェックボックス |  |
-| 2-7-2-9-1 | Save Coordinate X | 検出成功時のX座標の保存指定 | TextBox | Variableに保存 |  |
-| 2-7-2-9-2 | Save Coordinate Y | 検出成功時のY座標の保存指定 | TextBox | Variableに保存 |  |
+| 2-7-2-9-1 | Save Coordinate X | 検出成功時のX座標の保存指定 | TextBox | Variableに保存 | `Mouse position` で算出した代表点のXを保存する。 |
+| 2-7-2-9-2 | Save Coordinate Y | 検出成功時のY座標の保存指定 | TextBox | Variableに保存 | `Mouse position` で算出した代表点のYを保存する。 |
 | 2-7-2-10 | If true Go to | 検出成功時の動作 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 |
-| 2-7-2-11 | Waiting ms | 検出までの待機時間(ms) | TextBox | 単位はms |  |
+| 2-7-2-11 | Waiting ms | 検出までの待機時間(ms) | TextBox | 単位はms | 時間内に未検出なら `If false Go to` へ分岐し、タイムアウト自体はエラーにしない。 |
 | 2-7-2-12 | If false Go to | 検出失敗時の動作 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 |
 | 2-7-2-13 | OK | OKボタン | Button | 動作の追加 |  |
 | 2-7-2-14 | Cancel | Cancelボタン | Button | Cancel |  |

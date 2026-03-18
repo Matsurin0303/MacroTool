@@ -114,6 +114,7 @@
 ### 5.4 FindImage.data
 - `searchArea`: SearchArea
 - `tolerance`: 0..100
+  - `0` が最も厳密、`100` が最も緩い
 - `bitmapSource`: object
   - `kind`: `CapturedBitmap | FilePath`
   - `value`: string
@@ -129,6 +130,9 @@
 - `waitingMs`: int
 - `trueGoTo`: GoToTarget
 - `falseGoTo`: GoToTarget
+- 複数候補が見つかった場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
+- 検出成功時の代表点は `mousePosition` で算出し、マウス操作と `saveXVariable` / `saveYVariable` の双方で共通利用する
+- `waitingMs` 経過まで未検出の場合はエラーにせず `falseGoTo` 側へ分岐する
 
 ### 5.5 FindTextOcr.data
 - `textToSearchFor`: string（空不可）
@@ -143,6 +147,10 @@
 - `waitingMs`: int
 - `trueGoTo`: GoToTarget
 - `falseGoTo`: GoToTarget
+- 文字列比較は、前後空白を除去したうえで完全一致とする
+- 複数候補が見つかった場合は、最も左上の候補を採用する
+- 検出成功時の代表点は `mousePosition` で算出し、マウス操作と `saveXVariable` / `saveYVariable` の双方で共通利用する
+- `waitingMs` 経過まで未検出の場合はエラーにせず `falseGoTo` 側へ分岐する
 
 ### 5.6 Repeat.data
 - `startLabel`

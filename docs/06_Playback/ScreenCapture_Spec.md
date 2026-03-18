@@ -117,13 +117,21 @@
 1. 対象 `SearchArea` を解決する
 2. 領域画像を取得する
 3. `ImageFinderService` へ入力する
-4. 成功時は検出座標を返す
+4. 成功時は検出矩形と代表点を返す
+- `Tolerance` は許容差とし、`0` が最も厳密、`100` が最も緩い
+- 複数候補が検出された場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
+- 代表点は `MousePosition` (`Center / TopLeft / TopRight / BottomLeft / BottomRight`) により検出矩形から算出する
+- 代表点は、後続のマウス操作と `Save Coordinate` 保存の双方で共通利用する
 
 ### 7.3 FindTextOcr
 1. 対象 `SearchArea` を解決する
 2. 領域画像を取得する
 3. `OcrService` へ入力する
 4. テキスト一致結果を返す
+- OCR で得た候補文字列は、前後空白を除去したうえで完全一致判定する
+- 複数候補が一致した場合は、最も左上の候補を採用する
+- 代表点は `MousePosition` により検出矩形から算出する
+- 代表点は、後続のマウス操作と `Save Coordinate` 保存の双方で共通利用する
 
 ---
 
@@ -150,12 +158,16 @@
 - 画面取得は Playback 開始時ではなく **各Step評価時** に行う
 - 再利用キャッシュを持つかどうかは本版未確定とする
 - 同一Step内での再試行は Action仕様に従う
+- `FindImage` / `FindTextOcr` の再試行は、各ポーリング時点の**最新画面**を用いて行う
+- `WaitingMs` 経過まで未検出の場合は、タイムアウトをエラーにせず `FalseGoTo` 側へ分岐する
 
 ---
 
 ## 11. エラー方針
 
 - 取得不能、対象外座標、OCR入力不能は `ApplicationError` 候補とする
+- `FindImage` の画像読込失敗、`ImageFinderService` 実行失敗、`OcrService` 実行失敗は `ApplicationError` 候補とする
+- `WaitingMs` 経過まで未検出だった場合はエラーにせず、Action仕様どおり `FalseGoTo` へ分岐する
 - `Define` のキャンセル、0サイズ矩形、値未更新はユーザーキャンセル扱いとしエラーにしない
 - 予期しないOS API失敗は `SystemError` 候補とする
 - 停止要求を受けた場合は、次のキャンセル可能境界で中断する

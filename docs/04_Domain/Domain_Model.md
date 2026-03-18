@@ -172,7 +172,12 @@
 - FindImage は検索対象画像が必須
 - FindImage の画像ソースは `CapturedBitmap` または `FilePath` に限定する
 - `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
+- FindImage の `Tolerance` は **許容差** とし、`0` が最も厳密、`100` が最も緩い
+- FindImage で複数候補が見つかった場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
 - FindTextOcr は検索文字列が空不可
+- FindTextOcr の文字列比較は、前後空白を除去したうえで完全一致とする
+- FindTextOcr で複数候補が見つかった場合は、最も左上の候補を採用する
+- 検出成功時の代表点は `MousePosition` で算出し、`MouseActionBehavior` と `SaveXVariable` / `SaveYVariable` の双方で共通利用する
 - `Test` ボタン状態は永続化しない
 
 ### 6.8 Repeat

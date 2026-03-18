@@ -47,7 +47,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | MousePosition | enum | 任意 | FindImage / FindTextOcr | `Center / TopLeft / TopRight / BottomLeft / BottomRight` |
 | SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う。変数名規則に従う |
 | SaveYVariable | string | 任意 | FindImage / FindTextOcr | SaveXVariableと組で扱う。変数名規則に従う |
-| Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100 |
+| Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100。FindImage では `0` が最も厳密、`100` が最も緩い |
 | Text | string | Action依存 | WaitForTextInput / FindTextOcr | 空不可 |
 | Language | string | FindTextOcr | FindTextOcr | UI選択値 |
 | BitmapKind | enum | FindImage | FindImage | `CapturedBitmap / FilePath` |
@@ -136,7 +136,14 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `BitmapKind=CapturedBitmap` の場合、`BitmapValue` は Macro 内に保持される画像データに対応する値を格納する
 - `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
 
-## 9. 本書で未確定とする事項
+## 9. Detection 実行ルール
+- `FindImage` で複数候補が存在する場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
+- `FindTextOcr` は、前後空白を除去したうえで完全一致判定する
+- `FindTextOcr` で複数候補が一致した場合は、最も左上の候補を採用する
+- 検出成功時の代表点は `MousePosition` で算出し、マウス操作と `SaveXVariable` / `SaveYVariable` の双方で共通利用する
+- `WaitingMs` 経過まで未検出の場合はエラーにせず `FalseGoTo` 側へ分岐する
+
+## 10. 本書で未確定とする事項
 - `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---
