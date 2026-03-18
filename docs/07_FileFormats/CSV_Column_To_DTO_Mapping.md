@@ -193,7 +193,21 @@
 
 ---
 
-## 11. エラー判定責務
+## 11. 列挙値標準
+
+### 11.1 MouseClick
+- `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+- `ClickType`: `Click / DoubleClick / Down / Up`
+
+### 11.2 Detection
+- `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+- `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+
+### 11.3 その他
+- `WheelOrientation`: `Horizontal / Vertical`
+- `KeyOption`: `Press / Down / Up`
+
+## 12. エラー判定責務
 
 ### Application層
 - 必須列不足
@@ -208,8 +222,7 @@
 
 ---
 
-## 12. 本書で未確定とする事項
-- `MouseButton` / `ClickType` の厳密な enum
+## 13. 本書で未確定とする事項
 - `BitmapKind` / `BitmapValue` の厳密ルール
 
 ---

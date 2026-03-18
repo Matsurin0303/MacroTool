@@ -70,13 +70,16 @@
 | Move | `docs/images/2-4-2_Move.png` | Mouse Move入力UI | 対象 |
 | Wheel | `docs/images/2-4-3_Wheel.png` | Mouse Wheel入力UI | 対象 |
 
-#### 2.3.2 Text / Key
+#### 2.3.2 Text/Key
 
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
 | Text/Keyカテゴリ | `docs/images/2-5_TextKey.png` | キーボード系カテゴリ | 対象 |
 | Key press | `docs/images/2-5-1_KeyPress.png` | Key press入力UI | 対象 |
 | Hotkey | `docs/images/2-5-2_Hotkey.png` | Hotkey入力UI | 対象 |
+| Text | `docs/images/2-5-3_Text.png` | 旧画像。v7 に該当機能なし | 参考画像 / 本版対象外 |
+
+> v7 の `2-5` カテゴリは `Key press` と `Hotkey` を対象とする。独立した `Text` Action は本版に含めない。
 
 #### 2.3.3 Wait
 

@@ -43,8 +43,8 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | TrueGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
 | FalseGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
 | FinishGoTo | string | Repeat | Repeat | 同上 |
-| MouseActionBehavior | enum | 任意 | FindImage / FindTextOcr | 詳細列挙値は別チケット |
-| MousePosition | enum | 任意 | FindImage / FindTextOcr | Center等 |
+| MouseActionBehavior | enum | 任意 | FindImage / FindTextOcr | `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick` |
+| MousePosition | enum | 任意 | FindImage / FindTextOcr | `Center / TopLeft / TopRight / BottomLeft / BottomRight` |
 | SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う |
 | SaveYVariable | string | 任意 | FindImage / FindTextOcr | SaveXVariableと組で扱う |
 | Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100 |
@@ -52,8 +52,8 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | Language | string | FindTextOcr | FindTextOcr | UI選択値 |
 | BitmapKind | string | FindImage | FindImage | 画像ソース種別 |
 | BitmapValue | string | FindImage | FindImage | 画像ソース値 |
-| MouseButton | enum | MouseClick | MouseClick | 詳細列挙値は別チケット |
-| ClickType | enum | MouseClick | MouseClick | 詳細列挙値は別チケット |
+| MouseButton | enum | MouseClick | MouseClick | `Left / Right / Middle / SideButton1 / SideButton2` |
+| ClickType | enum | MouseClick | MouseClick | `Click / DoubleClick / Down / Up` |
 | Relative | bool | MouseClick / MouseMove | MouseClick / MouseMove | True / False |
 | X | int | Action依存 | MouseClick / WaitForPixelColor | 用途はAction依存 |
 | Y | int | Action依存 | MouseClick / WaitForPixelColor | 用途はAction依存 |
@@ -101,8 +101,22 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ---
 
-## 5. 本書で未確定とする事項
-- `MouseButton` / `ClickType` の詳細列挙値
+## 5. 列挙値標準
+
+### 5.1 MouseClick
+- `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+- `ClickType`: `Click / DoubleClick / Down / Up`
+
+### 5.2 Detection
+- `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+- `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+
+### 5.3 その他
+- `WheelOrientation`: `Horizontal / Vertical`
+- `KeyOption`: `Press / Down / Up`
+- `RepeatMode`: `Seconds / Repetitions / Until / Infinite`
+
+## 6. 本書で未確定とする事項
 - `BitmapKind` / `BitmapValue` の厳密ルール
 
 ---

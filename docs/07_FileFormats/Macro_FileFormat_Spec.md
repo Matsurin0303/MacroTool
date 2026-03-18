@@ -153,6 +153,14 @@
 ### 5.8 EmbedMacroFile.data / ExecuteProgram.data
 - `path`: string（空不可）
 
+### 5.9 列挙値標準
+- `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+- `ClickType`: `Click / DoubleClick / Down / Up`
+- `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+- `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+- `WheelOrientation`: `Horizontal / Vertical`
+- `KeyOption`: `Press / Down / Up`
+
 ---
 
 ## 6. CSV（Export / Import）仕様との関係
@@ -166,7 +174,6 @@ CSV列の定義は以下を参照する。
 
 ## 7. 本書で未確定とする事項
 - `bitmapSource` の厳密な許容種別
-- `MouseButton` / `ClickType` の厳密な enum
 - Importの追加位置詳細
 
 ---

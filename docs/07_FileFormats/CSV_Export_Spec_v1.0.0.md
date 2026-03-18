@@ -67,15 +67,28 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ---
 
-## 6. エンコード仕様
+## 6. 列挙値標準
+
+### 6.1 MouseClick
+- `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+- `ClickType`: `Click / DoubleClick / Down / Up`
+
+### 6.2 Detection
+- `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+- `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+
+### 6.3 その他
+- `WheelOrientation`: `Horizontal / Vertical`
+- `KeyOption`: `Press / Down / Up`
+
+## 7. エンコード仕様
 - UTF-8（BOMなし推奨）
 - 改行コードは CRLF を推奨
 
 ---
 
-## 7. 本書で未確定とする事項
-以下は別チケットで定義する。
-- `MouseButton` / `ClickType` の厳密な列挙値
+## 8. 本書で未確定とする事項
+なし
 
 ---
 以上

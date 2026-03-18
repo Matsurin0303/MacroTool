@@ -29,6 +29,20 @@
 
 ---
 
+## 2.2 名称統一ルール
+
+- 開発IDと機能名は `Macro仕様書_v7.xlsx` の表記をそのまま使用する。
+- UI表示名と永続化トークンは区別して扱う。
+- CSV / JSON / DTO では `Action` / `WaitingMs` / `MousePosition` を正とし、同義語は使用しない。
+- 代表対応は以下のとおり。
+  - UI `Click` ↔ Action token `MouseClick`
+  - UI `Move` ↔ Action token `MouseMove`
+  - UI `Wheel` ↔ Action token `MouseWheel`
+  - UI `Key press` ↔ Action token `KeyPress`
+  - UI `Find text (OCR)` ↔ Action token `FindTextOcr`
+
+---
+
 ## 3. 機能一覧
 
 - 列の意味は `Macro仕様書_v7.xlsx` に準拠する。  
@@ -153,6 +167,9 @@
 | 2-5-2-1 | Press hotkey now | ホットキーの表示 | HotkeyTextBox | 入力されているホットキーを表示 | 例：Ctrl+Z |
 | 2-5-2-2 | OK | OKボタン | Button | 動作の追加、入力されたホットキーに相当する複数のKey press項目を追加 | Ctrl+Zの場合、「Ctrl Down」, 「Z press」, 「Ctrl Up」の3つのKey press動作を追加する |
 | 2-5-2-3 | Cancel | Cancelボタン | Button | Cancel |  |
+
+> 補足: 独立した `Text` Action は本版に存在しない。`2-5` カテゴリの本版対象は `Key press` と `Hotkey` のみとし、テキスト入力は `Wait for text input` / `Find text (OCR)` 側で扱う。
+
 | 2-6 | Wait | 待機に関わる動作 | ToolStripDropDownButton |  |  |
 | 2-6-1 | Wait | 時間待機に関わる動作画面 | Form |  |  |
 | 2-6-1-1 | Value | 待機時間(ms) | TextBox |  |  |

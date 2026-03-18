@@ -40,7 +40,7 @@ Importエラー** とする。
     **CSV_v1.0固定ヘッダと完全一致**すること
 
 ``` csv
-Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue
+Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path
 ```
 
 ※ v1.0ではメタ行は存在しない前提。もし `#`
@@ -122,11 +122,18 @@ v1で許容していた（または現場で発生しうる）表記ゆれを、
     v2.0では **許容しない**）
 -   小文字16進は許容し、出力は大文字に統一してよい（例：`#ff00aa`→`#FF00AA`）
 
-#### 5.2.4 enum類（MouseActionBehavior / MousePosition / WheelOrientation / ClickType 等）
+#### 5.2.4 enum類（MouseActionBehavior / MousePosition / MouseButton / ClickType / WheelOrientation 等）
 
 -   トリム
 -   大文字小文字の揺れを吸収し、正規表記へ統一
 -   既知値にマッピングできない場合は Importエラー（丸めない）
+
+正規表記:
+-   `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+-   `ClickType`: `Click / DoubleClick / Down / Up`
+-   `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+-   `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+-   `WheelOrientation`: `Horizontal / Vertical`
 
 ------------------------------------------------------------------------
 
@@ -139,7 +146,7 @@ v2.0では、以下の
 
 -   条件：`MouseActionBehavior` が空欄ではない AND `MousePosition`
     が空欄
--   補完：`MousePosition=Centered`
+-   補完：`MousePosition=Center`
 
 ※ MouseActionBehavior が空欄（Mouse action無効）なら MousePosition
 は空欄のままでよい。
@@ -170,7 +177,7 @@ v2.0では、以下の
 ### 7.1 v1（入力）
 
 ``` csv
-Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue
+Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path
 0,Wait,,,EntireDesktop,,,,,1000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ```
 
@@ -178,7 +185,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ``` csv
 #SchemaVersion=CSV_v2.0
-Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue
+Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path
 0,Wait,,,EntireDesktop,,,,,1000,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ```
 
