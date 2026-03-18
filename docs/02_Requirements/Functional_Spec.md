@@ -139,25 +139,27 @@
 | 1-9-2 | Playback | 再生に関する設定画面 | ListBoxItem |  |  |
 | 1-9-2-1 | Block key presses during playback | 再生中のキー入力を無効 | CheckBox |  |  |
 | 1-9-2-2 | Abort playback on key press | キー入力で再生を止める | CheckBox |  |  |
-| 1-9-2-3 | Abort playback on mouse move | マウス移動でキー入力を止める | CheckBox |  |  |
+| 1-9-2-3 | Abort playback on mouse move | マウス移動で再生を止める | CheckBox |  |  |
 | 1-9-2-4 | Restore mouse position after playback | 再生後マウス位置を再生開始時の位置に戻す | CheckBox |  |  |
-| 1-9-2-5 | Restore window sizes | ウィンドウサイズを戻す | CheckBox |  |  |
-| 1-9-2-6 | Use relative mouse positions | マウスの相対位置を記録する。 | CheckBox |  |  |
-| 1-9-2-7 | Reset variables and list counter on each playback cycle | Cycle毎のvariables, counterの値リセット | CheckBox | Cycle毎にvariables, counterの値をリセットする |  |
+| 1-9-2-5 | Restore window sizes | 再生後にウィンドウサイズを元に戻す | CheckBox |  |  |
+| 1-9-2-6 | Use relative mouse positions | マウス位置を相対位置として扱う | CheckBox |  | 相対位置の厳密な基準座標ルールは本版未確定。 |
+| 1-9-2-7 | Reset variables and list counter on each playback cycle | Playback Repeat の各 cycle 開始時に variables / list counter をリセット | CheckBox | Playback Repeat の各 cycle 開始時に variables / list counter をリセットする | Repeat Action の内部周回には適用しない。 |
 | 1-9-3 | Hotkeys | ショートカットキー | ListBoxItem |  |  |
-| 1-9-3-1 | Start/append recording | 開始 | HotkeyTextBox |  |  |
+| 1-9-3-1 | Start/append recording | 記録を開始、または現在のMacroへ追記記録する | HotkeyTextBox |  |  |
 | 1-9-3-2 | Start new recording | 新規にマクロを作成し録画 | HotkeyTextBox |  |  |
-| 1-9-3-3 | Stop | 停止 | HotkeyTextBox |  |  |
-| 1-9-3-4 | Playback | 再生 | HotkeyTextBox |  |  |
+| 1-9-3-3 | Stop | 記録または再生を停止 | HotkeyTextBox |  |  |
+| 1-9-3-4 | Playback | 現在の再生対象を再生 | HotkeyTextBox |  |  |
 | 1-9-3-5 | Play selection | 選択中のマクロ動作を再生 | HotkeyTextBox |  |  |
 | 1-9-3-6 | Capture mouse position | マウス位置をキャプチャ | HotkeyTextBox | マクロ動作編集中、マウス位置をキャプチャし、マクロ動作に反映 |  |
 | 1-9-4 | User interface | ユーザーインターフェース関連設定 | ListBoxItem |  |  |
-| 1-9-4-1 | Show delete confirmation | 削除時に確認 | CheckBox |  |  |
+| 1-9-4-1 | Show delete confirmation | 削除前に確認ダイアログを表示 | CheckBox |  |  |
 | 1-9-4-2 | Hide Macro Recorder when recording | 記録中マクロ記録ツールを隠す | CheckBox |  |  |
 | 1-9-4-3 | Hide Macro Recorder on playback | 再生中マクロ記録ツールを隠す | CheckBox |  |  |
 | 1-9-7 | Reset settings | デフォルト設定 | Button | 設定画面の全項目をデフォルト値へ戻す | 保存は OK 押下時のみ反映する。 |
 | 1-9-8 | OK | OKボタン | Button | 設定の保存 | 設定画面の全項目をユーザープロファイル配下のローカル設定ファイルへ保存する。 |
 | 1-9-9 | Cancel | Cancelボタン | Button | 設定のキャンセル | ダイアログを開いてからの未保存変更を破棄する。 |
+
+> 補足: `Settings` 配下の説明文は、項目名と一致する意味に統一した。v7 由来のコピペ疑いがある文言は、本版では項目名優先で修正する。
 | 1-10 | Exit | ツールを終了する | Button |  | 未保存変更がある場合は共通の未保存変更確認ダイアログを表示する。 |
 
 
