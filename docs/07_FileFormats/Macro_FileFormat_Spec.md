@@ -147,6 +147,11 @@
 - `repetitions`
 - `until`
 - `finishGoTo`
+- 繰り返し範囲は `startLabel` の行から Repeat 行の直前までとする
+- `startLabel` は同一マクロ内の既存 `Label` を参照しなければならない
+- Repeat のネストは禁止とする
+- `Infinite` は Stop 操作またはエラー発生まで継続する
+- `finishGoTo` は繰り返し完了後に1回だけ適用する
 
 ### 5.7 If.data
 - `variableName`

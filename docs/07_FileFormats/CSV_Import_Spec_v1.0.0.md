@@ -207,6 +207,14 @@ RepeatMode別必須:
 - `Seconds` → `Seconds`
 - `Repetitions` → `Repetitions`
 - `Until` → `Until`
+- `Infinite` → 追加列不要
+
+制約:
+- `StartLabel` は同一マクロ内の既存 `Label` を参照しなければならない
+- `StartLabel` が解決できない場合は Importエラーとする
+- Repeat のネストは禁止とし、ネストが検出された場合は Importエラーとする
+- `FinishGoTo` は繰り返し完了後に1回だけ適用する
+- `Infinite` は Stop操作またはエラー発生まで継続する
 
 #### EmbedMacroFile
 必須:
@@ -238,6 +246,8 @@ RepeatMode別必須:
 - 必須列が空
 - 数値変換不可
 - 範囲外
+- `StartLabel` が解決できない Repeat
+- Repeat のネスト
 - 未知Action
 - ラベル参照不整合
 

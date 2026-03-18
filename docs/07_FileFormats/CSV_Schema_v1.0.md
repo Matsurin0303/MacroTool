@@ -42,7 +42,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | GoTo | string | GoTo | GoTo | `Start/Next/End/Label:<name>` |
 | TrueGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
 | FalseGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
-| FinishGoTo | string | Repeat | Repeat | 同上 |
+| FinishGoTo | string | Repeat | Repeat | 繰り返し完了後に1回だけ適用 |
 | MouseActionBehavior | enum | 任意 | FindImage / FindTextOcr | `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick` |
 | MousePosition | enum | 任意 | FindImage / FindTextOcr | `Center / TopLeft / TopRight / BottomLeft / BottomRight` |
 | SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う。変数名規則に従う |
@@ -68,7 +68,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | KeyOption | enum | KeyPress | KeyPress | Press / Down / Up |
 | Key | string | KeyPress | KeyPress | 空不可 |
 | Count | int | KeyPress | KeyPress | 1以上 |
-| StartLabel | string | Repeat | Repeat | 空不可 |
+| StartLabel | string | Repeat | Repeat | 空不可。同一マクロ内の既存Label参照必須 |
 | RepeatMode | enum | Repeat | Repeat | Seconds / Repetitions / Until |
 | Seconds | int | RepeatMode=Seconds | Repeat | |
 | Repetitions | int | RepeatMode=Repetitions | Repeat | |
@@ -141,3 +141,10 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ---
 以上
+
+## 7. Repeat 実行ルール
+- 繰り返し範囲は `StartLabel` の行から Repeat 行の直前まで
+- `StartLabel` が解決できないデータは不正
+- Repeat のネストは禁止
+- `Infinite` は Stop操作またはエラー発生まで継続
+- `FinishGoTo` は繰り返し完了後に1回だけ適用

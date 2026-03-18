@@ -163,9 +163,29 @@ Playbackの終了理由は以下とする。
 - 実行時型は `String` または `Number` とする
 - 未設定状態は `Undefined` とする
 - `Save Coordinate` により保存される X / Y は `Number` とする
-- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による cycle 開始時にも全変数を `Undefined` へ初期化する
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Playback Repeat の cycle 開始時に全変数を `Undefined` へ初期化する
+- Repeat Action の内部周回では、上記設定による初期化は行わない
 
 ---
+
+## 7.5 Repeat 実行ルール
+- Repeat の対象範囲は `startLabel` の行から Repeat 行の直前までとする
+- `startLabel` が解決できないマクロは実行対象とせず、保存時 / 読込時エラーで除外する
+- Repeat のネストは禁止とし、ネストを含むマクロは妥当なマクロとして扱わない
+- `Infinite` は Stop 操作またはエラー発生まで継続する
+- `finishGoTo` は繰り返し完了後に1回だけ適用する
+
+## 7.6 Playback Repeat 実行ルール
+- Playback Repeat は現在の再生対象全体を1 cycle として繰り返す
+- 対象全体とは、通常再生時はマクロ全体、`Play until selected` / `Play from selected` / `Play selected` 時はその再生対象範囲を指す
+- Playback Repeat が有効な場合でも、Macro 内の `Repeat` Action は内部制御としてそのまま実行する
+- `Repeat(Infinite)` が存在する場合は内側の `Repeat` が優先され、外側の Playback Repeat の次 cycle へは到達しない
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Playback Repeat の各 cycle 開始時に変数およびリストカウンタを初期化する
+
+## 7.7 Playback Speed 適用ルール
+- `Playback Speed` は `Wait` Action の待機時間にのみ適用する
+- `FindImage` / `FindText` / `WaitForTextInput` のタイムアウトおよびポーリング間隔には適用しない
+- `MouseClick` / `MouseMove` / `MouseWheel` / `KeyPress` には適用しない
 
 ## 8. 補足
 

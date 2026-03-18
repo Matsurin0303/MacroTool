@@ -177,8 +177,15 @@
 
 ### 6.8 Repeat
 - 条件 `Seconds / Repetitions / Until / Infinite` は排他
-- `startLabel` は存在するLabelであること
+- 繰り返し範囲は **`startLabel` の行から Repeat 行の直前まで** とする
+- `startLabel` は存在するLabelであること。未解決の `startLabel` を含むマクロは保存時 / 読込時エラーとする
 - `finishGoTo` は有効なGoToTargetであること
+- Repeat のネストは禁止とする
+- `Infinite` は Stop 操作またはエラー発生まで継続する
+- `finishGoTo` は繰り返し完了後に1回だけ適用する
+- Playback Repeat は現在の再生対象全体を1 cycleとして繰り返す
+- Playback Repeat が有効な場合でも `RepeatAction` は内部制御としてそのまま実行する
+- `RepeatAction(Infinite)` が存在する場合、外側の Playback Repeat の次 cycle へは到達しない
 
 ### 6.9 If
 - `variableName` は空不可
@@ -192,7 +199,7 @@
 ### 6.10 実行時変数コンテキスト
 - 変数ストアは Playback 開始時に生成し、Playback 終了時に破棄する
 - Playback 開始時、全変数は `Undefined` へ初期化する
-- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による cycle 開始時にも全変数を `Undefined` へ初期化する
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Playback Repeat の cycle 開始時に全変数を `Undefined` へ初期化する
 - 変数値は JSON / CSV へ永続化しない
 
 ### 6.11 Hotkey 正規化

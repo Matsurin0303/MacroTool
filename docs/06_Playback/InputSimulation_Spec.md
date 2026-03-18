@@ -98,10 +98,17 @@
 - Abort playback on mouse move
 - Restore mouse position after playback
 
-### 8.2 未確定
+### 8.2 Playback Speed の適用ルール
+- `Playback Speed` は **待機系のうち `Wait` Action の待機時間にのみ適用**する。
+- `Wait` の実効待機時間は、指定時間を `Playback Speed` の倍率で変換して決定する。
+  - 例: `Wait=1000ms`, `Playback Speed=200%` の場合、実効待機時間は `500ms` とする。
+  - 例: `Wait=1000ms`, `Playback Speed=50%` の場合、実効待機時間は `2000ms` とする。
+- 検出系待機 (`FindImage` / `FindText` / `WaitForTextInput`) のタイムアウト値およびポーリング間隔には適用しない。
+- 入力系Action (`MouseClick` / `MouseMove` / `MouseWheel` / `KeyPress`) には適用しない。
+
+### 8.3 未確定
 以下は本版で存在するが、入力送信との厳密な適用ルールは未確定とする。
 - Use relative mouse positions
-- Playback Speed の適用範囲
 
 ---
 
@@ -119,6 +126,8 @@
 - 修飾キーを含む `KeyPress` 送信順
 - 停止要求後に新規入力送信が始まらないこと
 - Restore mouse position 設定の反映
+- Playback Speed が `Wait` のみに反映されること
+- Playback Speed が検出系待機と入力系Actionへ影響しないこと
 - 検出結果座標を使ったマウス位置解決
 
 ---

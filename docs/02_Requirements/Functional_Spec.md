@@ -47,7 +47,7 @@
 - 未設定状態は **undefined** とする。空文字列や `0` を未設定値として扱わない。
 - 変数スコープは **1回のPlayback実行単位** とする。再生終了後の値は保持しない。
 - Playback開始時に、全変数は **undefined** へ初期化する。
-- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による各 cycle 開始時にも全変数を **undefined** へ初期化する。
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、**Playback Repeat の各 cycle 開始時** に全変数を **undefined** へ初期化する。Repeat Action の内部周回では初期化しない。
 - 変数名は英数字と `_` のみを使用でき、先頭数字は禁止とする。正規表現は `^[A-Za-z_][A-Za-z0-9_]*$` とする。
 - 変数参照は **大文字小文字を区別しない**。`Count` と `count` は同一変数として扱う。
 - `Save Coordinate` で保存する X / Y は **数値** として変数へ格納する。
@@ -63,6 +63,18 @@
 - 重複パスは **既存項目を削除して先頭へ再追加** する。重複のまま保持しない。
 - `Open` / `Recent Files` で存在しないファイルを選択した場合は **エラー表示** し、該当項目を Recent Files から削除する。
 - 読込失敗または保存失敗時は、成功していない操作結果で Recent Files を更新しない。
+
+
+## 2.5 Repeat 仕様
+
+- Repeat の繰り返し範囲は **`startLabel` の行から Repeat 行の直前まで** とする。
+- `startLabel` が存在しない Repeat を含むマクロは、**保存時および読込時にエラー** とする。
+- Repeat の**ネストは本版では禁止** とする。
+- `Infinite` は **Stop 操作またはエラー発生まで** 継続する。
+- `finishGoTo` は **繰り返し完了後に1回だけ** 適用する。
+- Playback Repeat は **現在の再生対象全体** を1 cycleとして繰り返す。
+- Playback Repeat が有効な場合でも、Macro 内の `Repeat` Action は内部制御としてそのまま実行する。
+- Playback Repeat と `Repeat(Infinite)` が重なった場合、**内側の `Repeat(Infinite)` が優先** され、外側の Playback Repeat の次 cycle へは到達しない。
 
 ---
 
@@ -261,16 +273,16 @@
 | 2-7-2-13 | OK | OKボタン | Button | 動作の追加 |  |
 | 2-7-2-14 | Cancel | Cancelボタン | Button | Cancel |  |
 | 2-8 | Misc | その他動作 | ToolStripDropDownButton |  |  |
-| 2-8-1 | Repeat | 繰り返し実行動作画面 | Form | Label〜Repeat行を繰り返す |  |
-| 2-8-1-1 | Start Label | 繰り返し開始Labelを指定 | ComboBox |  |  |
+| 2-8-1 | Repeat | 繰り返し実行動作画面 | Form | `Start Label` の行から Repeat 行の直前までを繰り返す | Repeat のネストは禁止。`finishGoTo` は完了後に1回だけ適用する。 |
+| 2-8-1-1 | Start Label | 繰り返し開始Labelを指定 | ComboBox |  | 指定したLabelが存在しない場合は保存時 / 読込時エラー |
 | 2-8-1-1-1 | Seconds RadioButton | Repeat条件、秒数のラジオボタン | RadioButton |  | Repeat条件は排他運用 |
 | 2-8-1-1-1-1 | Seconds | Repeat条件、秒数 | TextBox | seconds | Repeat条件は排他運用 |
 | 2-8-1-1-2 | repetitions | Repeat条件、回数のラジオボタン | RadioButton |  |  |
 | 2-8-1-1-2-1 | repetitions | Repeat条件、回数 | TextBox | repetitions | Repeat条件は排他運用 |
 | 2-8-1-1-3 | Until | Repeat条件、終了時間のラジオボタン | RadioButton |  |  |
 | 2-8-1-1-3-1 | Until | Repeat条件、終了時間 | DateTimePicker | HH:mm:ss | Repeat条件は排他運用 |
-| 2-8-1-1-4 | Infinite | Repeat条件、無限 | RadioButton |  | Repeat条件は排他運用 |
-| 2-8-1-2 | Finish Label | Repeat終了後のLabelを指定 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行 |
+| 2-8-1-1-4 | Infinite | Repeat条件、無限 | RadioButton |  | Repeat条件は排他運用。Stop操作またはエラー発生まで継続 |
+| 2-8-1-2 | Finish Label | Repeat終了後のLabelを指定 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行。繰り返し完了後に1回だけ適用する。 |
 | 2-8-2 | Go to | Go to動作画面 | Form | 指定されたLabelの行に移動 |  |
 | 2-8-2-1 | Go to Label | Go to Label指定 | ComboBox | Start, End, Next, Label | Labelはユーザーで定義されたLabelを全列挙 |
 | 2-8-3 | If | If条件動作画面 | Form |  |  |
@@ -302,8 +314,8 @@
 | 3-2-1-1-3 | Cancel | キャンセル | Button |  |  |
 | 3-3 | Stop | マクロの再生を停止 | ToolStripButton |  |  |
 | 3-4 | Playback Properties | 再生設定欄 | Area |  |  |
-| 3-4-1 | Playback Speed | 再生速度（％） | TextBox |  | 最小は1, 最大は1000、初期値は100, 不正値時は入力キャンセル、単位は% |
-| 3-4-3 | Repeat | マクロファイル繰り返し実行指定 | TextBox |  | 最小は1, 最大は9999999、初期値は1, 不正値時は入力キャンセル、単位は回数 |
+| 3-4-1 | Playback Speed | 再生速度（％） | TextBox |  | 最小は1, 最大は1000、初期値は100, 不正値時は入力キャンセル、単位は%。`Wait` Action の待機時間にのみ適用し、検出系待機 (`FindImage` / `FindText` / `WaitForTextInput`) のタイムアウト・ポーリング間隔、および入力系Action (`MouseClick` / `KeyPress`) には適用しない。 |
+| 3-4-3 | Repeat | マクロファイル繰り返し実行指定 | TextBox |  | 最小は1, 最大は9999999、初期値は1, 不正値時は入力キャンセル、単位は回数。Playback Repeat は現在の再生対象全体を1 cycleとして繰り返す。Macro 内の `Repeat` Action は内部制御としてそのまま動作し、`Repeat(Infinite)` がある場合は内側が優先される。 |
 
 ---
 ## 4. 本版対象外として扱う項目
