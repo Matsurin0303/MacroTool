@@ -73,7 +73,7 @@
 | 1-4-1-3 | Cancel | キャンセル | Button | キャンセル |  |
 | 1-5 | Save As… | マクロを名前を付けて保存 | Button | 名前を付けて保存 |  |
 | 1-6 | Export to CSV | CSVとして出力 | Button | マクロ動作内容CSVとして出力する |  |
-| 1-7 | Import from CSV | CSVから取り込み | Button | CSVの内容を読み取り、マクロ動作内容を選択行された行から追加する |  |
+| 1-7 | Import from CSV | CSVから取り込み | Button | CSVの内容を読み取り、現在編集中のマクロへ選択された行位置から追加する |  |
 | 1-8 | Schedule macro | マクロの起動をスケジュールする | Button | 常駐、起動していない場合は実行しない。 |  |
 | 1-8-1 | Start date | 開始年月日(yyyy/MM/DD) | DateTimePicker | 開始年月日 |  |
 | 1-8-2 | Start time | 開始時刻(HH:mm:ss) | DateTimePicker | 開始時刻 |  |
