@@ -136,15 +136,6 @@ TrueGoTo - FalseGoTo
 
 ------------------------------------------------------------------------
 
-### WaitForScreenChange
-
-必須: - SearchAreaKind - WaitingMs - TrueGoTo - FalseGoTo
-
-MouseActionBehavior が空欄の場合は無効。 SaveXVariable と SaveYVariable
-は両方セットで指定。
-
-------------------------------------------------------------------------
-
 ## 5.4 Detection
 
 ### FindImage

@@ -85,7 +85,7 @@
 | Waitカテゴリ | docs/images/2-6_Wait.png | Wait系カテゴリ | 対象 |
 | Wait | docs/images/2-6-1_Wait.png | 固定時間待機 | 対象 |
 | WaitForPixelColor | docs/images/2-6-2_WaitForPixelColor.png | ピクセル色待ち | 対象 |
-| WaitForScreenChange | docs/images/2-6-3_WaitForScreenChange.png | 画面変化待ち | 対象 |
+| WaitForScreenChange | docs/images/2-6-3_WaitForScreenChange.png | 画面変化待ち | 対象外（将来予定）  |
 | WaitForHotkey | docs/images/2-6-4_WaitForHotkey.png | ホットキー待ち | 対象外（将来予定） |
 | WaitForTextInput | docs/images/2-6-5_WaitForTextInput.png | テキスト入力待ち | 対象外（将来予定） |
 | WaitForFileChange | docs/images/2-6-6_WaitForFileChange.png | ファイル変更待ち | 対象外（将来予定） |
