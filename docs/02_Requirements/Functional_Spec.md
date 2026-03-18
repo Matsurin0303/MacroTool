@@ -41,6 +41,17 @@
   - UI `Key press` ↔ Action token `KeyPress`
   - UI `Find text (OCR)` ↔ Action token `FindTextOcr`
 
+## 2.3 変数仕様
+
+- 変数の実行時型は **文字列** または **数値** とする。
+- 未設定状態は **undefined** とする。空文字列や `0` を未設定値として扱わない。
+- 変数スコープは **1回のPlayback実行単位** とする。再生終了後の値は保持しない。
+- Playback開始時に、全変数は **undefined** へ初期化する。
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による各 cycle 開始時にも全変数を **undefined** へ初期化する。
+- 変数名は英数字と `_` のみを使用でき、先頭数字は禁止とする。正規表現は `^[A-Za-z_][A-Za-z0-9_]*$` とする。
+- 変数参照は **大文字小文字を区別しない**。`Count` と `count` は同一変数として扱う。
+- `Save Coordinate` で保存する X / Y は **数値** として変数へ格納する。
+
 ---
 
 ## 3. 機能一覧

@@ -212,7 +212,14 @@
 - `WheelOrientation`: `Horizontal / Vertical`
 - `KeyOption`: `Press / Down / Up`
 
-## 12. エラー判定責務
+## 12. 変数関連補足
+- `VariableName` / `SaveXVariable` / `SaveYVariable` は DTO 上では `string?` のまま保持する
+- 命名規則 `^[A-Za-z_][A-Za-z0-9_]*$` の検証は Application 層で行う
+- 変数参照は大文字小文字を区別しないため、比較・解決時は正規化して扱う
+- DTO は変数値を保持しない。変数値は Playback 実行時コンテキストで管理する
+- `Save Coordinate` により保存される X / Y は Domain 変換後に数値変数として扱う
+
+## 13. エラー判定責務
 
 ### Application層
 - 必須列不足
@@ -227,7 +234,7 @@
 
 ---
 
-## 13. 本書で未確定とする事項
+## 14. 本書で未確定とする事項
 - `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---

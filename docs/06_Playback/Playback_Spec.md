@@ -136,6 +136,8 @@ Playbackの終了理由は以下とする。
 - Validator実行
 - CancelToken生成
 - 実行コンテキスト初期化
+- 変数ストア生成
+- 全変数を `Undefined` へ初期化
 - 進捗通知開始
 
 ---
@@ -149,8 +151,19 @@ Playbackの終了理由は以下とする。
 
 ### 7.3 終了時
 - CancelToken破棄
+- 変数ストア破棄
 - 最終結果通知
 - 状態 Idle へ遷移
+
+---
+
+### 7.4 変数コンテキスト
+- 変数スコープは 1回のPlayback実行単位とする
+- Playback 終了後に変数値は保持しない
+- 実行時型は `String` または `Number` とする
+- 未設定状態は `Undefined` とする
+- `Save Coordinate` により保存される X / Y は `Number` とする
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による cycle 開始時にも全変数を `Undefined` へ初期化する
 
 ---
 
