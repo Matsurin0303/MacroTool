@@ -175,10 +175,10 @@
 | 2-1-3 | Play selected | 選択行を再生 | ToolStripMenuItem |  |  |
 | 2-2 | Record | マクロを選択行から記録する | ToolStripSplitButton |  |  |
 | 2-2-1 | New Record | マクロを新規に記録する | ToolStripMenuItem |  |  |
-| 2-2-1-1 | Confirmation | 未保存の変更 | MessageBox | 未保存変更がある状態で `Recent Files` を選択すると出現 | タイトル: `未保存の変更` / 本文: `変更内容は保存されていません。保存しますか？` / ボタン: `保存` `保存しない` `キャンセル` |
-| 2-2-1-1-1 | Save | 保存 | Button | 現在編集中のマクロを保存し、選択したRecent Filesのマクロを開く | 保存失敗時はRecent Filesの読込へ進まない。 |
-| 2-2-1-1-2 | Don't Save | 保存しない | Button | 現在編集中の変更を破棄し、選択したRecent Filesのマクロを開く |  |
-| 2-2-1-1-3 | Cancel | キャンセル | Button | キャンセル |  |
+| 2-2-1-1 | Confirmation | 未保存の変更 | MessageBox | 未保存変更がある状態で `New Record` を実行すると出現 | タイトル: `未保存の変更` / 本文: `変更内容は保存されていません。保存しますか？` / ボタン: `保存` `保存しない` `キャンセル` |
+| 2-2-1-1-1 | Save | 保存 | Button | 現在編集中のマクロを保存し、新規記録を開始する | 保存失敗時は新規記録へ進まない。 |
+| 2-2-1-1-2 | Don't Save | 保存しない | Button | 現在編集中の変更を破棄し、新規記録を開始する |  |
+| 2-2-1-1-3 | Cancel | キャンセル | Button | `New Record` を中止し、現在画面に留まる |  |
 | 2-3 | Stop | マクロの再生を停止 | ToolStripButton |  |  |
 | 2-4 | Mouse | マウスに関わる操作 | ToolStripDropDownButton |  |  |
 | 2-4-1 | Click | クリック動作画面 | Form | マウスのクリックに関わる画面 |  |
@@ -323,7 +323,7 @@
 | 3-2-1-1 | Confirmation | 未保存の変更 | MessageBox | 未保存変更がある状態で `New Record` を実行すると出現 | タイトル: `未保存の変更` / 本文: `変更内容は保存されていません。保存しますか？` / ボタン: `保存` `保存しない` `キャンセル` |
 | 3-2-1-1-1 | Save | 保存 | Button | 現在編集中のマクロを保存し、新規記録を開始する | 保存失敗時は新規記録へ進まない。 |
 | 3-2-1-1-2 | Don't Save | 保存しない | Button | 現在編集中の変更を破棄し、新規記録を開始する |  |
-| 3-2-1-1-3 | Cancel | キャンセル | Button |  |  |
+| 3-2-1-1-3 | Cancel | キャンセル | Button | `New Record` を中止し、現在画面に留まる |  |
 | 3-3 | Stop | マクロの再生を停止 | ToolStripButton |  |  |
 | 3-4 | Playback Properties | 再生設定欄 | Area |  |  |
 | 3-4-1 | Playback Speed | 再生速度（％） | TextBox |  | 最小は1, 最大は1000、初期値は100, 不正値時は入力キャンセル、単位は%。`Wait` Action の待機時間にのみ適用し、検出系待機 (`FindImage` / `FindText` / `WaitForTextInput`) のタイムアウト・ポーリング間隔、および入力系Action (`MouseClick` / `KeyPress`) には適用しない。 |
