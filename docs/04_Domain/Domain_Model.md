@@ -105,8 +105,11 @@
 
 ### 5.2 Key
 - `KeyPressAction`
+  - 永続化および再生の正規表現とする
 - `HotkeyAction`
-  - 編集操作として扱い、永続化時は KeyPress 群へ展開する
+  - 編集時のみ利用する複合入力表現とする
+  - 永続化前に、順序付きの `KeyPressAction` 群へ正規化する
+  - 復元時は `HotkeyAction` へ自動再構成せず、`KeyPressAction` 群として読み込む
 
 ### 5.3 Wait
 - `WaitAction`
@@ -172,6 +175,13 @@
 - `variableName` は空不可
 - `conditionType` により `value` の必須 / 任意が変わる
 - 本版の条件種別は `Macro仕様書_v7.xlsx` に存在する列挙値に限定する
+
+### 6.10 Hotkey 正規化
+- `HotkeyAction` は保存前に `KeyPressAction` 群へ必ず変換する
+- 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）とする
+- 例: `Ctrl+Shift+S` は `Ctrl Down` → `Shift Down` → `S Press` → `Shift Up` → `Ctrl Up`
+- 永続化層の Action 種別に `Hotkey` は存在しない
+- 復元後の内部表現は `KeyPressAction` 群とし、`HotkeyAction` への自動再構成は行わない
 
 ---
 

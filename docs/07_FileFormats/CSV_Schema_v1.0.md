@@ -97,7 +97,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `EmbedMacroFile`
 - `ExecuteProgram`
 
-> 上記以外は CSV_v1.0 Import ではエラーとする。
+> 上記以外は CSV_v1.0 Import ではエラーとする。`Hotkey` は既知Actionに含めない。
 
 ---
 
@@ -116,13 +116,19 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `KeyOption`: `Press / Down / Up`
 - `RepeatMode`: `Seconds / Repetitions / Until / Infinite`
 
-## 6. BitmapKind / BitmapValue ルール
+## 6. Hotkey の CSV 表現ルール
+- `Action=Hotkey` は定義しない
+- Hotkey は複数行の `KeyPress` で表現する
+- 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）
+- 復元時も `KeyPress` 群のまま扱い、Hotkey への自動再構成は行わない
+
+## 7. BitmapKind / BitmapValue ルール
 - `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
 - `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパスを格納する
 - `BitmapKind=CapturedBitmap` の場合、`BitmapValue` は Macro 内に保持される画像データに対応する値を格納する
 - `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
 
-## 7. 本書で未確定とする事項
+## 8. 本書で未確定とする事項
 - `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---

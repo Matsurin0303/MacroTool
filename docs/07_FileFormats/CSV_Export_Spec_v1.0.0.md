@@ -48,6 +48,10 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ### 5.2 Key
 - `KeyPress` → `KeyOption, Key, Count`
+- 編集上の `Hotkey` は、Export 時に複数行の `KeyPress` へ正規化して出力する
+  - 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）
+  - 例: `Ctrl+Shift+S` → `Ctrl/Down`, `Shift/Down`, `S/Press`, `Shift/Up`, `Ctrl/Up`
+- `Action=Hotkey` 行は Export しない
 
 ### 5.3 Wait
 - `Wait` → `WaitingMs`
@@ -92,7 +96,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 ---
 
 ## 8. 本書で未確定とする事項
-なし
+- Hotkey 編集UIへ再構成するための補助メタデータは本版では出力しない
 
 ---
 以上

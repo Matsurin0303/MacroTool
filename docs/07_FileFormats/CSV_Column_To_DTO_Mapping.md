@@ -99,6 +99,11 @@
 | Key | Key | string? | 必須 |
 | Count | Count | int? | 必須 |
 
+補足:
+- `Hotkey` 用の独立DTOは持たない
+- Hotkey は複数行の `KeyPress` DTO 群として受け取り、そのまま Domain へ渡す
+- `Action=Hotkey` は DTO 変換前のバリデーションでエラーとする
+
 ---
 
 ## 8. Wait系

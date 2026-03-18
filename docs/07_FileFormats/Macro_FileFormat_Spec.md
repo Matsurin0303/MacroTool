@@ -69,7 +69,7 @@
 ### 4.2 Key
 - `KeyPress`
 
-> Hotkey は UI操作で KeyPress 群に展開する。ファイルには Hotkey として保存しない。
+> Hotkey は編集時のみ存在するUI表現とし、保存時は KeyPress 群へ正規化する。ファイルには Hotkey として保存しない。
 
 ### 4.3 Wait
 - `Wait`
@@ -165,6 +165,13 @@
 - `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
 - `WheelOrientation`: `Horizontal / Vertical`
 - `KeyOption`: `Press / Down / Up`
+
+### 5.10 Hotkey の保存 / 復元ルール
+- JSON の `action.type` に `Hotkey` は出力しない
+- Hotkey は保存時に複数の `KeyPress` Action へ正規化して `macro.steps` に出力する
+- 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）とする
+- 例: `Ctrl+Shift+S` は 5 Step の `KeyPress` として保存する
+- JSON 読込時は `KeyPress` 群をそのまま復元し、`Hotkey` Action への自動再構成は行わない
 
 ---
 

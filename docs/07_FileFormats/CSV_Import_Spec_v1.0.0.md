@@ -25,7 +25,7 @@ version: Macro_v1.0.0
 
 ### 2.3 共通ルール
 - `Order` は数値必須。Import後に内部再採番してよい。
-- `Action` は固定トークン（英語）。未知ActionはImportエラー。
+- `Action` は固定トークン（英語）。未知ActionはImportエラー。`Hotkey` は固定トークンに含めない。
 - `Label` はMacro内で一意。重複時は末尾に連番付与。
 
 ---
@@ -104,6 +104,11 @@ version: Macro_v1.0.0
 - `KeyOption`
 - `Key`
 - `Count`
+
+ルール:
+- Hotkey は複数行の `KeyPress` として表現する
+- `Action=Hotkey` は Import エラーとする
+- Import 後の内部表現は `KeyPress` 群とし、`Hotkey` Action への自動再構成は行わない
 
 ### 5.3 Wait
 
