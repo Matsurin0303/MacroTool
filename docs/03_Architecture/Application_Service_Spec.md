@@ -174,6 +174,7 @@ UseCaseは例外をそのままUIに投げない。以下の分類で戻す（Re
 ## 事後条件
 - MacroDocumentがロードされ、編集可能状態になる
 - Dirtyフラグは false
+- 読込成功時、対象パスが Recent Files の先頭へ反映される
 
 ## 処理手順
 1. Persistenceでファイル読み込み（Macro JSON）
@@ -182,7 +183,7 @@ UseCaseは例外をそのままUIに投げない。以下の分類で戻す（Re
 4. DTO返却
 
 ## エラー
-- ファイル無し → ApplicationError
+- ファイル無し → ApplicationError（Recent Files から選択された場合は該当項目を削除）
 - 形式不正/パース失敗 → ApplicationError
 - 不変条件違反 → DomainError
 
@@ -203,6 +204,7 @@ UseCaseは例外をそのままUIに投げない。以下の分類で戻す（Re
 ## 事後条件
 - ファイルが更新される
 - Dirty=false
+- 保存成功時、保存先パスが Recent Files の先頭へ反映される
 
 ## 処理手順
 1. DTO→Domainへ反映（またはDomainを保持しているなら不要）
@@ -217,7 +219,32 @@ UseCaseは例外をそのままUIに投げない。以下の分類で戻す（Re
 ---
 
 # UC-04 Save As（名前を付けて保存）
-（UC-03 と同様。保存先指定が必須である点だけが差分）
+
+## 入力
+- `savePath`
+- `MacroDocumentDto`（または編集差分）
+
+## 出力
+- `SaveResultDto`（保存先、成功/失敗、Dirty=false など）
+
+## 前提条件
+- `savePath` が指定されている
+
+## 事後条件
+- 指定ファイルへ保存される
+- Dirty=false
+- 保存成功時、保存先パスが Recent Files の先頭へ反映される
+
+## 処理手順
+1. DTO→Domainへ反映（またはDomainを保持しているなら不要）
+2. Domain不変条件検証
+3. Persistenceへ `savePath` へ書き込み（原子性：一時ファイル→置換推奨）
+4. Recent Files を重複除去後に先頭更新
+5. 結果返却
+
+## エラー
+- 不変条件違反 → DomainError
+- I/O失敗 → ApplicationError
 
 ---
 
