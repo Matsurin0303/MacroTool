@@ -81,6 +81,7 @@
 - Repeat の**ネストは本版では禁止** とする。
 - `Infinite` は **Stop 操作またはエラー発生まで** 継続する。
 - `finishGoTo` は **繰り返し完了後に1回だけ** 適用する。
+- Repeat条件は **Seconds / repetitions / Until / Infinite** の4択で排他とし、選択中の条件に対応する入力欄のみ活性化する。
 - Playback Repeat は **現在の再生対象全体** を1 cycleとして繰り返す。
 - Playback Repeat が有効な場合でも、Macro 内の `Repeat` Action は内部制御としてそのまま実行する。
 - Playback Repeat と `Repeat(Infinite)` が重なった場合、**内側の `Repeat(Infinite)` が優先** され、外側の Playback Repeat の次 cycle へは到達しない。
@@ -286,13 +287,13 @@
 | 2-8 | Misc | その他動作 | ToolStripDropDownButton |  |  |
 | 2-8-1 | Repeat | 繰り返し実行動作画面 | Form | `Start Label` の行から Repeat 行の直前までを繰り返す | Repeat のネストは禁止。`finishGoTo` は完了後に1回だけ適用する。 |
 | 2-8-1-1 | Start Label | 繰り返し開始Labelを指定 | ComboBox |  | 指定したLabelが存在しない場合は保存時 / 読込時エラー |
-| 2-8-1-1-1 | Seconds RadioButton | Repeat条件、秒数のラジオボタン | RadioButton |  | Repeat条件は排他運用 |
-| 2-8-1-1-1-1 | Seconds | Repeat条件、秒数 | TextBox | seconds | Repeat条件は排他運用 |
-| 2-8-1-1-2 | repetitions | Repeat条件、回数のラジオボタン | RadioButton |  |  |
-| 2-8-1-1-2-1 | repetitions | Repeat条件、回数 | TextBox | repetitions | Repeat条件は排他運用 |
-| 2-8-1-1-3 | Until | Repeat条件、終了時間のラジオボタン | RadioButton |  |  |
-| 2-8-1-1-3-1 | Until | Repeat条件、終了時間 | DateTimePicker | HH:mm:ss | Repeat条件は排他運用 |
-| 2-8-1-1-4 | Infinite | Repeat条件、無限 | RadioButton |  | Repeat条件は排他運用。Stop操作またはエラー発生まで継続 |
+| 2-8-1-1-1 | Seconds RadioButton | Repeat条件、秒数のラジオボタン | RadioButton |  | Repeat条件は4つのRadioButtonで排他運用。選択時は `Seconds` 入力欄のみ活性化する。 |
+| 2-8-1-1-1-1 | Seconds | Repeat条件、秒数 | TextBox | seconds | `Seconds RadioButton` 選択時のみ活性。未選択時は非活性。 |
+| 2-8-1-1-2 | repetitions | Repeat条件、回数のラジオボタン | RadioButton |  | Repeat条件は4つのRadioButtonで排他運用。選択時は `repetitions` 入力欄のみ活性化する。 |
+| 2-8-1-1-2-1 | repetitions | Repeat条件、回数 | TextBox | repetitions | `repetitions` RadioButton 選択時のみ活性。未選択時は非活性。 |
+| 2-8-1-1-3 | Until | Repeat条件、終了時間のラジオボタン | RadioButton |  | Repeat条件は4つのRadioButtonで排他運用。選択時は `Until` 入力欄のみ活性化する。 |
+| 2-8-1-1-3-1 | Until | Repeat条件、終了時間 | DateTimePicker | HH:mm:ss | `Until` RadioButton 選択時のみ活性。未選択時は非活性。 |
+| 2-8-1-1-4 | Infinite | Repeat条件、無限 | RadioButton |  | Repeat条件は4つのRadioButtonで排他運用。選択時は `Seconds` / `repetitions` / `Until` の各入力欄を非活性にする。Stop操作またはエラー発生まで継続。 |
 | 2-8-1-2 | Finish Label | Repeat終了後のLabelを指定 | ComboBox | Start, End, Next, Label | Labelはユーザーが定義したラベルの値すべてを表示、Startはマクロ先頭行、Endはマクロ最終行、Nextはマクロの次の行、Labelは一致するLabelの行。繰り返し完了後に1回だけ適用する。 |
 | 2-8-2 | Go to | Go to動作画面 | Form | 指定されたLabelの行に移動 |  |
 | 2-8-2-1 | Go to Label | Go to Label指定 | ComboBox | Start, End, Next, Label | Labelはユーザーで定義されたLabelを全列挙 |
