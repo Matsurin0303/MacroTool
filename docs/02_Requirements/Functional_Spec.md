@@ -97,7 +97,7 @@
 | 1-8-3-6 | by months | 月実行 | TextBox | 指定された月の間隔で実行 |  |
 | 1-8-4 | OK | OKボタン | Button | Scheduleを決定 |  |
 | 1-8-5 | Cancel | Cancelボタン | Button | Cancel |  |
-| 1-9 | Settings | 設定画面を開く | Button |  |  |
+| 1-9 | Settings | 設定画面を開く | Button |  | 設定はアプリ全体で1つのローカル設定として扱い、Macroファイルには保存しない。 |
 | 1-9-1 | Recording | 記録に関する設定画面 | ListBoxItem |  |  |
 | 1-9-1-1 | Record mouse paths | マウスの軌道を記録 | CheckBox |  |  |
 | 1-9-1-2 | Minimum mouse movement | マウスの軌道を記録する間隔 | NumericUpDown |  | 最小は10, 最大は9999999、初期値は100, 不正値時は入力キャンセル、単位はms |
@@ -122,9 +122,9 @@
 | 1-9-4-1 | Show delete confirmation | 削除時に確認 | CheckBox |  |  |
 | 1-9-4-2 | Hide Macro Recorder when recording | 記録中マクロ記録ツールを隠す | CheckBox |  |  |
 | 1-9-4-3 | Hide Macro Recorder on playback | 再生中マクロ記録ツールを隠す | CheckBox |  |  |
-| 1-9-7 | Reset settings | デフォルト設定 | Button |  |  |
-| 1-9-8 | OK | OKボタン | Button | 設定の保存 |  |
-| 1-9-9 | Cancel | Cancelボタン | Button | 設定のキャンセル |  |
+| 1-9-7 | Reset settings | デフォルト設定 | Button | 設定画面の全項目をデフォルト値へ戻す | 保存は OK 押下時のみ反映する。 |
+| 1-9-8 | OK | OKボタン | Button | 設定の保存 | 設定画面の全項目をユーザープロファイル配下のローカル設定ファイルへ保存する。 |
+| 1-9-9 | Cancel | Cancelボタン | Button | 設定のキャンセル | ダイアログを開いてからの未保存変更を破棄する。 |
 | 1-10 | Exit | ツールを終了する | Button |  |  |
 
 
