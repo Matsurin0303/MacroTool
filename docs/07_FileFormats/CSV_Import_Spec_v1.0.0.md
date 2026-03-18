@@ -140,6 +140,12 @@ version: Macro_v1.0.0
 - `TrueGoTo`
 - `FalseGoTo`
 
+制約:
+- `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
+- `Variable` / `Embedded` / その他の画像ソース種別は Import エラーとする
+- `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパスとする
+- `BitmapKind=CapturedBitmap` の CSV 上の具体表現は未確定とする
+
 #### FindTextOcr
 必須:
 - `Text`

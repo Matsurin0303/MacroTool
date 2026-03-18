@@ -50,8 +50,8 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100 |
 | Text | string | Action依存 | WaitForTextInput / FindTextOcr | 空不可 |
 | Language | string | FindTextOcr | FindTextOcr | UI選択値 |
-| BitmapKind | string | FindImage | FindImage | 画像ソース種別 |
-| BitmapValue | string | FindImage | FindImage | 画像ソース値 |
+| BitmapKind | enum | FindImage | FindImage | `CapturedBitmap / FilePath` |
+| BitmapValue | string | FindImage | FindImage | `BitmapKind` に従う値 |
 | MouseButton | enum | MouseClick | MouseClick | `Left / Right / Middle / SideButton1 / SideButton2` |
 | ClickType | enum | MouseClick | MouseClick | `Click / DoubleClick / Down / Up` |
 | Relative | bool | MouseClick / MouseMove | MouseClick / MouseMove | True / False |
@@ -116,8 +116,14 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `KeyOption`: `Press / Down / Up`
 - `RepeatMode`: `Seconds / Repetitions / Until / Infinite`
 
-## 6. 本書で未確定とする事項
-- `BitmapKind` / `BitmapValue` の厳密ルール
+## 6. BitmapKind / BitmapValue ルール
+- `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
+- `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパスを格納する
+- `BitmapKind=CapturedBitmap` の場合、`BitmapValue` は Macro 内に保持される画像データに対応する値を格納する
+- `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
+
+## 7. 本書で未確定とする事項
+- `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---
 以上

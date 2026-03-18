@@ -158,6 +158,8 @@
 
 ### 6.7 FindImage / FindTextOcr
 - FindImage は検索対象画像が必須
+- FindImage の画像ソースは `CapturedBitmap` または `FilePath` に限定する
+- `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
 - FindTextOcr は検索文字列が空不可
 - `Test` ボタン状態は永続化しない
 

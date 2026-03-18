@@ -140,8 +140,8 @@
 | X2 | X2 | int? | Area系 |
 | Y2 | Y2 | int? | Area系 |
 | Tolerance | Tolerance | int? | 必須 |
-| BitmapKind | BitmapKind | string? | 必須 |
-| BitmapValue | BitmapValue | string? | 必須 |
+| BitmapKind | BitmapKind | string? | 必須 (`CapturedBitmap / FilePath`) |
+| BitmapValue | BitmapValue | string? | 必須 (`BitmapKind` に従う) |
 | WaitingMs | WaitingMs | int? | 必須 |
 | TrueGoTo | TrueGoTo | GoToTargetDto? | 必須 |
 | FalseGoTo | FalseGoTo | GoToTargetDto? | 必須 |
@@ -223,7 +223,7 @@
 ---
 
 ## 13. 本書で未確定とする事項
-- `BitmapKind` / `BitmapValue` の厳密ルール
+- `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---
 以上

@@ -111,6 +111,11 @@
 - `searchArea`: SearchArea
 - `tolerance`: 0..100
 - `bitmapSource`: object
+  - `kind`: `CapturedBitmap | FilePath`
+  - `value`: string
+  - `kind=CapturedBitmap` の場合、`value` は Macro 内に保持される画像データに対応する値
+  - `kind=FilePath` の場合、`value` は画像ファイルパス
+  - `Variable` / `Embedded` / その他の画像ソース種別は本版対象外
 - `mouseActionEnabled`: bool
 - `mouseActionBehavior`: string?
 - `mousePosition`: string?
@@ -173,7 +178,7 @@ CSV列の定義は以下を参照する。
 ---
 
 ## 7. 本書で未確定とする事項
-- `bitmapSource` の厳密な許容種別
+- `bitmapSource.kind=CapturedBitmap` の `value` の具体エンコード方式
 
 ---
 以上

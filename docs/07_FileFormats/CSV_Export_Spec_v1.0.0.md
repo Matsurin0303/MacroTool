@@ -56,6 +56,10 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ### 5.4 Detection
 - `FindImage` → `SearchAreaKind, X1, Y1, X2, Y2, Tolerance, BitmapKind, BitmapValue, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
+  - `BitmapKind` は `CapturedBitmap / FilePath` のみ
+  - `Variable` / `Embedded` / その他の画像ソース種別は Export 対象外
+  - `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパス
+  - `BitmapKind=CapturedBitmap` の CSV 上の具体表現は未確定
 - `FindTextOcr` → `Text, Language, SearchAreaKind, X1, Y1, X2, Y2, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
 
 ### 5.5 Control Flow
