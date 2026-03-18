@@ -1,5 +1,5 @@
 ---
-date: 2026-02-26
+date: 2026-03-18
 title: Macro CSV Import Specification
 version: Macro_v1.0.0
 ---
@@ -8,199 +8,197 @@ version: Macro_v1.0.0
 
 ## 1. 目的
 
-本ドキュメントは、MacroTool における CSV Import 仕様を定義する。 対象は
-v1.0.0 時点で実装済みの機能のみとする。
-将来実装予定の機能は本仕様に含めない。
+本ドキュメントは、MacroTool における CSV Import 仕様を定義する。  
+対象は `Macro仕様書_v7.xlsx` に存在する本版機能のみとする。
 
-------------------------------------------------------------------------
+---
 
-# 2. 共通仕様
+## 2. 共通仕様
 
-## 2.1 共通必須列
+### 2.1 共通必須列
+- `Order`
+- `Action`
 
--   `Order`
--   `Action`
+### 2.2 共通任意列
+- `Label`
+- `Comment`
 
-## 2.2 共通任意列
+### 2.3 共通ルール
+- `Order` は数値必須。Import後に内部再採番してよい。
+- `Action` は固定トークン（英語）。未知ActionはImportエラー。
+- `Label` はMacro内で一意。重複時は末尾に連番付与。
 
--   `Label`
--   `Comment`
+---
 
-### Order
-
--   数値必須
--   Import後に内部で再採番してよい
-
-### Action
-
--   固定トークン（英語）
--   未知Actionは Importエラー
-
-### Label
-
--   Macro内で一意
--   重複時は末尾に連番付与
-
-------------------------------------------------------------------------
-
-# 3. GoToターゲット形式
-
-対象列：
-
--   `GoTo`
--   `TrueGoTo`
--   `FalseGoTo`
--   `FinishGoTo`
-
-## 許容値
-
--   `Start`
--   `Next`
--   `End`
--   `Label:<ラベル名>`
-
-例:
-
-Label:Jump先
-
-### バリデーション
-
--   `Label:` の後ろが空はエラー
--   参照ラベルが存在しない場合は Importエラー
-
-------------------------------------------------------------------------
-
-# 4. SearchArea仕様
+## 3. GoToターゲット形式
 
 対象列:
+- `GoTo`
+- `TrueGoTo`
+- `FalseGoTo`
+- `FinishGoTo`
 
--   `SearchAreaKind`
--   `X1,Y1,X2,Y2`
+許容値:
+- `Start`
+- `Next`
+- `End`
+- `Label:<ラベル名>`
 
-## 許容値
+バリデーション:
+- `Label:` の後ろが空はエラー
+- 参照ラベルが存在しない場合はImportエラー
 
--   `EntireDesktop`
--   `AreaOfDesktop`
--   `FocusedWindow`
--   `AreaOfFocusedWindow`
+---
 
-### ルール
+## 4. SearchArea仕様
 
--   Area系は X1,Y1,X2,Y2 必須
--   X2 \> X1 かつ Y2 \> Y1
+対象列:
+- `SearchAreaKind`
+- `X1`
+- `Y1`
+- `X2`
+- `Y2`
 
-------------------------------------------------------------------------
+許容値:
+- `EntireDesktop`
+- `AreaOfDesktop`
+- `FocusedWindow`
+- `AreaOfFocusedWindow`
 
-# 5. Action別 必須列一覧
+ルール:
+- Area系は `X1,Y1,X2,Y2` 必須
+- `X2 > X1` かつ `Y2 > Y1`
 
-## 5.1 Mouse
+---
 
-### MouseClick
+## 5. Action別必須列
 
-必須: - MouseButton - ClickType - Relative - X - Y
+### 5.1 Mouse
 
-------------------------------------------------------------------------
+#### MouseClick
+必須:
+- `MouseButton`
+- `ClickType`
+- `Relative`
+- `X`
+- `Y`
 
-### MouseMove
+#### MouseMove
+必須:
+- `Relative`
+- `StartX`
+- `StartY`
+- `EndX`
+- `EndY`
+- `DurationMs`
 
-必須: - Relative - StartX - StartY - EndX - EndY - DurationMs
+#### MouseWheel
+必須:
+- `WheelOrientation`
+- `WheelValue`
 
-------------------------------------------------------------------------
+### 5.2 Key
 
-### MouseWheel
+#### KeyPress
+必須:
+- `KeyOption`
+- `Key`
+- `Count`
 
-必須: - WheelOrientation - WheelValue
+### 5.3 Wait
 
-------------------------------------------------------------------------
+#### Wait
+必須:
+- `WaitingMs`
 
-## 5.2 Key
+#### WaitForPixelColor
+必須:
+- `X`
+- `Y`
+- `Color`
+- `Tolerance`
+- `WaitingMs`
+- `TrueGoTo`
+- `FalseGoTo`
 
-### KeyPress
+#### WaitForTextInput
+必須:
+- `Text`
+- `WaitingMs`
+- `TrueGoTo`
+- `FalseGoTo`
 
-必須: - KeyOption - Key - Count
+### 5.4 Detection
 
-------------------------------------------------------------------------
+#### FindImage
+必須:
+- `SearchAreaKind`
+- `Tolerance`
+- `BitmapKind`
+- `BitmapValue`
+- `WaitingMs`
+- `TrueGoTo`
+- `FalseGoTo`
 
-## 5.3 Wait
+#### FindTextOcr
+必須:
+- `Text`
+- `Language`
+- `SearchAreaKind`
+- `WaitingMs`
+- `TrueGoTo`
+- `FalseGoTo`
 
-### Wait
+### 5.5 Control Flow
 
-必須: - WaitingMs
+#### GoTo
+必須:
+- `GoTo`
 
-------------------------------------------------------------------------
+#### If
+必須:
+- `VariableName`
+- `ConditionType`
+- `ConditionValue`
+- `TrueGoTo`
+- `FalseGoTo`
 
-### WaitForPixelColor
-
-必須: - X - Y - Color (#RRGGBB) - Tolerance (0-100) - WaitingMs -
-TrueGoTo - FalseGoTo
-
-------------------------------------------------------------------------
-
-## 5.4 Detection
-
-### FindImage
-
-必須: - SearchAreaKind - Tolerance - BitmapKind - BitmapValue -
-WaitingMs - TrueGoTo - FalseGoTo
-
-------------------------------------------------------------------------
-
-### FindTextOcr
-
-必須: - Text - Language - SearchAreaKind - WaitingMs - TrueGoTo -
-FalseGoTo
-
-------------------------------------------------------------------------
-
-## 5.5 Control Flow
-
-### GoTo
-
-必須: - GoTo
-
-------------------------------------------------------------------------
-
-### If
-
-必須: - VariableName - ConditionType - ConditionValue - TrueGoTo -
-FalseGoTo
-
-------------------------------------------------------------------------
-
-### Repeat
-
-必須: - StartLabel - RepeatMode - FinishGoTo
+#### Repeat
+必須:
+- `StartLabel`
+- `RepeatMode`
+- `FinishGoTo`
 
 RepeatMode別必須:
+- `Seconds` → `Seconds`
+- `Repetitions` → `Repetitions`
+- `Until` → `Until`
 
--   Seconds → Seconds
--   Repetitions → Repetitions
--   Until → Until
+#### EmbedMacroFile
+必須:
+- `Path`
 
-------------------------------------------------------------------------
+#### ExecuteProgram
+必須:
+- `Path`
 
-# 6. エラー方針
+---
 
-以下は Importエラーとする:
+## 6. エラー方針
 
--   必須列が空
--   数値変換不可
--   範囲外
--   未知Action
--   ラベル参照不整合
--   SaveXVariable / SaveYVariable の片側のみ指定
+以下はImportエラーとする。
+- 必須列が空
+- 数値変換不可
+- 範囲外
+- 未知Action
+- ラベル参照不整合
 
-------------------------------------------------------------------------
+---
 
-# 7. 配置場所
+## 7. 本書で未確定とする事項
+以下は別チケットで定義する。
+- `Import from CSV` が「新規作成」か「追加」かの詳細運用
+- `MouseButton` / `ClickType` の厳密な列挙値
 
-本仕様書は以下に配置することを推奨する:
-
-    docs/06_Persistence/CSV_Import_Spec_v1.0.0.md
-
-FileFormat_Spec.md とは分離し、
-永続化仕様とImportバリデーション仕様を分けて管理する。
-
-------------------------------------------------------------------------
-
+---
 以上

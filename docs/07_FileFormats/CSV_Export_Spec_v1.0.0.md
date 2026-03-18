@@ -1,5 +1,5 @@
 ---
-date: 2026-02-26
+date: 2026-03-18
 title: Macro CSV Export Specification
 version: Macro_v1.0.0
 ---
@@ -8,181 +8,74 @@ version: Macro_v1.0.0
 
 ## 1. 目的
 
-本ドキュメントは、MacroTool における CSV Export 仕様を定義する。 対象は
-v1.0.0 時点で実装済みの機能のみとする。 本仕様は
-CSV_Import_Spec_v1.0.0.md と対になるものである。
+本ドキュメントは、MacroTool における CSV Export 仕様を定義する。  
+対象は `Macro仕様書_v7.xlsx` に存在する本版機能のみとする。
 
-------------------------------------------------------------------------
+---
 
-# 2. 基本方針
+## 2. 基本方針
 
--   Exportフォーマットは Import仕様と完全一致させる
--   不要な列は出力しない（ただしヘッダは固定）
--   未使用列は空欄で出力する
--   内部ドメイン表現に依存しない形式で出力する
+- ExportフォーマットはImport仕様と一致させる
+- ヘッダは固定
+- 未使用列は空欄で出力する
+- 内部ドメイン表現に依存しない
 
-------------------------------------------------------------------------
+---
 
-# 3. ヘッダ（固定）
+## 3. ヘッダ（固定）
 
-``` csv
-Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue
+```csv
+Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path
 ```
 
--   ヘッダ順は固定
--   将来列追加時は Macro_vX+1.0 とする
+---
 
-------------------------------------------------------------------------
+## 4. 共通出力ルール
 
-# 4. 共通出力ルール
+- `Order` は表示順で出力する
+- `Label` 未設定時は空欄
+- `Comment` は任意
+- GoTo列は `Start / Next / End / Label:<ラベル名>` 形式で出力する
 
-## 4.1 Order
+---
 
--   0開始または1開始はどちらでもよい
--   出力順は画面表示順と一致させる
+## 5. Action別出力仕様
 
-## 4.2 Label
+### 5.1 Mouse
+- `MouseClick` → `MouseButton, ClickType, Relative, X, Y`
+- `MouseMove` → `Relative, StartX, StartY, EndX, EndY, DurationMs`
+- `MouseWheel` → `WheelOrientation, WheelValue`
 
--   未設定の場合は空欄
--   Domainで一意保証された値をそのまま出力
+### 5.2 Key
+- `KeyPress` → `KeyOption, Key, Count`
 
-## 4.3 Comment
+### 5.3 Wait
+- `Wait` → `WaitingMs`
+- `WaitForPixelColor` → `X, Y, Color, Tolerance, WaitingMs, TrueGoTo, FalseGoTo`
+- `WaitForTextInput` → `Text, WaitingMs, TrueGoTo, FalseGoTo`
 
--   任意
--   改行はCSV仕様に従いダブルクォートで囲む
+### 5.4 Detection
+- `FindImage` → `SearchAreaKind, X1, Y1, X2, Y2, Tolerance, BitmapKind, BitmapValue, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
+- `FindTextOcr` → `Text, Language, SearchAreaKind, X1, Y1, X2, Y2, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
 
-------------------------------------------------------------------------
+### 5.5 Control Flow
+- `GoTo` → `GoTo`
+- `If` → `VariableName, ConditionType, ConditionValue, TrueGoTo, FalseGoTo`
+- `Repeat` → `StartLabel, RepeatMode, Seconds, Repetitions, Until, FinishGoTo`
+- `EmbedMacroFile` → `Path`
+- `ExecuteProgram` → `Path`
 
-# 5. GoTo出力形式
+---
 
-対象列： - GoTo - TrueGoTo - FalseGoTo - FinishGoTo
+## 6. エンコード仕様
+- UTF-8（BOMなし推奨）
+- 改行コードは CRLF を推奨
 
-出力形式：
+---
 
--   Start
--   Next
--   End
--   Label:`<ラベル名>`{=html}
+## 7. 本書で未確定とする事項
+以下は別チケットで定義する。
+- `MouseButton` / `ClickType` の厳密な列挙値
 
-例: Label:Jump先
-
-------------------------------------------------------------------------
-
-# 6. SearchArea出力
-
-SearchAreaKind が Area系の場合のみ X1,Y1,X2,Y2 を出力。 それ以外は空欄。
-
-------------------------------------------------------------------------
-
-# 7. Action別 出力仕様
-
-## 7.1 Mouse
-
-### MouseClick
-
-出力列: MouseButton, ClickType, Relative, X, Y
-
-------------------------------------------------------------------------
-
-### MouseMove
-
-出力列: Relative, StartX, StartY, EndX, EndY, DurationMs
-
-------------------------------------------------------------------------
-
-### MouseWheel
-
-出力列: WheelOrientation, WheelValue
-
-------------------------------------------------------------------------
-
-## 7.2 Key
-
-### KeyPress
-
-出力列: KeyOption, Key, Count
-
-------------------------------------------------------------------------
-
-## 7.3 Wait
-
-### Wait
-
-出力列: WaitingMs
-
-------------------------------------------------------------------------
-
-### WaitForPixelColor
-
-出力列: X, Y, Color (#RRGGBB), Tolerance, WaitingMs, TrueGoTo, FalseGoTo
-
-------------------------------------------------------------------------
-
-## 7.4 Detection
-
-### FindImage
-
-出力列: SearchAreaKind, Tolerance, BitmapKind, BitmapValue, WaitingMs,
-TrueGoTo, FalseGoTo
-
-オプション: MouseActionBehavior, MousePosition, SaveXVariable,
-SaveYVariable
-
-------------------------------------------------------------------------
-
-### FindTextOcr
-
-出力列: Text, Language, SearchAreaKind, WaitingMs, TrueGoTo, FalseGoTo
-
-オプション: MouseActionBehavior, MousePosition, SaveXVariable,
-SaveYVariable
-
-------------------------------------------------------------------------
-
-## 7.5 Control Flow
-
-### GoTo
-
-出力列: GoTo
-
-------------------------------------------------------------------------
-
-### If
-
-出力列: VariableName, ConditionType, ConditionValue, TrueGoTo, FalseGoTo
-
-------------------------------------------------------------------------
-
-### Repeat
-
-出力列: StartLabel, RepeatMode, FinishGoTo
-
-RepeatMode別: - Seconds → Seconds - Repetitions → Repetitions - Until →
-Until
-
-------------------------------------------------------------------------
-
-# 8. エンコード仕様
-
--   UTF-8（BOMなし推奨）
--   改行コード：CRLF
-
-------------------------------------------------------------------------
-
-# 9. バージョン管理
-
--   CSV列追加 → Macro_vX+1.0
--   列の意味変更 → Macro_vX+1.0
--   軽微な文書修正 → Macro_vX.Y+1
-
-------------------------------------------------------------------------
-
-# 10. 推奨配置場所
-
-    docs/06_Persistence/CSV_Export_Spec_v1.0.0.md
-
-Import仕様とは別ファイルで管理する。
-
-------------------------------------------------------------------------
-
+---
 以上

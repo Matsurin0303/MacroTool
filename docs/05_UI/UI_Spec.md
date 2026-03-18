@@ -1,163 +1,149 @@
 # UI仕様書（WinForms）
 
 - プロダクト：MacroTool
-- 仕様書バージョン：Macro_vX.Y.Z（リリースタグ `Macro_vX.Y.Z` と一致させる）
-- 最終更新日：YYYY-MM-DD
-- 対象：WinForms UI（見た目＋操作＋入力制約）
-- 前提：ドメイン（DDD）で不変条件を担保し、UIは入力支援とバリデーションを担う
+- 仕様書バージョン：Macro_v1.0.0
+- 最終更新日：2026-03-18
+- 対象：WinForms UI（見た目 + 操作 + 入力制約）
+- 基準資料：`Macro仕様書_v7.xlsx` / `docs/02_Requirements/Functional_Spec.md`
 
 ---
 
-## 0. 重要注意（番号の扱い）
-`docs/images` のファイル名先頭の番号（例：`1-2_Open.png`）は **UI画像側の整理番号**であり、  
-機能仕様書（開発ID）と **一致しない可能性**がある。
+## 0. 目的
 
-運用上は、必要に応じて機能仕様書側に「UI画像ID（ファイル名）」列を追加して紐づける。
+本書は、`docs/images` 配下のUI画像と、`Macro仕様書_v7.xlsx` に基づく本版対象機能の対応を定義する。  
+本書の役割は **画像と本版機能スコープの対応付け** であり、動作詳細のSSOTは `Functional_Spec.md` とする。
 
 ---
 
-## 1. 参照（正：画像 / 補助：論理仕様）
+## 1. 参照
 
-### 1.1 UI画像（見た目の正）
-- 画像フォルダ（正）：`docs/images`
-  - **運用方針**：画像は原則移動しない。整理する場合は `docs/images/**` のサブフォルダで分割する。
-
-### 1.2 論理仕様（入力項目・動作の根拠）
-- 機能仕様（状態付き）：`docs/02_FunctionSpec/MacroTool_MacroSpecification_v1.0.md`
+- 画像フォルダ：`docs/images`
+- 機能仕様：`docs/02_Requirements/Functional_Spec.md`
 - ドメイン仕様：`docs/04_Domain/Domain_Model.md`
-- 再生仕様：`docs/05_Playback/Playback_Spec.md`
+- 再生仕様：`docs/06_Playback/Playback_Spec.md`
 
 ---
 
-## 2. 画面一覧と画像対応表（ファイル名確定版）
+## 2. 画面一覧と本版対象
 
-> 「対象」= 本版で実装対象  
-> 「対象外（将来予定）」= UIにあっても本版では処理しない（クリック等で未実装動作にしない方針）
+> 「本版対象」は `Macro仕様書_v7.xlsx` を基準に判定する。  
+> 画像が存在しても、v7 に存在しない項目は **参考画像 / 本版対象外** とする。
 
 ### 2.1 全体
+
 | 画面/領域 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| 全体イメージ | docs/images/0_All.png | 画面全体の構成・メニュー体系 | 対象 |
+| 全体イメージ | `docs/images/0_All.png` | 画面全体の構成 | 対象 |
 
-### 2.2 File メニュー
+### 2.2 File
+
 | 画面/ダイアログ | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| File メニュー全体 | docs/images/1_File.png | File配下の項目一覧 | 対象 |
-| New 確認 | docs/images/1-1-1_Confirmation.png | 新規作成の確認ダイアログ | 対象 |
-| Open | docs/images/1-2_Open.png | ファイル選択/オープン | 対象 |
-| Open 確認 | docs/images/1-2-1_Confirmation.png | オープン前確認 | 対象 |
-| Recent（※画像名Resent）一覧 | docs/images/1-3_ResentFileList.png | 最近使ったファイル一覧 | 対象 |
-| Recent 確認 | docs/images/1-3-1_Confirmation.png | Recent選択時の確認 | 対象 |
-| Schedule macro | docs/images/1-8_ScheduleMacro.png | スケジュール設定画面 | 対象外（将来予定）※運用方針に従う |
-| Settings - Recording | docs/images/1-9-1_Recording.png | 設定（記録） | 対象/対象外は機能仕様の状態で決定 |
-| Settings - Playback | docs/images/1-9-2_Playback.png | 設定（再生） | 対象/対象外は機能仕様の状態で決定 |
-| Settings - Hotkeys | docs/images/1-9-3_Hotkeys.png | 設定（ホットキー） | 対象/対象外は機能仕様の状態で決定 |
-| Settings - User Interface | docs/images/1-9-4_UserInterface.png | 設定（UI） | 対象/対象外は機能仕様の状態で決定 |
-| Settings - Network | docs/images/1-9-5_Network.png | 設定（ネットワーク） | 対象外（将来予定）※一般に影響が大きい |
-| Settings - AI | docs/images/1-9-6_AI.png | 設定（AI） | 対象外（将来予定） |
+| File メニュー全体 | `docs/images/1_File.png` | File配下の項目一覧 | 対象 |
+| New 確認 | `docs/images/1-1-1_Confirmation.png` | 新規作成確認 | 対象 |
+| Open | `docs/images/1-2_Open.png` | 既存マクロを開く | 対象 |
+| Open 確認 | `docs/images/1-2-1_Confirmation.png` | Open前確認 | 対象 |
+| Recent Files 一覧 | `docs/images/1-3_RecentFileList.png` | 最近開いたマクロ一覧 | 対象 |
+| Recent Files 確認 | `docs/images/1-3-1_Confirmation.png` | Recent選択時確認 | 対象 |
+| Save確認 | `docs/images/1-4-1_Confirmation.png` | Save時確認 | 対象 |
+| Schedule macro | `docs/images/1-8_ScheduleMacro.png` | スケジュール設定画面 | 対象 |
+| Settings - Recording | `docs/images/1-9-1_Recording.png` | 設定（記録） | 対象 |
+| Settings - Playback | `docs/images/1-9-2_Playback.png` | 設定（再生） | 対象 |
+| Settings - Hotkeys | `docs/images/1-9-3_Hotkeys.png` | 設定（ホットキー） | 対象 |
+| Settings - User Interface | `docs/images/1-9-4_UserInterface.png` | 設定（UI） | 対象 |
+| Settings - Network | `docs/images/1-9-5_Network.png` | 設定（Network） | 参考画像 / 本版対象外 |
+| Settings - AI | `docs/images/1-9-6_AI.png` | 設定（AI） | 参考画像 / 本版対象外 |
 
-※Settingsは「UIだけ先に存在している」可能性があるため、最終的な対象/対象外は機能仕様（状態列）で確定する。
+### 2.3 Record & Edit
 
-### 2.3 Record & Edit メニュー（Action編集）
 | 画面/カテゴリ | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Record & Edit メニュー全体 | docs/images/2_RecordAndEdit.png | Record/Edit配下の項目一覧 | 対象 |
-| Play | docs/images/2-1Play.png | 再生系操作（Play等） | 対象 |
+| Record & Edit メニュー全体 | `docs/images/2_RecordAndEdit.png` | Record/Edit配下の項目一覧 | 対象 |
+| Play | `docs/images/2-1Play.png` | 再生系操作 | 対象 |
 
 #### 2.3.1 Mouse
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Mouseカテゴリ | docs/images/2-4_Mouse.png | Mouse系Actionのカテゴリ画面 | 対象 |
-| Click | docs/images/2-4-1_Click.png | Mouse Click の入力UI | 対象 |
-| Move | docs/images/2-4-2_Move.png | Mouse Move の入力UI | 対象 |
-| Wheel | docs/images/2-4-3_Wheel.png | Mouse Wheel の入力UI | 対象 |
+| Mouseカテゴリ | `docs/images/2-4_Mouse.png` | Mouse系Actionのカテゴリ画面 | 対象 |
+| Click | `docs/images/2-4-1_Click.png` | Mouse Click入力UI | 対象 |
+| Move | `docs/images/2-4-2_Move.png` | Mouse Move入力UI | 対象 |
+| Wheel | `docs/images/2-4-3_Wheel.png` | Mouse Wheel入力UI | 対象 |
 
 #### 2.3.2 Text / Key
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Text/Keyカテゴリ | docs/images/2-5_TextKey.png | キーボード・テキスト系 | 対象 |
-| KeyPress | docs/images/2-5-1_KeyPress.png | KeyPress の入力UI | 対象 |
-| Text | docs/images/2-5-2_Text.png | テキスト入力（タイプ）UI | 対象 |
+| Text/Keyカテゴリ | `docs/images/2-5_TextKey.png` | キーボード系カテゴリ | 対象 |
+| Key press | `docs/images/2-5-1_KeyPress.png` | Key press入力UI | 対象 |
+| Hotkey | `docs/images/2-5-2_Hotkey.png` | Hotkey入力UI | 対象 |
 
 #### 2.3.3 Wait
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Waitカテゴリ | docs/images/2-6_Wait.png | Wait系カテゴリ | 対象 |
-| Wait | docs/images/2-6-1_Wait.png | 固定時間待機 | 対象 |
-| WaitForPixelColor | docs/images/2-6-2_WaitForPixelColor.png | ピクセル色待ち | 対象 |
-| WaitForScreenChange | docs/images/2-6-3_WaitForScreenChange.png | 画面変化待ち | 対象外（将来予定）  |
-| WaitForHotkey | docs/images/2-6-4_WaitForHotkey.png | ホットキー待ち | 対象外（将来予定） |
-| WaitForTextInput | docs/images/2-6-5_WaitForTextInput.png | テキスト入力待ち | 対象外（将来予定） |
-| WaitForFileChange | docs/images/2-6-6_WaitForFileChange.png | ファイル変更待ち | 対象外（将来予定） |
+| Waitカテゴリ | `docs/images/2-6_Wait.png` | Wait系カテゴリ | 対象 |
+| Wait | `docs/images/2-6-1_Wait.png` | 固定時間待機 | 対象 |
+| Wait for pixel color | `docs/images/2-6-2_WaitForPixelColor.png` | ピクセル色待ち | 対象 |
+| Wait for screen change | `docs/images/2-6-3_WaitForScreenChange.png` | 画面変化待ち | 参考画像 / 本版対象外 |
+| Wait for hotkey | `docs/images/2-6-4_WaitForHotkey.png` | ホットキー待ち | 参考画像 / 本版対象外 |
+| Wait for text input | `docs/images/2-6-5_WaitForTextInput.png` | テキスト入力待ち | 対象 |
+| Wait for file change | `docs/images/2-6-6_WaitForFileChange.png` | ファイル変更待ち | 参考画像 / 本版対象外 |
 
 #### 2.3.4 Image / OCR
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Image/OCRカテゴリ | docs/images/2-7_ImageOCR.png | 画像検出・OCR系カテゴリ | 対象 |
-| FindImage | docs/images/2-7-1_FindImage.png | 画像検索（テンプレマッチ等） | 対象 |
-| FindText | docs/images/2-7-2_FindText.png | OCR検索 | 対象 |
-| CaptureText | docs/images/2-7-3_CaptureText.png | OCR抽出（保存） | 対象外（将来予定） |
-| CaptureImage | docs/images/2-7-4_CaptureImage.png | 画像キャプチャ（保存） | 対象外（将来予定）※スクショ系 |
+| Image/OCRカテゴリ | `docs/images/2-7_ImageOCR.png` | 画像検出・OCR系カテゴリ | 対象 |
+| Find image | `docs/images/2-7-1_FindImage.png` | 画像検出 | 対象 |
+| Find text (OCR) | `docs/images/2-7-2_FindText.png` | OCR検索 | 対象 |
+| Capture text | `docs/images/2-7-3_CaptureText.png` | OCR抽出 | 参考画像 / 本版対象外 |
+| Capture image | `docs/images/2-7-4_CaptureImage.png` | 画像キャプチャ | 参考画像 / 本版対象外 |
 
 #### 2.3.5 Misc
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Miscカテゴリ | docs/images/2-8_Misc.png | そのほか（制御・通知等） | 対象 |
-| Repeat | docs/images/2-8-1_Repeat.png | 繰り返し | 対象 |
-| GoTo | docs/images/2-8-2_GoTo.png | GoTo（Start/Next/End/Label…） | 対象 |
-| Condition | docs/images/2-8-3_Condition.png | 条件分岐（If等） | 対象 |
-| EnableMacroFile | docs/images/2-8-4_EnableMacroFile.png | マクロファイル有効化 | 対象外（将来予定） |
-| ExecuteProgram | docs/images/2-8-5_ExecuteProgram.png | 外部プログラム実行 | 対象外（将来予定） |
-| WindowFocus | docs/images/2-8-6_WindowFocus.png | ウィンドウフォーカス | 対象外（将来予定） |
-| ShowNotification | docs/images/2-8-7_ShowNotification.png | 通知表示 | 対象外（将来予定） |
-| ShowMessageBox | docs/images/2-8-8_ShowMessageBox.png | メッセージボックス | 対象外（将来予定） |
-| SetVariavle（※画像名の綴り） | docs/images/2-8-10_SetVariavle.png | 変数設定 | 対象外（将来予定） |
-| SetVariableFromDataList | docs/images/2-8-11_SetVariableFromDataList.png | データリストから変数設定 | 対象外（将来予定） |
-| SaveVariable | docs/images/2-8-12_SaveVariable.png | 変数保存 | 対象外（将来予定） |
-| Calculate | docs/images/2-8-13_Calculate.png | 計算 | 対象外（将来予定） |
-| ExtractFromWebSite | docs/images/2-8-14_ExtractFromWebSite.png | Web抽出 | 対象外（将来予定） |
+| Miscカテゴリ | `docs/images/2-8_Misc.png` | 制御系カテゴリ | 対象 |
+| Repeat | `docs/images/2-8-1_Repeat.png` | 繰り返し | 対象 |
+| Go to | `docs/images/2-8-2_GoTo.png` | GoTo | 対象 |
+| If | `docs/images/2-8-3_Condition.png` | 条件分岐 | 対象 |
+| Embed macro file | `docs/images/2-8-4_EnableMacroFile.png` | マクロファイル埋め込み | 対象 |
+| Execute program | `docs/images/2-8-5_ExecuteProgram.png` | 外部プログラム実行 | 対象 |
+| Window focus | `docs/images/2-8-6_WindowFocus.png` | ウィンドウフォーカス | 参考画像 / 本版対象外 |
+| Show notification | `docs/images/2-8-7_ShowNotification.png` | 通知表示 | 参考画像 / 本版対象外 |
+| Show message box | `docs/images/2-8-8_ShowMessageBox.png` | メッセージ表示 | 参考画像 / 本版対象外 |
+| Set variable | `docs/images/2-8-10_SetVariavle.png` | 変数設定 | 参考画像 / 本版対象外 |
+| Set variable from data list | `docs/images/2-8-11_SetVariableFromDataList.png` | データリストから変数設定 | 参考画像 / 本版対象外 |
+| Save variable | `docs/images/2-8-12_SaveVariable.png` | 変数保存 | 参考画像 / 本版対象外 |
+| Calculate | `docs/images/2-8-13_Calculate.png` | 計算 | 参考画像 / 本版対象外 |
+| Extract from website | `docs/images/2-8-14_ExtractFromWebSite.png` | Web抽出 | 参考画像 / 本版対象外 |
 
 ### 2.4 Playback / View
+
 | 画面 | 画像ファイル | 内容 | 本版対象 |
 |---|---|---|---|
-| Playback（再生画面/領域） | docs/images/3_PlayBack.png | 再生中の表示・操作 | 対象 |
-| View（表示） | docs/images/4_View.png | 表示メニュー/表示切替 | 対象/対象外は機能仕様の状態で決定 |
+| Playback | `docs/images/3_PlayBack.png` | 再生画面 / 再生領域 | 対象 |
+| View | `docs/images/4_View.png` | 表示関連 | 参考画像（本版範囲は別途定義） |
 
 ---
 
-## 3. 共通UIルール（抜粋：最低限）
+## 3. UI共通ルール
 
-### 3.1 UI状態（Enabled/Disabled）
-- Idle / Recording / Playing の3状態を前提に、編集UIの有効/無効を制御する
-- Playing中：編集（追加/削除/並べ替え/プロパティ変更）は無効
-- Playing中：実行中ステップは一覧で自動選択状態に追従（ユーザー要望）
-- Recording中：再生操作は無効、Stopのみ有効
+### 3.1 状態
+- 公開状態は `Idle` / `Playing` を基本とする。
+- `Playing` 中は編集系UIを無効化する。
+- `Playing` 中は実行中ステップを一覧上で追従表示する。
 
-### 3.2 入力バリデーション（共通）
-- 数値は整数（範囲は各Actionで規定）
-- `#RRGGBB` 形式の色入力（PixelColor等）
-- 文字列は前後空白除去（Label/Variable名など）
+### 3.2 GoTo候補
+- `Start / End / Next / Label`
+- Labelはユーザー定義ラベル一覧から選択する。
 
-### 3.3 GoTo（ターゲット選択）
-- Target候補は「Start / Next / End / Label(ユーザー定義の全件)」
-- Labelは一意
-  - 重複時は末尾に連番付与（例：Jump先, Jump先1, Jump先2）
-  - 末尾が数字の場合はさらにインクリメント（Jump先2 が存在→Jump先3）
+### 3.3 本書で未確定として扱う事項
+以下は本書では決め打ちしない。別チケットで確定する。
+- Schedule macro の詳細挙動
+- Settings の保存先 / 保存単位
+- Recent Files の更新規則
 
 ---
-
-## 4. 対象外（将来実装予定：本版では処理しない）
-以下は UI画像が存在しても **本版では処理しない**（必要なら「対象外（将来予定）」表示を行う）。
-- WaitForHotkey / WaitForTextInput / WaitForFileChange
-- CaptureText / CaptureImage
-- WindowFocus / ShowNotification / ShowMessageBox
-- 変数操作群（SetVariable / SaveVariable / Calculate / DataList 等）
-- Web抽出（ExtractFromWebSite）
-- Network / AI 系の設定（導入範囲が大きいため）
-
----
-
-## 5. 変更履歴（このファイル）
-| 日付 | 版 | 変更内容 | 変更者 |
-|---|---|---|---|
-| YYYY-MM-DD | Macro_vX.Y.Z | 画像一覧の実ファイル名で対応表を確定 |  |
+以上

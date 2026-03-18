@@ -1,214 +1,189 @@
 # ドメイン仕様（Domain Model）
 
 - Version: **Macro_v1.0.0**
-- 更新日: 2026-02-26
+- 更新日: 2026-03-18
 - 対象: **MacroTool**（WinForms / C# / DDD + TDD）
 
-本書は、`docs/02_FunctionSpec/MacroTool_MacroSpecification_v1.0.0.md`（機能仕様）に基づき、実装のブレを防ぐために **ドメイン用語・集約・不変条件**を定義する。
+本書は、`Macro仕様書_v7.xlsx` および `docs/02_Requirements/Functional_Spec.md` に基づき、ドメイン用語・集約・不変条件を定義する。
 
 ---
 
 ## 1. スコープ
 
-### 1.1 本版で扱うもの（Macro_v1.0.0）
-- Macro（マクロ）と Step（ステップ）と Action（アクション）
-- 編集（追加/削除/並べ替え/プロパティ変更）に必要な不変条件
-- 再生（実行）に必要な **参照整合性**（GoToターゲット、Label一意、検索領域の妥当性など）
+### 1.1 本版で扱うもの
+- Macro / Step / Action
+- GoTo / Repeat / If の参照整合性
+- SearchArea、Color、Duration などの値オブジェクト
+- 本版対象Actionの永続化に必要な不変条件
 
-### 1.2 本版で扱わないもの（将来実装予定）
-機能仕様内で「将来実装予定」と明記されるものは **ドメインモデルに含めない**。  
-（例：Wait for hotkey press、Wait for file change、Capture text/image、Barcode/QR、2-8-6〜2-8-14 の変数/通知/WEB抽出等）
+### 1.2 本版で扱わないもの
+`Macro仕様書_v7.xlsx` に存在しないもの、または将来実装予定とするものは本書に含めない。  
+例:
+- Wait for screen change
+- Wait for hotkey
+- Wait for file change
+- Capture text / Capture image
+- Window focus / Show notification / Show message box
+- 変数操作群 / Web抽出
 
 ---
 
-## 2. ユビキタス言語（用語集）
+## 2. ユビキタス言語
 
 | 用語 | 意味 |
 |---|---|
-| Macro | アクション列を持つ実行単位（集約ルート） |
-| Step | Macro内の1行（順序を持つ） |
-| Action | Stepが実行する具体的な操作（Mouse/Key/Wait/Detection/ControlFlow など） |
-| Label | GoTo/Repeat 等の参照先として使う **一意な行識別子** |
-| GoTo | 実行位置を Start/Next/End/Label に移動する制御 |
-| Variable | 実行中に値を保持する領域（本版は “参照/保存先” を値オブジェクトとして扱う） |
-| SearchArea | 検索・監視対象（Entire Desktop / Area of Desktop / Focused window / Area of Focused window） |
-| Rect | 監視/検索領域の矩形（X1,Y1,X2,Y2） |
-| Playback | Macroを上から順に評価し、必要に応じて分岐・待機する実行処理 |
+| Macro | Action列を持つ実行単位（集約ルート） |
+| Step | Macro内の1行 |
+| Action | Stepが実行する操作 |
+| Label | GoTo / Repeat の参照先となる一意な行識別子 |
+| GoToTarget | Start / Next / End / Label で表される遷移先 |
+| VariableName | 実行時に利用する変数名 |
+| SearchArea | 監視 / 検索対象（EntireDesktop / AreaOfDesktop / FocusedWindow / AreaOfFocusedWindow） |
+| Rect | X1, Y1, X2, Y2 で定義される矩形 |
+| Playback | Macroを順に評価し、必要に応じて待機や分岐を行う処理 |
 
 ---
 
-## 3. 集約設計（DDD）
+## 3. 集約設計
 
-### 3.1 集約ルート: Macro
-**責務**
-- Stepの順序と整合性を守る
-- Labelの一意性を守る（追加/変更/複製時）
-- GoTo/Repeat など “参照を持つ Action” の参照整合性を守る（少なくとも検証可能にする）
+### 3.1 Macro（集約ルート）
+責務:
+- Step順序の整合性を保つ
+- Label一意性を保つ
+- Label参照を持つActionの整合性を検証可能にする
 
-**保持するもの（例）**
+代表プロパティ:
 - `MacroId`
 - `IReadOnlyList<MacroStep> Steps`
-- `MacroVersion SpecVersion`（例：Macro_v1.0.0）
+- `MacroVersion SpecVersion`
 
-### 3.2 エンティティ: MacroStep
-**責務**
-- 1行を表し、順序（Index/Order）を持つ
-- 任意で `StepLabel?` を持つ（Labelなしの行もある）
-- 1つの `MacroAction` を持つ
+### 3.2 MacroStep
+責務:
+- 1行の順序を表す
+- 任意でLabelを持つ
+- 1つのActionを持つ
 
-**推奨プロパティ（例）**
+代表プロパティ:
 - `StepId`
-- `int Order`（0..n-1 の連番）
+- `int Order`
 - `StepLabel? Label`
 - `MacroAction Action`
 
 ---
 
-## 4. 値オブジェクト（Value Objects）
+## 4. 値オブジェクト
 
 ### 4.1 StepLabel
-- `string Value`（トリム後の値を保持）
-
-**正規化（推奨）**
-- 前後空白は除去して扱う
-- 文字種の制限は最小限（日本語可）
+- `string Value`
+- 前後空白除去後の値を保持する
 
 ### 4.2 GoToTarget
-- 種別: `Start | Next | End | Label`
-- `Label` の場合は `StepLabel` を保持（参照）
+- Kind: `Start | Next | End | Label`
+- `Label` の場合のみ `StepLabel` を保持する
 
 ### 4.3 SearchArea / Rect
-- `SearchAreaKind`（4種類）
-- Kindが Area を含む場合は `Rect` 必須
+- SearchAreaKind が Area系なら `Rect` 必須
+- Rectは `X2 > X1` かつ `Y2 > Y1`
 
-Rectは `X1,Y1,X2,Y2` の4点で保持し、**幅・高さが正**であることが必要。
+### 4.4 ColorCode / Percentage / Milliseconds
+- `ColorCode`: `#RRGGBB`
+- `Percentage`: 0..100
+- `Milliseconds`: 0以上
 
-### 4.4 ColorCode / Tolerance / Duration
-- `ColorCode`：RGB（#RRGGBB）を内部表現に変換
-- `Percentage`：0〜100
-- `Milliseconds`：0以上（※Timeoutをどう扱うかは Action ごとに定義）
-
-### 4.5 VariableName / VariableRef
-- UIで入力・選択される “変数名” を値オブジェクト化
-- 本版は「保存先として指定できる」ことが前提（型は string/int/point 等が入る想定）
+### 4.5 VariableName
+- UIで入力される変数名を値オブジェクトとして扱う
+- 型体系やスコープは別チケットで確定する
 
 ---
 
-## 5. アクション体系（ドメイン型）
-
-> 実装では `MacroAction` 抽象クラス + 派生型（レコードでも可）を推奨。  
-> UIの各ダイアログは **Actionの編集UI** として位置づける。
+## 5. アクション体系
 
 ### 5.1 Mouse
-- `MouseClickAction`（button, clickType, relative, x, y）
-- `MouseMoveAction`（relative, startX/Y, endX/Y, durationMs）
-- `MouseWheelAction`（orientation, value）
+- `MouseClickAction`
+- `MouseMoveAction`
+- `MouseWheelAction`
 
 ### 5.2 Key
-- `KeyPressAction`（option: Press/Down/Up, key, count）
-- `HotkeyAction`（入力されたChordを KeyPress列へ展開する “編集操作” として扱う）
-  - ドメイン的には **Hotkey自体を保存しない**でOK（保存するなら “元入力” と “展開結果” の整合ルールが必要）
+- `KeyPressAction`
+- `HotkeyAction`
+  - 編集操作として扱い、永続化時は KeyPress 群へ展開する
 
 ### 5.3 Wait
-- `WaitAction`（valueMs）
-- `WaitForPixelColorAction`（x,y,color,tolerance,waitingMs,trueGoTo,falseGoTo）
+- `WaitAction`
+- `WaitForPixelColorAction`
+- `WaitForTextInputAction`
 
 ### 5.4 Detection
-- `FindImageAction`（searchArea(+rect), bitmapSource, tolerance, mouseAction?, saveCoordinate?, trueGoTo,falseGoTo, waitingMs）
-- `FindTextOcrAction`（text, language, searchArea(+rect), mouseAction?, saveCoordinate?, trueGoTo,falseGoTo, waitingMs）
+- `FindImageAction`
+- `FindTextOcrAction`
 
 ### 5.5 ControlFlow
-- `RepeatAction`（startLabel, condition(Seconds/Repetitions/Until/Infinite), finishGoTo）
-- `GoToAction`（target）
-- `IfAction`（variableName, conditionType, value?, trueGoTo, falseGoTo）
-- `EmbedMacroFileAction`（path）
-- `ExecuteProgramAction`（path）
+- `RepeatAction`
+- `GoToAction`
+- `IfAction`
+- `EmbedMacroFileAction`
+- `ExecuteProgramAction`
 
 ---
 
-## 6. ドメイン不変条件（最重要）
+## 6. ドメイン不変条件
 
-### 6.1 Macro / Step の不変条件
-1. **Stepの順序は 0..n-1 の連番**（重複なし）
-2. Stepを削除/挿入したら、Orderは再採番される（UI表示順＝Order）
-3. `StepLabel` は Macro内で **一意**
+### 6.1 Macro / Step
+1. Step順序は 0..n-1 の連番
+2. UI表示順とOrderは一致する
+3. StepLabel は Macro 内で一意
 
-### 6.2 Label一意性ルール（生成規約）
-- 入力されたLabel（トリム後）が既存と重複する場合、末尾に数字を付与して一意化する  
-  - 例：`Jump先` が存在 → 新規は `Jump先1`  
-  - `Jump先1` も存在 → `Jump先2` …
-- すでに末尾が数字のLabelを複製/追加する場合は、末尾数字をインクリメントして一意化する  
-  - 例：`Jump先2` が存在 → 新規は `Jump先3`
+### 6.2 Label一意性
+- 重複時は末尾に連番を付与して一意化する
+- 末尾が数字の場合はその数字をインクリメントする
 
-**推奨アルゴリズム**
-- `basePart`（末尾連番を除いた部分）と `n`（末尾数値、なければ0）を抽出  
-- `candidate = basePart + (n==0 ? "" : n)` を基準にし、存在する限り `n++` で探索
+### 6.3 GoToTarget
+- `Start / Next / End` は常に有効
+- `Label` は Macro内に存在するLabelのみ指定可能
 
-### 6.3 GoToTarget の不変条件
-- `Start/Next/End` は常に有効
-- `Label` は、Macro内に存在するLabelのみ指定可能
-  - Label削除時は参照を壊さないように、編集操作で検知できること（例：検証エラー、または自動置換は別仕様）
+### 6.4 SearchArea / Rect
+- Area系の場合のみ Rect 必須
+- 負座標は許容する
+- 幅 / 高さが0以下のRectは無効
 
-### 6.4 SearchArea / Rect の不変条件
-- SearchArea が Area 系の場合、Rect必須
-- Rectは `width > 0 && height > 0`
-  - `width = X2 - X1`、`height = Y2 - Y1`
-- 座標はマルチモニタを考慮して負数も許容しうる（禁止しない）。ただし width/height は必須。
+### 6.5 WaitForPixelColor
+- `Tolerance` は 0..100
+- `ColorCode` は `#RRGGBB`
+- `waitingMs` は 0以上
 
-### 6.5 WaitForPixelColor の不変条件
-- `Tolerance` は 0〜100（整数）
-- `ColorCode` は #RRGGBB として解釈可能
-- `waitingMs` は 0以上（0を許すかは仕様で固定。許す場合は “即時判定”）
+### 6.6 WaitForTextInput
+- `textToWaitFor` は空不可
+- `waitingMs` は 0以上
+- `trueGoTo` / `falseGoTo` は必須
 
-### 6.6 FindImage / FindTextOcr の不変条件（要点）
-- FindImage は bitmapSource が必須（Capture/File/Variable のいずれか）
-- FindTextOcr は `text` が空でない
-- `Test` ボタンは **UI操作**（ドメイン永続値ではない）として扱う
+### 6.7 FindImage / FindTextOcr
+- FindImage は検索対象画像が必須
+- FindTextOcr は検索文字列が空不可
+- `Test` ボタン状態は永続化しない
 
-### 6.7 Repeat の不変条件
-- Repeat条件（Seconds/Repetitions/Until/Infinite）は **排他**
-- startLabel は Macro内に存在するLabel（または仕様で Start を許すなら別途定義）
-- finishGoTo は Start/Next/End/Label のいずれかで有効
+### 6.8 Repeat
+- 条件 `Seconds / Repetitions / Until / Infinite` は排他
+- `startLabel` は存在するLabelであること
+- `finishGoTo` は有効なGoToTargetであること
 
-### 6.8 If の不変条件
-- variableName は空でない
-- conditionType により `value` の必須/不要が変わる
-  - 例：Defined は value 不要
-  - RegEx を採用する場合は value 必須（ただし FindText の RegEx は将来予定）
+### 6.9 If
+- `variableName` は空不可
+- `conditionType` により `value` の必須 / 任意が変わる
+- 本版の条件種別は `Macro仕様書_v7.xlsx` に存在する列挙値に限定する
 
 ---
 
 ## 7. ドメインサービス（推奨）
-
-### 7.1 LabelUniquenessService
-- 入力Labelを受け取り、Macro内で一意なLabelを返す
-
-### 7.2 MacroValidator
-- Macro全体の参照整合性（Label参照、Rect妥当性等）を検証し、エラー一覧を返す  
-  - UIは保存時/再生開始時に呼び出せる
-
-### 7.3 GoToResolver（再生側）
-- GoToTarget を “次の Step index” に解決する  
-  - Next/End は境界処理が必要（Nextが最終行の次にならない等）
+- `LabelUniquenessService`
+- `MacroValidator`
+- `GoToResolver`
 
 ---
 
-## 8. 状態遷移（アプリ層の責務）
-
-ドメインは原則として「編集可能なデータ構造」を提供し、以下の状態制御はアプリ層（WinForms / Presenter / Application Service）で行う。
-
-- Idle：編集可、再生可
-- Recording：編集不可（記録以外）、Stop可
-- Playing：編集不可、Stop/Cancel可、実行中ステップの自動選択追従（UI要件）
-
----
-
-## 9. 受け入れ基準（TDD向けチェック観点）
-
-- Labelを複製/追加しても Macro内で必ず一意になる
-- GoTo の候補（Start/Next/End/Label一覧）が Macroの状態と常に一致する
-- Area選択が必要な SearchArea で Rectが未設定の Action は検証で弾ける
-- tolerance / color / waitingMs 等の範囲外入力はドメインで弾ける（例外 or Result）
+## 8. アプリケーション層との責務分担
+- UI状態制御はアプリケーション層が担う
+- ドメインは編集可能な正しいデータ構造を提供する
+- 再生状態の詳細遷移は `docs/06_Playback` 側で定義する
 
 ---
 以上
