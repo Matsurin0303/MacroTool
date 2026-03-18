@@ -3,6 +3,60 @@
     <Platform Name="Any CPU" />
     <Platform Name="x64" />
   </Configurations>
+  <Folder Name="/docs/">
+    <File Path="docs/00_Index.md" />
+    <File Path="docs/01_Glossary.md" />
+  </Folder>
+  <Folder Name="/docs/02_Requirements/">
+    <File Path="docs/02_Requirements/Compatibility_Policy.md" />
+    <File Path="docs/02_Requirements/Functional_Spec.md" />
+    <File Path="docs/02_Requirements/NonFunctional_Spec.md" />
+    <File Path="docs/02_Requirements/Product_Spec.md" />
+  </Folder>
+  <Folder Name="/docs/03_Architecture/">
+    <File Path="docs/03_Architecture/Aggregate_Boundary_Spec.md" />
+    <File Path="docs/03_Architecture/Application_Service_Spec.md" />
+    <File Path="docs/03_Architecture/Architecture_Overview.md" />
+    <File Path="docs/03_Architecture/Error_Handling_Policy.md" />
+    <File Path="docs/03_Architecture/Logging_Spec.md" />
+    <File Path="docs/03_Architecture/Threading_Model_Spec.md" />
+  </Folder>
+  <Folder Name="/docs/04_Domain/">
+    <File Path="docs/04_Domain/Domain_Model.md" />
+  </Folder>
+  <Folder Name="/docs/05_UI/">
+    <File Path="docs/05_UI/UI_Flow.md" />
+    <File Path="docs/05_UI/UI_Spec.md" />
+  </Folder>
+  <Folder Name="/docs/06_Playback/">
+    <File Path="docs/06_Playback/InputSimulation_Spec.md" />
+    <File Path="docs/06_Playback/Playback_Spec.md" />
+    <File Path="docs/06_Playback/Playback_StateMachine.md" />
+    <File Path="docs/06_Playback/ScreenCapture_Spec.md" />
+    <File Path="docs/06_Playback/UI_Flow.md" />
+  </Folder>
+  <Folder Name="/docs/07_FileFormats/">
+    <File Path="docs/07_FileFormats/CSV_Column_To_DTO_Mapping.md" />
+    <File Path="docs/07_FileFormats/CSV_Export_Spec_v1.0.0.md" />
+    <File Path="docs/07_FileFormats/CSV_Import_Spec_v1.0.0.md" />
+    <File Path="docs/07_FileFormats/CSV_Schema_v1.0.md" />
+    <File Path="docs/07_FileFormats/Macro_FileFormat_Spec.md" />
+    <File Path="docs/07_FileFormats/Version_Mapping_Table.md" />
+  </Folder>
+  <Folder Name="/docs/07_FileFormats/Migrations/">
+    <File Path="docs/07_FileFormats/Migrations/CSV_v1_to_v2.md" />
+  </Folder>
+  <Folder Name="/docs/08_Test/">
+    <File Path="docs/08_Test/Test_Cases_Domain.md" />
+    <File Path="docs/08_Test/Test_Data.md" />
+    <File Path="docs/08_Test/Test_Strategy.md" />
+  </Folder>
+  <Folder Name="/docs/09_Release/">
+    <File Path="docs/09_Release/Changelog_Format.md" />
+    <File Path="docs/09_Release/Git_Branch_Tag_Rule.md" />
+    <File Path="docs/09_Release/Versioning_Rule.md" />
+  </Folder>
+  <Folder Name="/docs/images/" />
   <Folder Name="/src/">
     <Project Path="src/MacroTool.Application/MacroTool.Application.csproj" Id="5dc883c0-9d8f-45f2-9cf1-982869c3461f" />
     <Project Path="src/MacroTool.Domain/MacroTool.Domain.csproj" Id="6ee4b508-29c4-433a-8d20-7c83cda1f5c4" />
