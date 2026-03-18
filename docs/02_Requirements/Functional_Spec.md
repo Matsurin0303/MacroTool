@@ -97,18 +97,18 @@
 | 1-5 | Save As… | マクロを名前を付けて保存 | Button | 名前を付けて保存 |  |
 | 1-6 | Export to CSV | CSVとして出力 | Button | マクロ動作内容CSVとして出力する |  |
 | 1-7 | Import from CSV | CSVから取り込み | Button | CSVの内容を読み取り、現在編集中のマクロへ選択された行位置から追加する |  |
-| 1-8 | Schedule macro | マクロの起動をスケジュールする | Button | 常駐、起動していない場合は実行しない。 |  |
-| 1-8-1 | Start date | 開始年月日(yyyy/MM/DD) | DateTimePicker | 開始年月日 |  |
-| 1-8-2 | Start time | 開始時刻(HH:mm:ss) | DateTimePicker | 開始時刻 |  |
-| 1-8-3 | Recur every | 繰り返し間隔（数値＋単位） | NumericUpDown + ComboBox | Repeat条件 |  |
-| 1-8-3-1 | Execute one | 1回だけ実行 | TextBox | 1回だけ実行 |  |
-| 1-8-3-2 | by minutes | 分実行 | TextBox | 指定された分の間隔で実行 |  |
-| 1-8-3-3 | by hours | 時実行 | TextBox | 指定された時間の間隔で実行 |  |
-| 1-8-3-4 | by days | 日実行 | TextBox | 指定された日にちの間隔で実行 |  |
-| 1-8-3-5 | by weeks | 週実行 | TextBox | 指定された週の間隔で実行 |  |
-| 1-8-3-6 | by months | 月実行 | TextBox | 指定された月の間隔で実行 |  |
-| 1-8-4 | OK | OKボタン | Button | Scheduleを決定 |  |
-| 1-8-5 | Cancel | Cancelボタン | Button | Cancel |  |
+| 1-8 | Schedule macro | マクロの起動をスケジュールする | Button | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-1 | Start date | 開始年月日(yyyy/MM/DD) | DateTimePicker | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-2 | Start time | 開始時刻(HH:mm:ss) | DateTimePicker | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3 | Recur every | 繰り返し間隔（数値＋単位） | NumericUpDown + ComboBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-1 | Execute one | 1回だけ実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-2 | by minutes | 分実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-3 | by hours | 時実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-4 | by days | 日実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-5 | by weeks | 週実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-3-6 | by months | 月実行 | TextBox | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-4 | OK | OKボタン | Button | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
+| 1-8-5 | Cancel | Cancelボタン | Button | 参考機能。**将来予定 / 本版対象外**。 | 実装しない。 |
 | 1-9 | Settings | 設定画面を開く | Button |  | 設定はアプリ全体で1つのローカル設定として扱い、Macroファイルには保存しない。 |
 | 1-9-1 | Recording | 記録に関する設定画面 | ListBoxItem |  |  |
 | 1-9-1-1 | Record mouse paths | マウスの軌道を記録 | CheckBox |  |  |

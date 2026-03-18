@@ -47,7 +47,7 @@ MacroTool は以下の4層で構成する。
 - MainForm
 - Action編集ダイアログ群
 - Settingsダイアログ
-- Schedule macro ダイアログ
+- Schedule macro ダイアログ（**将来予定 / 本版対象外**）
 
 責務:
 - ユーザー入力の取得
@@ -164,3 +164,7 @@ MacroTool は以下の4層で構成する。
 - OCR / 画像検出ライブラリの最終選定
 - マルチモニタ・DPI差異吸収の実装詳細
 
+
+
+## 6. 将来予定として扱う画面
+- Schedule macro は参考機能とし、本版の実装対象から除外する。

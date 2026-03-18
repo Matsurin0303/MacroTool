@@ -46,7 +46,7 @@
 | Recent Files 一覧 | `docs/images/1-3_RecentFileList.png` | 最近開いたマクロ一覧 | 対象 |
 | Recent Files 確認 | `docs/images/1-3-1_Confirmation.png` | Recent選択時確認 | 対象 |
 | Save確認 | `docs/images/1-4-1_Confirmation.png` | Save時確認 | 対象 |
-| Schedule macro | `docs/images/1-8_ScheduleMacro.png` | スケジュール設定画面 | 対象 |
+| Schedule macro | `docs/images/1-8_ScheduleMacro.png` | スケジュール設定画面 | 参考画像 / 将来予定 / 本版対象外 |
 | Settings - Recording | `docs/images/1-9-1_Recording.png` | 設定（記録） | 対象 |
 | Settings - Playback | `docs/images/1-9-2_Playback.png` | 設定（再生） | 対象 |
 | Settings - Hotkeys | `docs/images/1-9-3_Hotkeys.png` | 設定（ホットキー） | 対象 |
@@ -155,9 +155,9 @@
 - 重複パスは一覧内に複数残さず、既存項目を削除して先頭へ再追加する。
 - `Recent Files` から存在しないファイルを選択した場合はエラーを表示し、その項目を一覧から削除する。
 
-### 3.5 本書で未確定として扱う事項
-以下は本書では決め打ちしない。別チケットで確定する。
-- Schedule macro の詳細挙動
+### 3.5 将来予定として扱う事項
+以下は本版では実装しない。参考情報としてのみ扱う。
+- Schedule macro
 
 ---
 以上
