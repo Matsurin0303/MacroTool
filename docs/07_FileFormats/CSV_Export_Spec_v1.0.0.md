@@ -39,26 +39,32 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ---
 
-## 5. Action別出力仕様
+## 5. 変数名 / 変数値ルール
+- `VariableName` / `SaveXVariable` / `SaveYVariable` は `^[A-Za-z_][A-Za-z0-9_]*$` を満たす名称で出力する
+- 変数参照は大文字小文字を区別しない
+- CSV へは変数名のみを出力し、実行時の変数値は出力しない
+- `Save Coordinate` により保存される X / Y は実行時に数値として扱う
 
-### 5.1 Mouse
+## 6. Action別出力仕様
+
+### 6.1 Mouse
 - `MouseClick` → `MouseButton, ClickType, Relative, X, Y`
 - `MouseMove` → `Relative, StartX, StartY, EndX, EndY, DurationMs`
 - `MouseWheel` → `WheelOrientation, WheelValue`
 
-### 5.2 Key
+### 6.2 Key
 - `KeyPress` → `KeyOption, Key, Count`
 - 編集上の `Hotkey` は、Export 時に複数行の `KeyPress` へ正規化して出力する
   - 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）
   - 例: `Ctrl+Shift+S` → `Ctrl/Down`, `Shift/Down`, `S/Press`, `Shift/Up`, `Ctrl/Up`
 - `Action=Hotkey` 行は Export しない
 
-### 5.3 Wait
+### 6.3 Wait
 - `Wait` → `WaitingMs`
 - `WaitForPixelColor` → `X, Y, Color, Tolerance, WaitingMs, TrueGoTo, FalseGoTo`
 - `WaitForTextInput` → `Text, WaitingMs, TrueGoTo, FalseGoTo`
 
-### 5.4 Detection
+### 6.4 Detection
 - `FindImage` → `SearchAreaKind, X1, Y1, X2, Y2, Tolerance, BitmapKind, BitmapValue, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
   - `BitmapKind` は `CapturedBitmap / FilePath` のみ
   - `Variable` / `Embedded` / その他の画像ソース種別は Export 対象外
@@ -66,7 +72,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
   - `BitmapKind=CapturedBitmap` の CSV 上の具体表現は未確定
 - `FindTextOcr` → `Text, Language, SearchAreaKind, X1, Y1, X2, Y2, WaitingMs, TrueGoTo, FalseGoTo, MouseActionBehavior, MousePosition, SaveXVariable, SaveYVariable`
 
-### 5.5 Control Flow
+### 6.5 Control Flow
 - `GoTo` → `GoTo`
 - `If` → `VariableName, ConditionType, ConditionValue, TrueGoTo, FalseGoTo`
 - `Repeat` → `StartLabel, RepeatMode, Seconds, Repetitions, Until, FinishGoTo`
@@ -75,7 +81,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ---
 
-## 6. 列挙値標準
+## 7. 列挙値標準
 
 ### 6.1 MouseClick
 - `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
@@ -89,13 +95,13 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `WheelOrientation`: `Horizontal / Vertical`
 - `KeyOption`: `Press / Down / Up`
 
-## 7. エンコード仕様
+## 8. エンコード仕様
 - UTF-8（BOMなし推奨）
 - 改行コードは CRLF を推奨
 
 ---
 
-## 8. 本書で未確定とする事項
+## 9. 本書で未確定とする事項
 - Hotkey 編集UIへ再構成するための補助メタデータは本版では出力しない
 
 ---

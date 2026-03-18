@@ -71,9 +71,23 @@ version: Macro_v1.0.0
 
 ---
 
-## 5. Action別必須列
+## 5. 変数名ルール
 
-### 5.1 Mouse
+対象列:
+- `VariableName`
+- `SaveXVariable`
+- `SaveYVariable`
+
+ルール:
+- 値が存在する場合、`^[A-Za-z_][A-Za-z0-9_]*$` に一致しなければ Import エラー
+- 変数参照は大文字小文字を区別しない
+- `Count` と `count` は同一変数として扱う
+- CSV は変数値を保持しない。実行時の初期値は `Undefined` とする
+- `Save Coordinate` により保存される X / Y は実行時に数値として格納する
+
+## 6. Action別必須列
+
+### 6.1 Mouse
 
 #### MouseClick
 必須:
@@ -97,7 +111,7 @@ version: Macro_v1.0.0
 - `WheelOrientation`
 - `WheelValue`
 
-### 5.2 Key
+### 6.2 Key
 
 #### KeyPress
 必須:
@@ -110,7 +124,7 @@ version: Macro_v1.0.0
 - `Action=Hotkey` は Import エラーとする
 - Import 後の内部表現は `KeyPress` 群とし、`Hotkey` Action への自動再構成は行わない
 
-### 5.3 Wait
+### 6.3 Wait
 
 #### Wait
 必須:
@@ -133,7 +147,7 @@ version: Macro_v1.0.0
 - `TrueGoTo`
 - `FalseGoTo`
 
-### 5.4 Detection
+### 6.4 Detection
 
 #### FindImage
 必須:
@@ -144,6 +158,9 @@ version: Macro_v1.0.0
 - `WaitingMs`
 - `TrueGoTo`
 - `FalseGoTo`
+
+補足:
+- `SaveXVariable` / `SaveYVariable` を指定する場合は変数名ルールに従う
 
 制約:
 - `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
@@ -160,7 +177,10 @@ version: Macro_v1.0.0
 - `TrueGoTo`
 - `FalseGoTo`
 
-### 5.5 Control Flow
+補足:
+- `SaveXVariable` / `SaveYVariable` を指定する場合は変数名ルールに従う
+
+### 6.5 Control Flow
 
 #### GoTo
 必須:
@@ -173,6 +193,9 @@ version: Macro_v1.0.0
 - `ConditionValue`
 - `TrueGoTo`
 - `FalseGoTo`
+
+制約:
+- `VariableName` は変数名ルールに従う
 
 #### Repeat
 必須:
@@ -195,7 +218,7 @@ RepeatMode別必須:
 
 ---
 
-## 6. 列挙値標準
+## 7. 列挙値標準
 
 ### 6.1 MouseClick
 - `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
@@ -209,7 +232,7 @@ RepeatMode別必須:
 - `WheelOrientation`: `Horizontal / Vertical`
 - `KeyOption`: `Press / Down / Up`
 
-## 7. エラー方針
+## 8. エラー方針
 
 以下はImportエラーとする。
 - 必須列が空
@@ -220,7 +243,7 @@ RepeatMode別必須:
 
 ---
 
-## 8. Import from CSV の取り込み先
+## 9. Import from CSV の取り込み先
 - 取り込み先は **現在編集中のMacro** に固定する。
 - CSVの内容は **選択された行位置から追加** する。
 - 新規Macroを自動作成するImportモードは本版では持たない。

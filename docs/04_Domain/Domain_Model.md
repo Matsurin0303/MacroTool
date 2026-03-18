@@ -92,7 +92,16 @@
 
 ### 4.5 VariableName
 - UIで入力される変数名を値オブジェクトとして扱う
-- 型体系やスコープは別チケットで確定する
+- 形式は `^[A-Za-z_][A-Za-z0-9_]*$` とする
+- 英数字と `_` のみを許可し、先頭数字は禁止する
+- 変数参照は大文字小文字を区別しない
+- `Count` と `count` は同一の `VariableName` として扱う
+
+### 4.6 VariableValue
+- 実行時値は `Undefined / String / Number` のいずれかとする
+- 未設定状態は `Undefined` とする
+- 空文字列や `0` を未設定値として扱わない
+- `Save Coordinate` により保存される X / Y は `Number` とする
 
 ---
 
@@ -173,10 +182,20 @@
 
 ### 6.9 If
 - `variableName` は空不可
+- `variableName` は `VariableName` の命名規則に従う
+- 変数参照は大文字小文字を区別しない
 - `conditionType` により `value` の必須 / 任意が変わる
+- 文字列比較は `String`、数値比較は `Number` に対して評価する
+- `Undefined` に対して数値比較・文字列比較を行う場合の評価結果はアプリケーション層の条件評価仕様に従う
 - 本版の条件種別は `Macro仕様書_v7.xlsx` に存在する列挙値に限定する
 
-### 6.10 Hotkey 正規化
+### 6.10 実行時変数コンテキスト
+- 変数ストアは Playback 開始時に生成し、Playback 終了時に破棄する
+- Playback 開始時、全変数は `Undefined` へ初期化する
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による cycle 開始時にも全変数を `Undefined` へ初期化する
+- 変数値は JSON / CSV へ永続化しない
+
+### 6.11 Hotkey 正規化
 - `HotkeyAction` は保存前に `KeyPressAction` 群へ必ず変換する
 - 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）とする
 - 例: `Ctrl+Shift+S` は `Ctrl Down` → `Shift Down` → `S Press` → `Shift Up` → `Ctrl Up`

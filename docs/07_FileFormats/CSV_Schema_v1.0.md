@@ -45,8 +45,8 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | FinishGoTo | string | Repeat | Repeat | 同上 |
 | MouseActionBehavior | enum | 任意 | FindImage / FindTextOcr | `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick` |
 | MousePosition | enum | 任意 | FindImage / FindTextOcr | `Center / TopLeft / TopRight / BottomLeft / BottomRight` |
-| SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う |
-| SaveYVariable | string | 任意 | FindImage / FindTextOcr | SaveXVariableと組で扱う |
+| SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う。変数名規則に従う |
+| SaveYVariable | string | 任意 | FindImage / FindTextOcr | SaveXVariableと組で扱う。変数名規則に従う |
 | Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100 |
 | Text | string | Action依存 | WaitForTextInput / FindTextOcr | 空不可 |
 | Language | string | FindTextOcr | FindTextOcr | UI選択値 |
@@ -73,7 +73,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | Seconds | int | RepeatMode=Seconds | Repeat | |
 | Repetitions | int | RepeatMode=Repetitions | Repeat | |
 | Until | string | RepeatMode=Until | Repeat | `HH:mm:ss` |
-| VariableName | string | If | If | 空不可 |
+| VariableName | string | If | If | 空不可。変数名規則に従う |
 | ConditionType | string | If | If | v7列挙値 |
 | ConditionValue | string | If | If | `Value is defined` 以外で必須 |
 | Path | string | EmbedMacroFile / ExecuteProgram | EmbedMacroFile / ExecuteProgram | 空不可 |
@@ -116,19 +116,27 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 - `KeyOption`: `Press / Down / Up`
 - `RepeatMode`: `Seconds / Repetitions / Until / Infinite`
 
-## 6. Hotkey の CSV 表現ルール
+## 6. 変数名 / 変数値ルール
+- `VariableName` / `SaveXVariable` / `SaveYVariable` は `^[A-Za-z_][A-Za-z0-9_]*$` に一致しなければならない
+- 変数名の参照は大文字小文字を区別しない
+- CSV は **変数名のみ** を保持し、実行時の変数値は保持しない
+- 実行時の変数型は `String` または `Number` とする
+- 未設定状態は `Undefined` とする
+- `Save Coordinate` により保存される X / Y は実行時に `Number` として格納する
+
+## 7. Hotkey の CSV 表現ルール
 - `Action=Hotkey` は定義しない
 - Hotkey は複数行の `KeyPress` で表現する
 - 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）
 - 復元時も `KeyPress` 群のまま扱い、Hotkey への自動再構成は行わない
 
-## 7. BitmapKind / BitmapValue ルール
+## 8. BitmapKind / BitmapValue ルール
 - `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
 - `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパスを格納する
 - `BitmapKind=CapturedBitmap` の場合、`BitmapValue` は Macro 内に保持される画像データに対応する値を格納する
 - `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
 
-## 8. 本書で未確定とする事項
+## 9. 本書で未確定とする事項
 - `BitmapKind=CapturedBitmap` の CSV 上の具体表現
 
 ---

@@ -173,6 +173,17 @@
 - 例: `Ctrl+Shift+S` は 5 Step の `KeyPress` として保存する
 - JSON 読込時は `KeyPress` 群をそのまま復元し、`Hotkey` Action への自動再構成は行わない
 
+### 5.11 実行時変数ルール
+- JSON / CSV は **変数定義や変数値そのものを保存しない**
+- 変数は Playback 実行時に動的に生成される実行時コンテキストで管理する
+- 変数名は `^[A-Za-z_][A-Za-z0-9_]*$` に従う
+- 変数参照は大文字小文字を区別しない
+- 実行時の値型は `String` または `Number` とする
+- 未設定状態は `Undefined` とする
+- `saveXVariable` / `saveYVariable` に保存される値は `Number` とする
+- Playback 開始時に全変数を `Undefined` へ初期化し、Playback 終了時に破棄する
+- 設定 `Reset variables and list counter on each playback cycle` が有効な場合、Repeat による cycle 開始時にも全変数を `Undefined` へ初期化する
+
 ---
 
 ## 6. CSV（Export / Import）仕様との関係
