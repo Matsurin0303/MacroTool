@@ -95,8 +95,9 @@ MacroTool は以下の4層で構成する。
 1. UI が Application Service を呼ぶ
 2. Application が Repository を利用する
 3. Repository が JSON を読み書きする
-4. Application が DTO を返す
-5. UI が画面更新する
+4. 成功時のみ Application が Recent Files を更新する
+5. Application が DTO を返す
+6. UI が画面更新する
 
 ### 5.2 Export / Import CSV
 1. UI が Import / Export を要求する

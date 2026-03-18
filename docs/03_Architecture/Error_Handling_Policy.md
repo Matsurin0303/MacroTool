@@ -82,10 +82,13 @@
 ### 5.1 New / Open / Recent Files
 - 未保存確認はエラーではなく分岐として扱う。
 - 読込失敗、存在しないファイル、形式不正は ApplicationError。
+- `Recent Files` から存在しないファイルを選択した場合は、ApplicationError をUIへ通知し、同一トランザクション内で該当MRU項目を削除する。
+- 読込に失敗した場合は Recent Files の並び順を更新しない。
 
 ### 5.2 Save / Save As
 - 保存先不正、書込失敗、権限不足は ApplicationError。
 - 永続化前の整合性違反は DomainError。
+- 保存成功時のみ保存先ファイルを Recent Files の先頭へ反映する。保存失敗時は Recent Files を更新しない。
 
 ### 5.3 Import / Export CSV
 - ヘッダ不足、列挙値不正、型変換失敗は ApplicationError。
