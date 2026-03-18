@@ -15,7 +15,7 @@ CSV_v2）に対して、
 -   「過去にExportしたCSVを、将来バージョンでも読める」ことを保証する
 -   互換性を保証する範囲・失敗条件・変換規約を明確化する
 
-> 本方針は `docs/06_Persistence/Version_Mapping_Spec.md`
+> 本方針は `docs/07_FileFormats/Version_Mapping_Table.md`
 > の互換性ポリシーを **上書き（強化）**する。
 
 ------------------------------------------------------------------------
@@ -149,8 +149,8 @@ CSV_v2）に対して、
 
 ## 8. 仕様書配置（推奨）
 
-    docs/06_Persistence/Compatibility_Policy.md
-    docs/06_Persistence/Migrations/
+    docs/02_Requirements/Compatibility_Policy.md
+    docs/07_FileFormats/Migrations/
       ├─ CSV_v1_to_v2.md
       ├─ CSV_v2_to_v3.md
       └─ ...

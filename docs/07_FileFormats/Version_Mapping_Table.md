@@ -107,8 +107,8 @@ v1.0.0 では以下のいずれかでスキーマを識別する。
 
 ## 6.2 CSV_v1.0 の対象仕様書
 
--   `docs/06_Persistence/CSV_Import_Spec_v1.0.0.md`
--   `docs/06_Persistence/CSV_Export_Spec_v1.0.0.md`
+-   `docs/07_FileFormats/CSV_Import_Spec_v1.0.0.md`
+-   `docs/07_FileFormats/CSV_Export_Spec_v1.0.0.md`
 
 ------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ v1.0.0 では以下のいずれかでスキーマを識別する。
 
 # 8. 推奨配置場所
 
-    docs/06_Persistence/Version_Mapping_Spec.md
+    docs/07_FileFormats/Version_Mapping_Table.md
 
 ------------------------------------------------------------------------
 

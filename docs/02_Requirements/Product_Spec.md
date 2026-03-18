@@ -37,19 +37,19 @@
 - Label：GoTo等で参照される一意なラベル
 - GoTo：ターゲット（Start/Next/End/Label…）へ実行位置を移動する制御
 
-詳細は [ドメイン仕様](./04_Domain/Domain_Model.md) を参照。
+詳細は [ドメイン仕様](../04_Domain/Domain_Model.md) を参照。
 
 ## 6. 画面・UI参照
 - UI画像：`docs/images`
-- UIの操作ルール・入力制約： [UI仕様](./03_UI/UI_Spec.md) に定義する  
+- UIの操作ルール・入力制約： [UI仕様](../05_UI/UI_Spec.md) に定義する  
   ※画像だけでは曖昧になりやすいので、必ず文章で補完する
 
 ## 7. 成果物（ドキュメント）
 - 入口：`docs/00_Index.md`
-- 機能仕様（状態付き）：`docs/02_FunctionSpec/MacroTool_MacroSpecification_v1.0.md`
-- UI仕様：`docs/03_UI/UI_Spec.md`
+- 機能仕様（状態付き）：`docs/02_Requirements/Functional_Spec.md`
+- UI仕様：`docs/05_UI/UI_Spec.md`
 - ほかインデックス参照
 
 ## 8. バージョニング
 - 本プロジェクトのリリース番号は `vX.Y.Z` とし、Gitタグは `Macro_vX.Y.Z` を用いる  
-詳細は [Versioning](./Versioning.md) を参照。
+詳細は [Versioning](../09_Release/Versioning_Rule.md) を参照。

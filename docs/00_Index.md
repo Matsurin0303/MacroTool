@@ -33,8 +33,8 @@
 # 4. ファイル仕様
 
 - [マクロJSON仕様](./07_FileFormats/Macro_FileFormat_Spec.md)
-- [CSV Import仕様](./07_FileFormats/CSV_Import_Spec.md)
-- [CSV Export仕様](./07_FileFormats/CSV_Export_Spec.md)
+- [CSV Import仕様](./07_FileFormats/CSV_Import_Spec_v1.0.0.md)
+- [CSV Export仕様](./07_FileFormats/CSV_Export_Spec_v1.0.0.md)
 - [互換ポリシー](./02_Requirements/Compatibility_Policy.md)
 
 ---
@@ -43,7 +43,7 @@
 
 - [非機能仕様](./02_Requirements/NonFunctional_Spec.md)
 - [テスト方針](./08_Test/Test_Strategy.md)
-- [バージョニング規約](../README.md)
+- [バージョニング規約](./09_Release/Versioning_Rule.md)
 
 ---
 

@@ -193,7 +193,7 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 
 ## 8. 推奨配置場所
 
-    docs/06_Persistence/Migrations/CSV_v1_to_v2.md
+    docs/07_FileFormats/Migrations/CSV_v1_to_v2.md
 
 ------------------------------------------------------------------------
 
