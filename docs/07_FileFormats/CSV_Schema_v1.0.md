@@ -34,10 +34,10 @@ Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,Fa
 | Label | string | 任意 | 全Action | 重複時は連番付与 |
 | Comment | string | 任意 | 全Action | メモ |
 | SearchAreaKind | enum | Action依存 | FindImage / FindTextOcr | Area系は座標必須 |
-| X1 | int | Area系 | FindImage / FindTextOcr | 左上X |
-| Y1 | int | Area系 | FindImage / FindTextOcr | 左上Y |
-| X2 | int | Area系 | FindImage / FindTextOcr | 右下X |
-| Y2 | int | Area系 | FindImage / FindTextOcr | 右下Y |
+| X1 | int | Area系 | FindImage / FindTextOcr | 左上X。物理ピクセル。AreaOfDesktop は仮想デスクトップ基準、AreaOfFocusedWindow はフォーカス中ウィンドウ外枠左上基準 |
+| Y1 | int | Area系 | FindImage / FindTextOcr | 左上Y。物理ピクセル。X1/Y1/X2/Y2 は正規化済み矩形として保持 |
+| X2 | int | Area系 | FindImage / FindTextOcr | 右下X。物理ピクセル |
+| Y2 | int | Area系 | FindImage / FindTextOcr | 右下Y。物理ピクセル。0サイズ矩形は不可 |
 | WaitingMs | int | Action依存 | Wait系 / Detection系 | 0以上 |
 | GoTo | string | GoTo | GoTo | `Start/Next/End/Label:<name>` |
 | TrueGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |

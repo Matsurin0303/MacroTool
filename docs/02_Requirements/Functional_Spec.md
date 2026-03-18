@@ -242,12 +242,12 @@
 | 2-6-5-6 | Cancel | Cancelボタン | Button | Cancel |  |
 | 2-7 | Image/OCR | 画像検索、OCRに関わる動作 | ToolStripDropDownButton |  |  |
 | 2-7-1 | Find image | 画像検出動作画面 | Form | Capture bitmap と Load bitmap の優先順位は最新のもの、保存先はなし。 |  |
-| 2-7-1-1 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-1-1-1から2-7-1-1-5までが表示される |
-| 2-7-1-1-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-1-1-2から2-7-1-1-5までの値が自動入力される |
-| 2-7-1-1-2 | X1 | 監視対象エリアの左上X座標 | TextBox | 監視対象エリアの左上X絶対座標値 |  |
-| 2-7-1-1-3 | Y1 | 監視対象エリアの左上Y座標 | TextBox | 監視対象エリアの左上Y絶対座標値 |  |
-| 2-7-1-1-4 | X2 | 監視対象エリアの右下X座標 | TextBox | 監視対象エリアの右下X絶対座標値 |  |
-| 2-7-1-1-5 | Y2 | 監視対象エリアの右下Y座標 | TextBox | 監視対象エリアの右下Y絶対座標値 |  |
+| 2-7-1-1 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-1-1-1から2-7-1-1-5までが表示される。Area of Desktop は仮想デスクトップ基準の物理ピクセル、Area of Focused window はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる。 |
+| 2-7-1-1-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-1-1-2から2-7-1-1-5までの値が自動入力される。背景は見えるまま、赤枠のみ表示、枠内は透過。Esc または右クリックでキャンセル。モニタをまたぐドラッグを許可。 |
+| 2-7-1-1-2 | X1 | 監視対象エリアの左上X座標 | TextBox | 監視対象エリアの左上X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Xを自動入力。 |
+| 2-7-1-1-3 | Y1 | 監視対象エリアの左上Y座標 | TextBox | 監視対象エリアの左上Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Yを自動入力。 |
+| 2-7-1-1-4 | X2 | 監視対象エリアの右下X座標 | TextBox | 監視対象エリアの右下X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Xを自動入力。 |
+| 2-7-1-1-5 | Y2 | 監視対象エリアの右下Y座標 | TextBox | 監視対象エリアの右下Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Yを自動入力。0サイズ矩形は確定しない。 |
 | 2-7-1-2 | Color tolerance | 色許容度 | TextBox | 0-100% | 0で完全一致 |
 | 2-7-1-3 | Test | 検出テスト | Button | 検出した場合は緑文字でDetectedと表示され、検出した対象へマウスカーソルを移動する。未検出の場合は赤文字でNot Detectedと表示する。検出時間は固定で1秒とする。2-7-1-7から2-7-1-11までの設定は反映しない。 |  |
 | 2-7-1-4 | Capture bitmap | 検出対象の画像切り取り | Button | 検出対象の画像を切り取り | すでに画像がある場合は上書き |
@@ -266,12 +266,12 @@
 | 2-7-2 | Find text (OCR) | テキスト検出動作画面 | Form | OCRはWinOCRを使用 |  |
 | 2-7-2-1 | Text to search for | 検出対象テキスト | TextBox | 完全一致 |  |
 | 2-7-2-3 | Language | 検出対象言語 | ComboBox | English, Japanese |  |
-| 2-7-2-4 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-2-4-1から2-7-2-4-5までが表示される |
-| 2-7-2-4-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-2-4-2から2-7-2-4-5までの値が自動入力される |
-| 2-7-2-4-2 | X1 | 監視対象エリアの左上X座標 | TextBox | 監視対象エリアの左上X絶対座標値 |  |
-| 2-7-2-4-3 | Y1 | 監視対象エリアの左上Y座標 | TextBox | 監視対象エリアの左上Y絶対座標値 |  |
-| 2-7-2-4-4 | X2 | 監視対象エリアの右下X座標 | TextBox | 監視対象エリアの右下X絶対座標値 |  |
-| 2-7-2-4-5 | Y2 | 監視対象エリアの右下Y座標 | TextBox | 監視対象エリアの右下Y絶対座標値 |  |
+| 2-7-2-4 | Search area | 監視対象 | ComboBox | Entire Desktop, Area of Desktop, Focused window, Area of Focused window | 監視対象がArea of Desktop, Area of Focused windowの場合、2-7-2-4-1から2-7-2-4-5までが表示される。Area of Desktop は仮想デスクトップ基準の物理ピクセル、Area of Focused window はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる。 |
+| 2-7-2-4-1 | Define | 監視対象エリアの定義 | Button | Defineボタンクリック後、ドラッグアンドドロップで監視対象範囲を指定 | ドラッグアンドドロップ後、2-7-2-4-2から2-7-2-4-5までの値が自動入力される。背景は見えるまま、赤枠のみ表示、枠内は透過。Esc または右クリックでキャンセル。モニタをまたぐドラッグを許可。 |
+| 2-7-2-4-2 | X1 | 監視対象エリアの左上X座標 | TextBox | 監視対象エリアの左上X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Xを自動入力。 |
+| 2-7-2-4-3 | Y1 | 監視対象エリアの左上Y座標 | TextBox | 監視対象エリアの左上Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最小Yを自動入力。 |
+| 2-7-2-4-4 | X2 | 監視対象エリアの右下X座標 | TextBox | 監視対象エリアの右下X座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Xを自動入力。 |
+| 2-7-2-4-5 | Y2 | 監視対象エリアの右下Y座標 | TextBox | 監視対象エリアの右下Y座標値 | 物理ピクセル。Define確定時は開始点/終了点の最大Yを自動入力。0サイズ矩形は確定しない。 |
 | 2-7-2-5 | Test | 検出テスト | Button | 検出した場合は緑文字でDetectedと表示され、検出した対象へマウスカーソルを移動する。未検出の場合は赤文字でNot Detectedと表示する。検出時間は固定で1秒とする。2-7-2-8から2-7-2-12までの設定は反映しない。 |  |
 | 2-7-2-8 | Mouse action | 検出成功時のマウス動作のOn, OFF | CheckBox | チェックボックス |  |
 | 2-7-2-8-1 | Mouse action behavior | 検出成功時のマウス動作 | ComboBox | Positioning, Left-Click, Right-Click, Middle-Click, Double-Click |  |

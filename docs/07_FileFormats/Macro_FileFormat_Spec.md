@@ -100,6 +100,10 @@
 ```json
 { "kind": "EntireDesktop|AreaOfDesktop|FocusedWindow|AreaOfFocusedWindow", "rect": { "x1": 0, "y1": 0, "x2": 100, "y2": 100 } }
 ```
+- `rect` は物理ピクセルで保持する
+- `kind=AreaOfDesktop` の `rect` は仮想デスクトップ基準
+- `kind=AreaOfFocusedWindow` の `rect` はフォーカス中ウィンドウ外枠左上基準
+- 保存時は `x1<=x2`, `y1<=y2` になるよう正規化する
 
 ### 5.3 WaitForTextInput.data
 - `textToWaitFor`: string（空不可）

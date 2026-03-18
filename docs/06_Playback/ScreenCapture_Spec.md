@@ -8,7 +8,7 @@
 
 ## 1. 目的
 
-本書は、Playback 中に `FindImage` / `FindTextOcr` / `WaitForPixelColor` が利用する**画面取得責務**を定義する。
+本書は、Playback 中に `FindImage` / `FindTextOcr` / `WaitForPixelColor` が利用する**画面取得責務**と、`Define` による検索領域指定方法を定義する。
 
 ---
 
@@ -34,62 +34,118 @@
 ### 3.2 Rect
 - `AreaOfDesktop` / `AreaOfFocusedWindow` の場合は `Rect` 必須
 - `Rect` は `X1, Y1, X2, Y2` で定義する
+- 保存単位は**物理ピクセル**とする
+- `X1, Y1` は左上、`X2, Y2` は右下を表す
+- 保存時は `X1=min(startX,endX)`、`Y1=min(startY,endY)`、`X2=max(startX,endX)`、`Y2=max(startY,endY)` に**正規化**する
 - `X2 > X1` かつ `Y2 > Y1` を満たすこと
+- 幅0または高さ0の矩形は無効とし、確定しない
+
+### 3.3 座標原点
+- `EntireDesktop` / `AreaOfDesktop` は**仮想デスクトップ基準**の座標を使用する
+- `FocusedWindow` / `AreaOfFocusedWindow` は**実行時点でフォーカス中のウィンドウ**を対象とする
+- `AreaOfFocusedWindow` の `Rect` は**フォーカス中ウィンドウの外枠左上**を `(0,0)` とする
+- 仮想デスクトップ基準では、マルチモニタ配置により負座標を取り得る
 
 ---
 
-## 4. キャプチャ責務
+## 4. Define 操作仕様
 
-### 4.1 ScreenCaptureService
-- SearchArea から取得対象を解決する
+### 4.1 開始条件
+- `SearchArea` が `AreaOfDesktop` または `AreaOfFocusedWindow` の場合に `Define` を使用できる
+- `Define` 開始時は、現在選択中の `SearchArea` に応じた座標系で矩形を取得する
+
+### 4.2 操作手順
+1. ユーザーが `Define` を押下する
+2. 画面上でドラッグ開始点を取得する
+3. ドラッグ終了点を取得する
+4. 開始点と終了点から矩形を生成する
+5. 正規化後の `X1, Y1, X2, Y2` をUIへ反映する
+
+### 4.3 表示ルール
+- `Define` 中は**背景を見えるまま**にする
+- 選択矩形は**赤枠のみ表示**し、**枠内は透過**とする
+- これにより背景位置を視認できること
+
+### 4.4 キャンセル
+- `Esc` でキャンセルできる
+- 右クリックでもキャンセルできる
+- キャンセル時は `X1, Y1, X2, Y2` を更新しない
+
+### 4.5 完了条件
+- ドラッグで有効矩形が作成された場合のみ確定する
+- 幅0または高さ0の場合はキャンセル扱いとし、値を更新しない
+
+---
+
+## 5. マルチモニタ / DPI
+
+### 5.1 マルチモニタ
+- `AreaOfDesktop` の `Define` は**モニタをまたぐドラッグを許可**する
+- 取得結果は仮想デスクトップ基準の物理ピクセル座標として保持する
+- モニタまたぎにより負座標や大きな座標値を取り得る
+
+### 5.2 DPI
+- Domain / FileFormat に保存する座標は**物理ピクセル**とする
+- DIP / 論理座標への正規化は行わない
+- OS API やUI入力が論理座標を返す場合、Infrastructure 層で物理ピクセルへ変換してから Domain へ渡す
+- 再生時のキャプチャも同じ物理ピクセル基準で評価する
+
+---
+
+## 6. キャプチャ責務
+
+### 6.1 ScreenCaptureService
+- `SearchArea` から取得対象を解決する
 - 必要な領域のビットマップを返す
 - 必要に応じて座標系の変換情報を返す
 
-### 4.2 検出系サービスとの分担
+### 6.2 検出系サービスとの分担
 - OCR 実行自体は `OcrService` の責務
 - 画像一致判定自体は `ImageFinderService` の責務
-- ScreenCaptureService は入力画像の取得責務に限定する
+- `ScreenCaptureService` は入力画像の取得責務に限定する
 
 ---
 
-## 5. 処理フロー
+## 7. 処理フロー
 
-### 5.1 WaitForPixelColor
-1. 対象 SearchArea を解決する
+### 7.1 WaitForPixelColor
+1. 対象 `SearchArea` を解決する
 2. 指定座標の色を取得する
 3. 条件一致まで待機またはタイムアウトする
 
-### 5.2 FindImage
-1. 対象 SearchArea を解決する
+### 7.2 FindImage
+1. 対象 `SearchArea` を解決する
 2. 領域画像を取得する
-3. ImageFinderService へ入力する
+3. `ImageFinderService` へ入力する
 4. 成功時は検出座標を返す
 
-### 5.3 FindTextOcr
-1. 対象 SearchArea を解決する
+### 7.3 FindTextOcr
+1. 対象 `SearchArea` を解決する
 2. 領域画像を取得する
-3. OcrService へ入力する
+3. `OcrService` へ入力する
 4. テキスト一致結果を返す
 
 ---
 
-## 6. 座標系
+## 8. 座標変換
 
-- Domain上の `Rect` は画面上の矩形領域を表す
-- Detection 成功時は、検索領域内座標ではなく**再生側で利用可能な画面座標**へ変換できることが望ましい
-- 変換責務の最終配置は Infrastructure 実装で吸収する
+- Domain上の `Rect` は検索対象の矩形領域を表す
+- `AreaOfDesktop` の `Rect` は仮想デスクトップ基準の物理ピクセルとして扱う
+- `AreaOfFocusedWindow` の `Rect` は外枠左上基準の物理ピクセルとして扱う
+- Detection 成功時は、検索領域内座標ではなく**再生側で利用可能な画面座標**へ変換できること
+- `AreaOfFocusedWindow` で得た相対座標を画面座標へ変換する責務は Infrastructure 実装が持つ
 
 ---
 
-## 7. FocusedWindow の扱い
+## 9. FocusedWindow の扱い
 
 - `FocusedWindow` は実行時点でフォーカス中のウィンドウを対象とする
-- `AreaOfFocusedWindow` は、FocusedWindow 基準で部分矩形を取得する
-- フォーカス取得不能時の扱いは ApplicationError 候補とする
+- `AreaOfFocusedWindow` は、FocusedWindow の外枠左上基準で部分矩形を取得する
+- フォーカス取得不能時の扱いは `ApplicationError` 候補とする
 
 ---
 
-## 8. タイミング
+## 10. タイミング
 
 - 画面取得は Playback 開始時ではなく **各Step評価時** に行う
 - 再利用キャッシュを持つかどうかは本版未確定とする
@@ -97,28 +153,24 @@
 
 ---
 
-## 9. エラー方針
+## 11. エラー方針
 
-- 取得不能、対象外座標、OCR入力不能は ApplicationError 候補とする
-- 予期しないOS API失敗は SystemError 候補とする
+- 取得不能、対象外座標、OCR入力不能は `ApplicationError` 候補とする
+- `Define` のキャンセル、0サイズ矩形、値未更新はユーザーキャンセル扱いとしエラーにしない
+- 予期しないOS API失敗は `SystemError` 候補とする
 - 停止要求を受けた場合は、次のキャンセル可能境界で中断する
 
 ---
 
-## 10. テスト観点
+## 12. テスト観点
 
-- SearchArea 列挙値ごとの対象領域解決
-- Rect 不正値の検証
+- `SearchArea` 列挙値ごとの対象領域解決
+- `Rect` 正規化 (`min/max`) の検証
+- `AreaOfFocusedWindow` の外枠左上原点の検証
+- `Define` の `Esc` / 右クリックキャンセル
+- モニタまたぎドラッグで矩形が保持されること
+- 負座標を含む仮想デスクトップ矩形の保持
+- DPI差異環境でも物理ピクセル基準で一貫すること
 - FocusedWindow 未取得時の失敗
 - 検出座標をマウス操作へ引き渡せること
 - Step評価時に最新画面を取得すること
-
----
-
-## 11. 未確定事項
-
-- マルチモニタ時の仮想スクリーン座標の扱い
-- DPI差異吸収方法
-- 最小キャプチャ単位と性能最適化
-- 画像フォーマット統一方針
-

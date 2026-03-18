@@ -38,8 +38,8 @@
 | Label | GoTo / Repeat の参照先となる一意な行識別子 |
 | GoToTarget | Start / Next / End / Label で表される遷移先 |
 | VariableName | 実行時に利用する変数名 |
-| SearchArea | 監視 / 検索対象（EntireDesktop / AreaOfDesktop / FocusedWindow / AreaOfFocusedWindow） |
-| Rect | X1, Y1, X2, Y2 で定義される矩形 |
+| SearchArea | 監視 / 検索対象（EntireDesktop / AreaOfDesktop / FocusedWindow / AreaOfFocusedWindow）。AreaOfDesktop は仮想デスクトップ基準、AreaOfFocusedWindow はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる |
+| Rect | X1, Y1, X2, Y2 で定義される矩形。物理ピクセルで保持し、保存時は min/max へ正規化する |
 | Playback | Macroを順に評価し、必要に応じて待機や分岐を行う処理 |
 
 ---
