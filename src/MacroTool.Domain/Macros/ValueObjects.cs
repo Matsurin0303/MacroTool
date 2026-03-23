@@ -88,26 +88,26 @@ public enum RepeatConditionKind
 
 public enum IfConditionKind
 {
-    TextEquals,
-    TextBeginsWith,
-    TextEndsWith,
-    TextIncludes,
+    TextEquals = 0,
+    TextBeginsWith = 1,
+    TextEndsWith = 2,
+    TextIncludes = 3,
 
-    TextNotEquals,
-    TextNotBeginsWith,
-    TextNotEndsWith,
-    TextNotIncludes,
+    TextNotEquals = 4,
+    TextNotBeginsWith = 5,
+    TextNotEndsWith = 6,
+    TextNotIncludes = 7,
 
-    TextLongerThan,
-    TextShorterThan,
+    TextLongerThan = 8,
+    TextShorterThan = 9,
 
-    ValueHigherThan,
-    ValueLowerThan,
-    ValueHigherOrEqual,
-    ValueLowerOrEqual,
+    ValueHigherThan = 10,
+    ValueLowerThan = 11,
+    ValueHigherOrEqual = 12,
+    ValueLowerOrEqual = 13,
 
-    RegEx,
-    ValueDefined
+    // 14 は旧 RegEx 用の欠番として予約
+    ValueDefined = 15
 }
 
 public enum ImageTemplateKind

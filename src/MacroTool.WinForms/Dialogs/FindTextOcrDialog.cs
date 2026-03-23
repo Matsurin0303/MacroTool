@@ -333,7 +333,6 @@ public partial class FindTextOcrDialog : Form
         _cmbArea.Enabled = !testing;
         _txtText.Enabled = !testing;
         // 仕様上は存在するが v1.0 では未処理のオプション（UIのみ）
-        _chkRegex.Enabled = !testing;
         _chkOptimizeContrast.Enabled = !testing;
         _chkOptimizeShortText.Enabled = !testing;
         _numTimeoutSec.Enabled = !testing;

@@ -38,7 +38,6 @@ public partial class FindTextOcrDialog
 
     // ===== UI controls (code-behind から参照するためフィールド化) =====
     private TextBox _txtText;
-    private CheckBox _chkRegex;
     private ComboBox _cmbLang;
 
     private CheckBox _chkOptimizeContrast;
@@ -81,7 +80,6 @@ public partial class FindTextOcrDialog
         tblSpec = new TableLayoutPanel();
         lblText = new Label();
         _txtText = new TextBox();
-        _chkRegex = new CheckBox();
         lblLangTitle = new Label();
         _cmbLang = new ComboBox();
         lblAreaTitle = new Label();
@@ -155,20 +153,18 @@ public partial class FindTextOcrDialog
         tblSpec.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         tblSpec.Controls.Add(lblText, 0, 0);
         tblSpec.Controls.Add(_txtText, 0, 1);
-        tblSpec.Controls.Add(_chkRegex, 0, 2);
-        tblSpec.Controls.Add(lblLangTitle, 0, 3);
-        tblSpec.Controls.Add(_cmbLang, 0, 4);
-        tblSpec.Controls.Add(lblAreaTitle, 0, 5);
-        tblSpec.Controls.Add(tblAreaRow, 0, 6);
-        tblSpec.Controls.Add(_chkOptimizeContrast, 0, 7);
-        tblSpec.Controls.Add(_chkOptimizeShortText, 0, 8);
+        tblSpec.Controls.Add(lblLangTitle, 0, 2);
+        tblSpec.Controls.Add(_cmbLang, 0, 3);
+        tblSpec.Controls.Add(lblAreaTitle, 0, 4);
+        tblSpec.Controls.Add(tblAreaRow, 0, 5);
+        tblSpec.Controls.Add(_chkOptimizeContrast, 0, 6);
+        tblSpec.Controls.Add(_chkOptimizeShortText, 0, 7);
         tblSpec.Dock = DockStyle.Fill;
         tblSpec.Location = new Point(10, 26);
         tblSpec.Name = "tblSpec";
-        tblSpec.RowCount = 9;
+        tblSpec.RowCount = 8;
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
-        tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
         tblSpec.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
@@ -196,15 +192,6 @@ public partial class FindTextOcrDialog
         _txtText.ScrollBars = ScrollBars.Vertical;
         _txtText.Size = new Size(674, 58);
         _txtText.TabIndex = 1;
-        // 
-        // _chkRegex
-        // 
-        _chkRegex.AutoSize = true;
-        _chkRegex.Location = new Point(3, 87);
-        _chkRegex.Name = "_chkRegex";
-        _chkRegex.Size = new Size(85, 18);
-        _chkRegex.TabIndex = 2;
-        _chkRegex.Text = "RegEx term";
         // 
         // lblLangTitle
         // 

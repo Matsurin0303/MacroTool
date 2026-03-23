@@ -65,13 +65,16 @@ public sealed class JsonMacroRepository : IMacroRepository
                       ?? throw new InvalidDataException("Invalid macro file.");
 
             var macro = new Macro();
-            foreach (var s in dto.Steps)
-            {
-                if (s.Action is null)
-                    throw new InvalidDataException("Step.Action is null.");
+foreach (var s in dto.Steps)
+{
+    if (s.Action is null)
+        throw new InvalidDataException("Step.Action is null.");
 
-                macro.AddStep(new MacroStep(s.Action, s.Label ?? string.Empty, s.Comment ?? string.Empty));
-            }
+    if (s.Action is IfAction ifAction && (int)ifAction.Condition == 14)
+        throw new InvalidDataException("このマクロファイルには本版対象外の If.RegEx が含まれているため読み込めません。");
+
+    macro.AddStep(new MacroStep(s.Action, s.Label ?? string.Empty, s.Comment ?? string.Empty));
+}
 
             return macro;
         }

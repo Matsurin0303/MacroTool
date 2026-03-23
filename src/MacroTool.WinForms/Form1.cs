@@ -31,16 +31,10 @@ public partial class Form1 : Form
     // Status
     private ToolStripStatusLabel _lblState = null!;
     private ToolStripStatusLabel _lblElapsed = null!;
-    private ToolStripStatusLabel _lblSchedule = null!;
     private readonly System.Windows.Forms.Timer _statusTimer = new();
-
-    // Scheduler (v1.0: アプリ稼働中のみ)
-    private System.Threading.Timer? _scheduleTimer;
-    private DateTime? _scheduledAt;
 
     // v1.0 追加メニュー
     private ToolStripMenuItem? _miExportCsv;
-    private ToolStripMenuItem? _miScheduleMacro;
     private ToolStripMenuItem? _miPlayUntilSelected;
     private ToolStripMenuItem? _miPlayFromSelected;
     private ToolStripMenuItem? _miPlaySelectedOnly;
@@ -139,14 +133,6 @@ public partial class Form1 : Form
             AutoSize = true
         };
         statusStrip1.Items.Add(_lblElapsed);
-
-        _lblSchedule = new ToolStripStatusLabel
-        {
-            Name = "lblSchedule",
-            Text = "スケジュール: なし",
-            AutoSize = true
-        };
-        statusStrip1.Items.Add(_lblSchedule);
 
         // Coreイベント
         _app.StateChanged += (_, __) => BeginInvoke(new Action(UpdateUi));
@@ -380,8 +366,8 @@ public partial class Form1 : Form
     // ===== v1.0: Fileメニュー拡張（CSV出力/スケジュール） =====
     private void InitializeFileMenuExtras()
     {
-        if (_miExportCsv != null || _miScheduleMacro != null)
-        {
+        if (_miExportCsv != null)
+            {
             // Already initialized
             return;
         }
@@ -400,12 +386,6 @@ public partial class Form1 : Form
         };
         _miExportCsv.Click += (_, __) => ExportToCsv();
 
-        _miScheduleMacro = new ToolStripMenuItem("Schedule macro")
-        {
-            Name = "miScheduleMacro"
-        };
-        _miScheduleMacro.Click += (_, __) => ScheduleMacro();
-
         var sepBetweenCsvAndSchedule = new ToolStripSeparator { Name = "miSepCsvSchedule" };
 
         // 既存の区切り線（SaveAs と Settings の間）より前に差し込む
@@ -413,8 +393,6 @@ public partial class Form1 : Form
         if (insertBefore < 0) insertBefore = fileToolStripMenuItem.DropDownItems.Count;
         fileToolStripMenuItem.DropDownItems.Insert(insertBefore, miTriggerMacroByHotkey);
         fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 1, _miExportCsv);
-        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 2, sepBetweenCsvAndSchedule);
-        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 3, _miScheduleMacro);
     }
 
     // ===== v1.0: ToolStrip 拡張（各アクション追加 / 範囲再生 / 編集） =====
@@ -1276,57 +1254,6 @@ public partial class Form1 : Form
         MessageBox.Show(this, "CSVを出力しました。", "Export CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
-    private void ScheduleMacro()
-    {
-        var result = Dialogs.ScheduleMacroDialog.Show(this, _scheduledAt);
-        if (result is null) return;
-
-        if (result.Clear)
-        {
-            ClearSchedule();
-            return;
-        }
-
-        if (result.RunAt is null) return;
-
-        var runAt = result.RunAt.Value;
-        var due = runAt - DateTime.Now;
-        if (due <= TimeSpan.Zero)
-        {
-            MessageBox.Show(this, "未来の時刻を指定してください。", "Schedule", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        ClearSchedule();
-        _scheduledAt = runAt;
-        _scheduleTimer = new System.Threading.Timer(_ =>
-        {
-            try
-            {
-                BeginInvoke(() =>
-                {
-                    // 1回実行
-                    ClearSchedule();
-                    if (_app.State == MacroTool.Application.AppState.Stopped)
-                    {
-                        _app.Play();
-                    }
-                });
-            }
-            catch
-            {
-                // ignore
-            }
-        }, null, due, Timeout.InfiniteTimeSpan);
-    }
-
-    private void ClearSchedule()
-    {
-        _scheduleTimer?.Dispose();
-        _scheduleTimer = null;
-        _scheduledAt = null;
-    }
-
     private void StartRecording()
     {
         if (_app.State != MacroTool.Application.AppState.Stopped) return;
@@ -1357,10 +1284,6 @@ public partial class Form1 : Form
         lblCount.Text = $"{_app.ActionCount} actions";
         lblTime.Text = $"完了まで {FormatHms(_app.UntilDone())}";
         _lblElapsed.Text = $"経過 {FormatHms(_app.Elapsed())}";
-
-        _lblSchedule.Text = _scheduledAt is null
-            ? "スケジュール: なし"
-            : $"スケジュール: {_scheduledAt:yyyy/MM/dd HH:mm:ss}";
     }
 
     private void UpdateButtons()
@@ -1400,7 +1323,6 @@ public partial class Form1 : Form
 
         // File menu extras
         if (_miExportCsv != null) _miExportCsv.Enabled = stopped && hasMacro;
-        if (_miScheduleMacro != null) _miScheduleMacro.Enabled = stopped;
 
         // Range play
         if (_miPlayUntilSelected != null) _miPlayUntilSelected.Enabled = playEnabled && hasSelection;

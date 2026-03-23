@@ -554,7 +554,6 @@ public sealed class SendInputPlayer : IPlayer
             IfConditionKind.ValueHigherOrEqual => ParseDouble(v) >= ParseDouble(cmp),
             IfConditionKind.ValueLowerOrEqual => ParseDouble(v) <= ParseDouble(cmp),
 
-            IfConditionKind.RegEx => Regex.IsMatch(v, cmp),
             IfConditionKind.ValueDefined => !string.IsNullOrWhiteSpace(v),
 
             _ => false
