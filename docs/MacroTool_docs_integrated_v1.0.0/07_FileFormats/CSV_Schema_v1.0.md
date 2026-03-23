@@ -1,0 +1,157 @@
+---
+date: 2026-03-18
+macro_version: Macro_v1.0.0
+title: CSV Schema Dictionary (CSV_v1.0)
+version: CSV_v1.0
+---
+
+# CSVスキーマ定義書（CSV_v1.0）
+
+## 1. 目的
+
+本書は、MacroTool の CSV列（ヘッダ）を SSOT として定義する。  
+Import / Export 仕様は本書に従う。
+
+- 対象: `Macro仕様書_v7.xlsx` に存在する本版機能
+- 方針: ヘッダ順固定 / 未使用列は空欄許容
+
+---
+
+## 2. 固定ヘッダ
+
+```csv
+Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path
+```
+
+---
+
+## 3. 列定義
+
+| 列名 | 型 | 必須条件 | 主な適用Action | 備考 |
+|---|---|---|---|---|
+| Order | int | 全Action | 全Action | 内部再採番可 |
+| Action | string | 全Action | 全Action | 固定トークン |
+| Label | string | 任意 | 全Action | 重複時は連番付与 |
+| Comment | string | 任意 | 全Action | メモ |
+| SearchAreaKind | enum | Action依存 | FindImage / FindTextOcr | Area系は座標必須 |
+| X1 | int | Area系 | FindImage / FindTextOcr | 左上X。物理ピクセル。AreaOfDesktop は仮想デスクトップ基準、AreaOfFocusedWindow はフォーカス中ウィンドウ外枠左上基準 |
+| Y1 | int | Area系 | FindImage / FindTextOcr | 左上Y。物理ピクセル。X1/Y1/X2/Y2 は正規化済み矩形として保持 |
+| X2 | int | Area系 | FindImage / FindTextOcr | 右下X。物理ピクセル |
+| Y2 | int | Area系 | FindImage / FindTextOcr | 右下Y。物理ピクセル。0サイズ矩形は不可 |
+| WaitingMs | int | Action依存 | Wait系 / Detection系 | 0以上 |
+| GoTo | string | GoTo | GoTo | `Start/Next/End/Label:<name>` |
+| TrueGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
+| FalseGoTo | string | Action依存 | Wait系 / If / Detection系 | 同上 |
+| FinishGoTo | string | Repeat | Repeat | 繰り返し完了後に1回だけ適用 |
+| MouseActionBehavior | enum | 任意 | FindImage / FindTextOcr | `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick` |
+| MousePosition | enum | 任意 | FindImage / FindTextOcr | `Center / TopLeft / TopRight / BottomLeft / BottomRight` |
+| SaveXVariable | string | 任意 | FindImage / FindTextOcr | SaveYVariableと組で扱う。変数名規則に従う |
+| SaveYVariable | string | 任意 | FindImage / FindTextOcr | SaveXVariableと組で扱う。変数名規則に従う |
+| Tolerance | int | Action依存 | WaitForPixelColor / FindImage | 0..100。FindImage では `0` が最も厳密、`100` が最も緩い |
+| Text | string | Action依存 | WaitForTextInput / FindTextOcr | 空不可 |
+| Language | string | FindTextOcr | FindTextOcr | UI選択値 |
+| BitmapKind | enum | FindImage | FindImage | `CapturedBitmap / FilePath` |
+| BitmapValue | string | FindImage | FindImage | `BitmapKind` に従う値 |
+| MouseButton | enum | MouseClick | MouseClick | `Left / Right / Middle / SideButton1 / SideButton2` |
+| ClickType | enum | MouseClick | MouseClick | `Click / DoubleClick / Down / Up` |
+| Relative | bool | MouseClick / MouseMove | MouseClick / MouseMove | True / False |
+| X | int | Action依存 | MouseClick / WaitForPixelColor | 用途はAction依存 |
+| Y | int | Action依存 | MouseClick / WaitForPixelColor | 用途はAction依存 |
+| Color | color | WaitForPixelColor | WaitForPixelColor | `#RRGGBB` |
+| StartX | int | MouseMove | MouseMove | |
+| StartY | int | MouseMove | MouseMove | |
+| EndX | int | MouseMove | MouseMove | |
+| EndY | int | MouseMove | MouseMove | |
+| DurationMs | int | MouseMove | MouseMove | 0以上 |
+| WheelOrientation | enum | MouseWheel | MouseWheel | Horizontal / Vertical |
+| WheelValue | int | MouseWheel | MouseWheel | |
+| KeyOption | enum | KeyPress | KeyPress | Press / Down / Up |
+| Key | string | KeyPress | KeyPress | 空不可 |
+| Count | int | KeyPress | KeyPress | 1以上 |
+| StartLabel | string | Repeat | Repeat | 空不可。同一マクロ内の既存Label参照必須 |
+| RepeatMode | enum | Repeat | Repeat | Seconds / Repetitions / Until |
+| Seconds | int | RepeatMode=Seconds | Repeat | |
+| Repetitions | int | RepeatMode=Repetitions | Repeat | |
+| Until | string | RepeatMode=Until | Repeat | `HH:mm:ss` |
+| VariableName | string | If | If | 空不可。変数名規則に従う |
+| ConditionType | string | If | If | v7列挙値 |
+| ConditionValue | string | If | If | `Value is defined` 以外で必須 |
+| Path | string | EmbedMacroFile / ExecuteProgram | EmbedMacroFile / ExecuteProgram | 空不可 |
+
+---
+
+## 4. 既知Action一覧
+
+- `MouseClick`
+- `MouseMove`
+- `MouseWheel`
+- `KeyPress`
+- `Wait`
+- `WaitForPixelColor`
+- `WaitForTextInput`
+- `FindImage`
+- `FindTextOcr`
+- `GoTo`
+- `If`
+- `Repeat`
+- `EmbedMacroFile`
+- `ExecuteProgram`
+
+> 上記以外は CSV_v1.0 Import ではエラーとする。`Hotkey` は既知Actionに含めない。
+
+---
+
+## 5. 列挙値標準
+
+### 5.1 MouseClick
+- `MouseButton`: `Left / Right / Middle / SideButton1 / SideButton2`
+- `ClickType`: `Click / DoubleClick / Down / Up`
+
+### 5.2 Detection
+- `MouseActionBehavior`: `Positioning / LeftClick / RightClick / MiddleClick / DoubleClick`
+- `MousePosition`: `Center / TopLeft / TopRight / BottomLeft / BottomRight`
+
+### 5.3 その他
+- `WheelOrientation`: `Horizontal / Vertical`
+- `KeyOption`: `Press / Down / Up`
+- `RepeatMode`: `Seconds / Repetitions / Until / Infinite`
+
+## 6. 変数名 / 変数値ルール
+- `VariableName` / `SaveXVariable` / `SaveYVariable` は `^[A-Za-z_][A-Za-z0-9_]*$` に一致しなければならない
+- 変数名の参照は大文字小文字を区別しない
+- CSV は **変数名のみ** を保持し、実行時の変数値は保持しない
+- 実行時の変数型は `String` または `Number` とする
+- 未設定状態は `Undefined` とする
+- `Save Coordinate` により保存される X / Y は実行時に `Number` として格納する
+
+## 7. Hotkey の CSV 表現ルール
+- `Action=Hotkey` は定義しない
+- Hotkey は複数行の `KeyPress` で表現する
+- 正規化順は、修飾キー `Down` 群 → 主キー `Press` → 修飾キー `Up` 群（逆順）
+- 復元時も `KeyPress` 群のまま扱い、Hotkey への自動再構成は行わない
+
+## 8. BitmapKind / BitmapValue ルール
+- `BitmapKind` は `CapturedBitmap` または `FilePath` のみを許可する
+- `BitmapKind=FilePath` の場合、`BitmapValue` は画像ファイルパスを格納する
+- `BitmapKind=CapturedBitmap` の場合、`BitmapValue` は Macro 内に保持される画像データに対応する値を格納する
+- `Variable` / `Embedded` / その他の画像ソース種別は本版対象外とする
+
+## 9. Detection 実行ルール
+- `FindImage` で複数候補が存在する場合は、一致度が最も高い候補を採用し、同点時は左上の候補を採用する
+- `FindTextOcr` は、前後空白を除去したうえで完全一致判定する
+- `FindTextOcr` で複数候補が一致した場合は、最も左上の候補を採用する
+- 検出成功時の代表点は `MousePosition` で算出し、マウス操作と `SaveXVariable` / `SaveYVariable` の双方で共通利用する
+- `WaitingMs` 経過まで未検出の場合はエラーにせず `FalseGoTo` 側へ分岐する
+
+## 10. 本書で未確定とする事項
+- `BitmapKind=CapturedBitmap` の CSV 上の具体表現
+
+---
+以上
+
+## 7. Repeat 実行ルール
+- 繰り返し範囲は `StartLabel` の行から Repeat 行の直前まで
+- `StartLabel` が解決できないデータは不正
+- Repeat のネストは禁止
+- `Infinite` は Stop操作またはエラー発生まで継続
+- `FinishGoTo` は繰り返し完了後に1回だけ適用
