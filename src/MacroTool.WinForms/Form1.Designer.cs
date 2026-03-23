@@ -54,22 +54,6 @@
             tabPage4 = new TabPage();
             tabPage5 = new TabPage();
             menuStrip1 = new MenuStrip();
-            fileToolStripMenuItem = new ToolStripMenuItem();
-            newToolStripMenuItem = new ToolStripMenuItem();
-            openToolStripMenuItem = new ToolStripMenuItem();
-            recentFilesToolStripMenuItem = new ToolStripMenuItem();
-            toolStripMenuItem1 = new ToolStripSeparator();
-            saveToolStripMenuItem = new ToolStripMenuItem();
-            saveAsToolStripMenuItem = new ToolStripMenuItem();
-            toolStripMenuItem2 = new ToolStripSeparator();
-            settingsToolStripMenuItem = new ToolStripMenuItem();
-            toolStripMenuItem3 = new ToolStripSeparator();
-            exitToolStripMenuItem = new ToolStripMenuItem();
-            recordAndEditToolStripMenuItem = new ToolStripMenuItem();
-            playbackToolStripMenuItem = new ToolStripMenuItem();
-            viewToolStripMenuItem = new ToolStripMenuItem();
-            helpToolStripMenuItem = new ToolStripMenuItem();
-            registerLicenseKeyToolStripMenuItem = new ToolStripMenuItem();
             gridActions = new DataGridView();
             colNo = new DataGridViewTextBoxColumn();
             colIcon = new DataGridViewImageColumn();
@@ -89,6 +73,22 @@
             mnuPaste = new ToolStripMenuItem();
             ToolStripSeparator = new ToolStripSeparator();
             mnuDelete = new ToolStripMenuItem();
+            newToolStripMenuItem = new ToolStripMenuItem();
+            openToolStripMenuItem = new ToolStripMenuItem();
+            recentFilesToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem1 = new ToolStripSeparator();
+            saveToolStripMenuItem = new ToolStripMenuItem();
+            saveAsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripSeparator();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem3 = new ToolStripSeparator();
+            exitToolStripMenuItem = new ToolStripMenuItem();
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            registerLicenseKeyToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            viewToolStripMenuItem = new ToolStripMenuItem();
+            playbackToolStripMenuItem = new ToolStripMenuItem();
+            recordAndEditToolStripMenuItem = new ToolStripMenuItem();
             tableLayoutPanel1.SuspendLayout();
             pnlRibbon.SuspendLayout();
             tabRibbon.SuspendLayout();
@@ -342,109 +342,6 @@
             menuStrip1.TabIndex = 1;
             menuStrip1.Text = "menuStrip1";
             // 
-            // fileToolStripMenuItem
-            // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem, openToolStripMenuItem, recentFilesToolStripMenuItem, toolStripMenuItem1, saveToolStripMenuItem, saveAsToolStripMenuItem, toolStripMenuItem2, settingsToolStripMenuItem, toolStripMenuItem3, exitToolStripMenuItem });
-            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            fileToolStripMenuItem.Size = new Size(37, 20);
-            fileToolStripMenuItem.Text = "File";
-            // 
-            // newToolStripMenuItem
-            // 
-            newToolStripMenuItem.Name = "newToolStripMenuItem";
-            newToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.N;
-            newToolStripMenuItem.Size = new Size(180, 22);
-            newToolStripMenuItem.Text = "New";
-            newToolStripMenuItem.Click += newToolStripMenuItem_Click;
-            // 
-            // openToolStripMenuItem
-            // 
-            openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
-            openToolStripMenuItem.Size = new Size(180, 22);
-            openToolStripMenuItem.Text = "Open";
-            openToolStripMenuItem.Click += openToolStripMenuItem_Click;
-            // 
-            // recentFilesToolStripMenuItem
-            // 
-            recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
-            recentFilesToolStripMenuItem.Size = new Size(145, 22);
-            recentFilesToolStripMenuItem.Text = "Recent files";
-            // 
-            // toolStripMenuItem1
-            // 
-            toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(177, 6);
-            // 
-            // saveToolStripMenuItem
-            // 
-            saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
-            saveToolStripMenuItem.Size = new Size(180, 22);
-            saveToolStripMenuItem.Text = "Save";
-            saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
-            // 
-            // saveAsToolStripMenuItem
-            // 
-            saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(180, 22);
-            saveAsToolStripMenuItem.Text = "Save As...";
-            saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
-            // 
-            // toolStripMenuItem2
-            // 
-            toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new Size(177, 6);
-            // 
-            // settingsToolStripMenuItem
-            // 
-            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new Size(180, 22);
-            settingsToolStripMenuItem.Text = "Settings";
-            // 
-            // toolStripMenuItem3
-            // 
-            toolStripMenuItem3.Name = "toolStripMenuItem3";
-            toolStripMenuItem3.Size = new Size(177, 6);
-            // 
-            // exitToolStripMenuItem
-            // 
-            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new Size(180, 22);
-            exitToolStripMenuItem.Text = "Exit";
-            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
-            // 
-            // recordAndEditToolStripMenuItem
-            // 
-            recordAndEditToolStripMenuItem.Name = "recordAndEditToolStripMenuItem";
-            recordAndEditToolStripMenuItem.Size = new Size(102, 20);
-            recordAndEditToolStripMenuItem.Text = "Record and Edit";
-            // 
-            // playbackToolStripMenuItem
-            // 
-            playbackToolStripMenuItem.Name = "playbackToolStripMenuItem";
-            playbackToolStripMenuItem.Size = new Size(66, 20);
-            playbackToolStripMenuItem.Text = "Playback";
-            // 
-            // viewToolStripMenuItem
-            // 
-            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            viewToolStripMenuItem.Size = new Size(44, 20);
-            viewToolStripMenuItem.Text = "View";
-            // 
-            // helpToolStripMenuItem
-            // 
-            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            helpToolStripMenuItem.Size = new Size(44, 20);
-            helpToolStripMenuItem.Text = "Help";
-            // 
-            // registerLicenseKeyToolStripMenuItem
-            // 
-            registerLicenseKeyToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
-            registerLicenseKeyToolStripMenuItem.Name = "registerLicenseKeyToolStripMenuItem";
-            registerLicenseKeyToolStripMenuItem.Size = new Size(129, 20);
-            registerLicenseKeyToolStripMenuItem.Text = "Register license key...";
-            // 
             // gridActions
             // 
             gridActions.AllowUserToAddRows = false;
@@ -601,6 +498,109 @@
             mnuDelete.Size = new Size(142, 22);
             mnuDelete.Text = "Delete";
             // 
+            // newToolStripMenuItem
+            // 
+            newToolStripMenuItem.Name = "newToolStripMenuItem";
+            newToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.N;
+            newToolStripMenuItem.Size = new Size(180, 22);
+            newToolStripMenuItem.Text = "New";
+            newToolStripMenuItem.Click += newToolStripMenuItem_Click;
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.O;
+            openToolStripMenuItem.Size = new Size(180, 22);
+            openToolStripMenuItem.Text = "Open";
+            openToolStripMenuItem.Click += openToolStripMenuItem_Click;
+            // 
+            // recentFilesToolStripMenuItem
+            // 
+            recentFilesToolStripMenuItem.Name = "recentFilesToolStripMenuItem";
+            recentFilesToolStripMenuItem.Size = new Size(180, 22);
+            recentFilesToolStripMenuItem.Text = "Recent files";
+            // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(177, 6);
+            // 
+            // saveToolStripMenuItem
+            // 
+            saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+            saveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
+            saveToolStripMenuItem.Size = new Size(180, 22);
+            saveToolStripMenuItem.Text = "Save";
+            saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            saveAsToolStripMenuItem.Size = new Size(180, 22);
+            saveAsToolStripMenuItem.Text = "Save As...";
+            saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
+            // 
+            // toolStripMenuItem2
+            // 
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(177, 6);
+            // 
+            // settingsToolStripMenuItem
+            // 
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(180, 22);
+            settingsToolStripMenuItem.Text = "Settings";
+            // 
+            // toolStripMenuItem3
+            // 
+            toolStripMenuItem3.Name = "toolStripMenuItem3";
+            toolStripMenuItem3.Size = new Size(177, 6);
+            // 
+            // exitToolStripMenuItem
+            // 
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.Size = new Size(180, 22);
+            exitToolStripMenuItem.Text = "Exit";
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // fileToolStripMenuItem
+            // 
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem, openToolStripMenuItem, recentFilesToolStripMenuItem, toolStripMenuItem1, saveToolStripMenuItem, saveAsToolStripMenuItem, toolStripMenuItem2, settingsToolStripMenuItem, toolStripMenuItem3, exitToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(37, 20);
+            fileToolStripMenuItem.Text = "File";
+            // 
+            // registerLicenseKeyToolStripMenuItem
+            // 
+            registerLicenseKeyToolStripMenuItem.Alignment = ToolStripItemAlignment.Right;
+            registerLicenseKeyToolStripMenuItem.Name = "registerLicenseKeyToolStripMenuItem";
+            registerLicenseKeyToolStripMenuItem.Size = new Size(129, 20);
+            registerLicenseKeyToolStripMenuItem.Text = "Register license key...";
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // viewToolStripMenuItem
+            // 
+            viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            viewToolStripMenuItem.Size = new Size(44, 20);
+            viewToolStripMenuItem.Text = "View";
+            // 
+            // playbackToolStripMenuItem
+            // 
+            playbackToolStripMenuItem.Name = "playbackToolStripMenuItem";
+            playbackToolStripMenuItem.Size = new Size(66, 20);
+            playbackToolStripMenuItem.Text = "Playback";
+            // 
+            // recordAndEditToolStripMenuItem
+            // 
+            recordAndEditToolStripMenuItem.Name = "recordAndEditToolStripMenuItem";
+            recordAndEditToolStripMenuItem.Size = new Size(102, 20);
+            recordAndEditToolStripMenuItem.Text = "Record and Edit";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -666,12 +666,13 @@
         private TabPage tabPage4;
         private TabPage tabPage5;
         private MenuStrip menuStrip1;
+        private ContextMenuStrip cmsActions;
+        private ToolStripMenuItem mnuCopy;
+        private ToolStripMenuItem mnuCut;
+        private ToolStripMenuItem mnuPaste;
+        private ToolStripSeparator ToolStripSeparator;
+        private ToolStripMenuItem mnuDelete;
         private ToolStripMenuItem fileToolStripMenuItem;
-        private ToolStripMenuItem recordAndEditToolStripMenuItem;
-        private ToolStripMenuItem playbackToolStripMenuItem;
-        private ToolStripMenuItem viewToolStripMenuItem;
-        private ToolStripMenuItem helpToolStripMenuItem;
-        private ToolStripMenuItem registerLicenseKeyToolStripMenuItem;
         private ToolStripMenuItem newToolStripMenuItem;
         private ToolStripMenuItem openToolStripMenuItem;
         private ToolStripMenuItem recentFilesToolStripMenuItem;
@@ -682,11 +683,10 @@
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripMenuItem exitToolStripMenuItem;
-        private ContextMenuStrip cmsActions;
-        private ToolStripMenuItem mnuCopy;
-        private ToolStripMenuItem mnuCut;
-        private ToolStripMenuItem mnuPaste;
-        private ToolStripSeparator ToolStripSeparator;
-        private ToolStripMenuItem mnuDelete;
+        private ToolStripMenuItem recordAndEditToolStripMenuItem;
+        private ToolStripMenuItem playbackToolStripMenuItem;
+        private ToolStripMenuItem viewToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem registerLicenseKeyToolStripMenuItem;
     }
 }

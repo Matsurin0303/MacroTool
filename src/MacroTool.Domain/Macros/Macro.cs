@@ -120,7 +120,6 @@ public sealed class Macro
             {
                 WaitTimeAction w => w.Milliseconds,
                 WaitForPixelColorAction w => w.TimeoutMs > 0 ? w.TimeoutMs : 0,
-                WaitForScreenChangeAction w => w.TimeoutMs > 0 ? w.TimeoutMs : 0,
                 WaitForTextInputAction w => w.TimeoutMs > 0 ? w.TimeoutMs : 0,
                 FindImageAction f => f.TimeoutMs > 0 ? f.TimeoutMs : 0,
                 FindTextOcrAction f => f.TimeoutMs > 0 ? f.TimeoutMs : 0,

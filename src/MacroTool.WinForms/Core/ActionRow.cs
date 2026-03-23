@@ -31,7 +31,7 @@ public sealed class ActionRow
             MouseClickAction or MouseMoveAction or MouseWheelAction => "Mouse",
             KeyPressAction => "Keyboard",
 
-            WaitTimeAction or WaitForPixelColorAction or WaitForScreenChangeAction or WaitForTextInputAction => "Wait",
+            WaitTimeAction or WaitForPixelColorAction  or WaitForTextInputAction => "Wait",
 
             FindImageAction or FindTextOcrAction => "Image",
 

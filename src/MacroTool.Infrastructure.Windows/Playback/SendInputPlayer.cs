@@ -107,12 +107,6 @@ public sealed class SendInputPlayer : IPlayer
                     return ResolveGoTo(ok ? wpc.IfTrueGoTo : wpc.IfFalseGoTo, index, steps, labelMap);
                 }
 
-            case WaitForScreenChangeAction wsc:
-                {
-                    var result = await WaitForScreenChangeAsync(wsc, ctx, opt, token);
-                    return ResolveGoTo(result.Success ? wsc.IfTrueGoTo : wsc.IfFalseGoTo, index, steps, labelMap);
-                }
-
             case WaitForTextInputAction wti:
                 {
                     bool ok = await WaitForTextInputAsync(wti, token);
@@ -451,41 +445,6 @@ public sealed class SendInputPlayer : IPlayer
         }
     }
 
-    private sealed record ScreenChangeResult(bool Success, Point? ChangedPoint);
-
-    private static async Task<ScreenChangeResult> WaitForScreenChangeAsync(WaitForScreenChangeAction action, PlaybackContext ctx, PlaybackOptions opt, CancellationToken token)
-    {
-        var rect = ResolveSearchRectangle(action.SearchArea);
-        if (rect.Width <= 0 || rect.Height <= 0)
-            throw new InvalidOperationException("WaitForScreenChange: 検索領域が不正です。");
-
-        using var baseline = Capture(rect);
-        var baselineBytes = ReadBytes(baseline, out int baseStride);
-
-        var start = Stopwatch.StartNew();
-        int timeout = action.TimeoutMs;
-
-        while (true)
-        {
-            token.ThrowIfCancellationRequested();
-
-            using var nowBmp = Capture(rect);
-            var nowBytes = ReadBytes(nowBmp, out int nowStride);
-
-            if (TryFindScreenChange(baselineBytes, baseStride, nowBytes, nowStride, rect.Width, rect.Height, out var changed))
-            {
-                var screenPt = new Point(rect.Left + changed.X, rect.Top + changed.Y);
-                ApplyCoordinateEffects(action.MouseActionEnabled, action.MouseAction, action.SaveCoordinate, action.SaveXVariable, action.SaveYVariable, screenPt, ctx, opt, token);
-                return new ScreenChangeResult(true, screenPt);
-            }
-
-            if (timeout > 0 && start.ElapsedMilliseconds >= timeout)
-                return new ScreenChangeResult(false, null);
-
-            await Task.Delay(100, token);
-        }
-    }
-
     private static async Task<bool> WaitForTextInputAsync(WaitForTextInputAction action, CancellationToken token)
     {
         var target = action.TextToWaitFor ?? string.Empty;
@@ -710,37 +669,6 @@ public sealed class SendInputPlayer : IPlayer
         Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
         bmp.UnlockBits(data);
         return bytes;
-    }
-
-    private static bool TryFindScreenChange(byte[] baseBytes, int baseStride, byte[] nowBytes, int nowStride, int width, int height, out Point changed)
-    {
-        const int channelThreshold = 16; // 小さな揺らぎを無視
-
-        int stride = Math.Min(baseStride, nowStride);
-
-        for (int y = 0; y < height; y++)
-        {
-            int rowBase = y * baseStride;
-            int rowNow = y * nowStride;
-            for (int x = 0; x < width; x++)
-            {
-                int iBase = rowBase + x * 4;
-                int iNow = rowNow + x * 4;
-
-                int db = Math.Abs(nowBytes[iNow + 0] - baseBytes[iBase + 0]);
-                int dg = Math.Abs(nowBytes[iNow + 1] - baseBytes[iBase + 1]);
-                int dr = Math.Abs(nowBytes[iNow + 2] - baseBytes[iBase + 2]);
-
-                if (db > channelThreshold || dg > channelThreshold || dr > channelThreshold)
-                {
-                    changed = new Point(x, y);
-                    return true;
-                }
-            }
-        }
-
-        changed = default;
-        return false;
     }
 
     private static Bitmap? LoadTemplate(ImageTemplate template)

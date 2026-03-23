@@ -482,11 +482,9 @@ public partial class Form1 : Form
         tsdWait.DropDownItems.Clear();
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait [W]", null, (_, __) => AddWaitTime()));
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for pixel color [P]", null, (_, __) => AddWaitForPixelColor()));
-        tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for screen changes", null, (_, __) => AddWaitForScreenChange()));
 
         // 将来実装予定（UIのみ）
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for hotkey press") { Enabled = false });
-
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for text input", null, (_, __) => AddWaitForTextInput()));
         tsdWait.DropDownItems.Add(new ToolStripMenuItem("Wait for file") { Enabled = false });
 
@@ -997,27 +995,6 @@ public partial class Form1 : Form
         InsertAction(action);
     }
 
-    private void AddWaitForScreenChange()
-    {
-        var initial = new WaitForScreenChangeAction
-        {
-            SearchArea = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
-            MouseActionEnabled = false,
-            MouseAction = MouseActionBehavior.Positioning,
-            SaveCoordinateEnabled = false,
-            SaveXVariable = "X",
-            SaveYVariable = "Y",
-            TrueGoTo = GoToTarget.Next(),
-            TimeoutMs = 120_000,
-            FalseGoTo = GoToTarget.End()
-        };
-
-        var action = Dialogs.WaitForScreenChangeDialog.Show(this, initial);
-        if (action is null) return;
-        InsertAction(action);
-    }
-
     private void AddWaitForTextInput()
     {
         var initial = new WaitForTextInputAction
@@ -1206,7 +1183,6 @@ public partial class Form1 : Form
             KeyPressAction kp => Dialogs.KeyPressDialog.Show(this, kp),
             WaitTimeAction wt => Dialogs.WaitTimeDialog.Show(this, wt),
             WaitForPixelColorAction wpc => Dialogs.WaitForPixelColorDialog.Show(this, wpc),
-            WaitForScreenChangeAction wsc => Dialogs.WaitForScreenChangeDialog.Show(this, wsc),
             WaitForTextInputAction wti => Dialogs.WaitForTextInputDialog.Show(this, wti),
             FindImageAction fia => Dialogs.FindImageDialog.Show(this, fia),
             FindTextOcrAction fto => Dialogs.FindTextOcrDialog.Show(this, fto),

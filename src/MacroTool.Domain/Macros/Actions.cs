@@ -13,7 +13,6 @@ namespace MacroTool.Domain.Macros;
 [JsonDerivedType(typeof(KeyPressAction), "KeyPress")]
 [JsonDerivedType(typeof(WaitTimeAction), "Wait")]
 [JsonDerivedType(typeof(WaitForPixelColorAction), "WaitForPixelColor")]
-[JsonDerivedType(typeof(WaitForScreenChangeAction), "WaitForScreenChange")]
 [JsonDerivedType(typeof(WaitForTextInputAction), "WaitForTextInput")]
 [JsonDerivedType(typeof(FindImageAction), "FindImage")]
 [JsonDerivedType(typeof(FindTextOcrAction), "FindTextOcr")]
@@ -120,42 +119,6 @@ public sealed record WaitForPixelColorAction : MacroAction
     public override string Kind => "WaitForPixelColor";
     public override string DisplayValue
         => $"({X},{Y}) {ColorHex} tol={TolerancePercent}% timeout={TimeoutMs}ms";
-}
-
-public sealed record WaitForScreenChangeAction : MacroAction
-{
-    public SearchArea SearchArea { get; set; } = new();
-    public SearchArea Area { get; set; } = new() { Kind = SearchAreaKind.EntireDesktop };
-
-    public bool MouseActionEnabled { get; set; } = false;
-    public MouseActionBehavior MouseAction { get; set; } = MouseActionBehavior.Positioning;
-    public MousePosition MousePosition { get; set; } = MousePosition.Center;
-
-    public bool SaveCoordinateEnabled { get; set; } = false;
-    public string SaveXVariable { get; set; } = "X";
-    public string SaveYVariable { get; set; } = "Y";
-
-    public GoToTarget TrueGoTo { get; set; } = GoToTarget.Next();
-    public GoToTarget FalseGoTo { get; set; } = GoToTarget.Next();
-
-    public int TimeoutMs { get; set; } = 5000;
-
-    // ---- 互換プロパティ（SendInputPlayer が参照している名前） ----
-    [JsonIgnore]
-    public GoToTarget IfTrueGoTo { get => TrueGoTo; set => TrueGoTo = value; }
-
-    [JsonIgnore]
-    public GoToTarget IfFalseGoTo { get => FalseGoTo; set => FalseGoTo = value; }
-
-    [JsonIgnore]
-    public MouseActionBehavior MouseActionBehavior { get => MouseAction; set => MouseAction = value; }
-
-    [JsonIgnore]
-    public bool SaveCoordinate { get => SaveCoordinateEnabled; set => SaveCoordinateEnabled = value; }
-
-    public override string Kind => "WaitForScreenChange";
-    public override string DisplayValue
-        => $"{SearchArea} timeout={TimeoutMs}ms";
 }
 
 public sealed record WaitForTextInputAction : MacroAction

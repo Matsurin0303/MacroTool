@@ -59,19 +59,32 @@ public sealed class JsonMacroRepository : IMacroRepository
 
     private static Macro LoadV3(string json)
     {
-        var dto = JsonSerializer.Deserialize<MacroFileV3Dto>(json, JsonOptions)
-                  ?? throw new InvalidDataException("Invalid macro file.");
-
-        var macro = new Macro();
-        foreach (var s in dto.Steps)
+        try
         {
-            if (s.Action is null)
-                throw new InvalidDataException("Step.Action is null.");
+            var dto = JsonSerializer.Deserialize<MacroFileV3Dto>(json, JsonOptions)
+                      ?? throw new InvalidDataException("Invalid macro file.");
 
-            macro.AddStep(new MacroStep(s.Action, s.Label ?? string.Empty, s.Comment ?? string.Empty));
+            var macro = new Macro();
+            foreach (var s in dto.Steps)
+            {
+                if (s.Action is null)
+                    throw new InvalidDataException("Step.Action is null.");
+
+                macro.AddStep(new MacroStep(s.Action, s.Label ?? string.Empty, s.Comment ?? string.Empty));
+            }
+
+            return macro;
         }
-
-        return macro;
+        catch (NotSupportedException ex) when (json.Contains("\"kind\": \"WaitForScreenChange\"", StringComparison.OrdinalIgnoreCase)
+                                            || json.Contains("\"kind\":\"WaitForScreenChange\"", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("このマクロファイルには本版対象外の WaitForScreenChange が含まれているため読み込めません。", ex);
+        }
+        catch (JsonException ex) when (json.Contains("\"kind\": \"WaitForScreenChange\"", StringComparison.OrdinalIgnoreCase)
+                                    || json.Contains("\"kind\":\"WaitForScreenChange\"", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("このマクロファイルには本版対象外の WaitForScreenChange が含まれているため読み込めません。", ex);
+        }
     }
 
     private static Macro LoadLegacyV1V2(string json, int version)
