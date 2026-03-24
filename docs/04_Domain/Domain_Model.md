@@ -38,7 +38,8 @@
 | Label | GoTo / Repeat の参照先となる一意な行識別子 |
 | GoToTarget | Start / Next / End / Label で表される遷移先 |
 | VariableName | 実行時に利用する変数名 |
-| SearchArea | 監視 / 検索対象（EntireDesktop / AreaOfDesktop / FocusedWindow / AreaOfFocusedWindow）。AreaOfDesktop は仮想デスクトップ基準、AreaOfFocusedWindow はフォーカス中ウィンドウ外枠左上基準の物理ピクセルを用いる |
+| SearchArea | 監視 / 検索対象（EntireDesktop / AreaOfDesktop / FocusedWindow / AreaOfFocusedWindow）。座標基準・DPI処理の詳細は「4.3.1 座標体系とDPI処理」参照 |
+| Rect | X, Y, Width, Height で定義される矩形領域。座標は**論理ピクセル**（Windows が統一的に見せる座標）で保持し、保存時は min/max へ正規化する |
 | Rect | X1, Y1, X2, Y2 で定義される矩形。物理ピクセルで保持し、保存時は min/max へ正規化する |
 | Playback | Macroを順に評価し、必要に応じて待機や分岐を行う処理 |
 
@@ -82,8 +83,54 @@
 - `Label` の場合のみ `StepLabel` を保持する
 
 ### 4.3 SearchArea / Rect
-- SearchAreaKind が Area系なら `Rect` 必須
-- Rectは `X2 > X1` かつ `Y2 > Y1`
+- SearchAreaKind が Area系（`AreaOfDesktop`、`AreaOfFocusedWindow`）なら `Rect` 必須
+- Rect は `Width > 0` かつ `Height > 0`
+- 座標・DPI処理の詳細は以下のサブセクション参照
+
+#### 4.3.1 座標体系とDPI処理
+
+##### 4.3.1.1 座標基準の定義
+
+**座標値はすべて論理ピクセル（Logical Pixel）で取り扱う。**
+
+- **論理ピクセル**：Windows が統一的に見せるピクセル座標
+  - DPI スケーリング（100%, 125%, 150% など）を適用済みの座標
+  - アプリケーションレイヤーが標準的に受け取る座標系
+  
+- **物理ピクセル**：実際の画面ハードウェアのピクセル
+  - DPI スケーリング前のネイティブ解像度
+  - Infrastructure (OS呼び出し) レイヤーでのみ変換が発生
+
+##### 4.3.1.2 Window基準座標の定義（AreaOfFocusedWindow）
+
+`AreaOfFocusedWindow` で指定された座標の基準点：
+
+- **X=0, Y=0** の基準位置：
+  - ウィンドウのタイトルバー最上部の外側（ボーダーの外側）
+  - タイトルバーはシステムメニュー、最小化/最大化/閉じるボタンを含む
+  - ウィンドウボーダーは X=0, Y=0 の外側として扱う
+
+##### 4.3.1.3 Playback時の座標処理
+
+Playback 実行時に `MouseClick(X, Y)` や `FindImage(SearchArea)` が指定された場合：
+
+1. **座標値は論理ピクセルとして受け取られる**
+2. **Infrastructure層の OS API 呼び出し時に自動変換**
+   - Windows API（`SetCursorPos`, `GetPixel`, `mouse_event` など）は論理座標を期待する
+   - DPI 変換は Windows が自動で行うため、Application/Domain 側での変換ロジックは不要
+3. **変換ロジックの責務**：Infrastructure (OS連携) レイヤーに委譲
+
+##### 4.3.1.4 SaveCoordinate時の座標処理
+
+UI でユーザーが「座標を保存」操作を実行した場合：
+
+1. **マウス座標は物理座標で取得される** （OS から `GetCursorPos` ���ど）
+2. **Application層で論理座標へ変換**
+   - DPI スケーリング係数を取得（例：125% = 1.25）
+   - `物理座標 ÷ DPI係数 = 論理座標`
+3. **論理座標をファイルに保存**
+   - マクロファイルは環境非依存な形式を保証
+   - 異なる DPI 環境での実行時に同じ操作位置が再現される
 
 ### 4.4 ColorCode / Percentage / Milliseconds
 - `ColorCode`: `#RRGGBB`
@@ -102,6 +149,21 @@
 - 未設定状態は `Undefined` とする
 - 空文字列や `0` を未設定値として扱わない
 - `Save Coordinate` により保存される X / Y は `Number` とする
+
+### 4.7 DPI スケーリングと座標互換性
+
+#### 4.7.1 マクロファイルの環境非依存性
+
+- マクロファイル（JSON/CSV）に保存される座標値は**常に論理ピクセル**
+- ファイルを異なる DPI 環���間で共有可能
+- 実行時の DPI スケーリングは自動で適用される
+
+#### 4.7.2 座標値の一貫性保証
+
+- Domain層：座標は論理ピクセルのみを扱う
+- Application層：ユーザー入力（物理座標）⇔ ファイル保存（論理座標）の変換
+- Infrastructure層：OS API 呼び出し時の自動 DPI 変換に委譲
+- **複層でのDPI二重変換を禁止**
 
 ---
 
