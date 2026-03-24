@@ -367,7 +367,7 @@ public partial class Form1 : Form
     private void InitializeFileMenuExtras()
     {
         if (_miExportCsv != null)
-            {
+        {
             // Already initialized
             return;
         }
@@ -385,8 +385,6 @@ public partial class Form1 : Form
             Name = "miExportCsv"
         };
         _miExportCsv.Click += (_, __) => ExportToCsv();
-
-        var sepBetweenCsvAndSchedule = new ToolStripSeparator { Name = "miSepCsvSchedule" };
 
         // 既存の区切り線（SaveAs と Settings の間）より前に差し込む
         var insertBefore = fileToolStripMenuItem.DropDownItems.IndexOf(toolStripMenuItem2);
@@ -1527,84 +1525,6 @@ public partial class Form1 : Form
             GoToKind.Label => $"Label:{target.Label}",
             _ => "Next"
         };
-    }
-    private void ScheduleMacro()
-    {
-        var result = Dialogs.ScheduleMacroDialog.Show(this, _scheduledAt);
-        if (result is null) return;
-
-        if (result.Clear)
-        {
-            ClearSchedule();
-            return;
-        }
-
-        if (result.RunAt is null) return;
-
-        var runAt = result.RunAt.Value;
-        var due = runAt - DateTime.Now;
-        if (due <= TimeSpan.Zero)
-        {
-            MessageBox.Show(this, "未来の時刻を指定してください。", "Schedule", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        ClearSchedule();
-        _scheduledAt = runAt;
-        _scheduleTimer = new System.Threading.Timer(_ =>
-        {
-            try
-            {
-                BeginInvoke(() =>
-                {
-                    // 1回実行
-                    ClearSchedule();
-                    if (_app.State == MacroTool.Application.AppState.Stopped)
-                    {
-                        _app.Play();
-                    }
-                });
-            }
-            catch
-            {
-                // ignore
-            }
-        }, null, due, Timeout.InfiniteTimeSpan);
-    }
-
-    private void ClearSchedule()
-    {
-        _scheduleTimer?.Dispose();
-        _scheduleTimer = null;
-        _scheduledAt = null;
-    }
-
-            catch
-            {
-                // ignore
-            }
-        }, null, due, Timeout.InfiniteTimeSpan);
-    }
-
-    private void ClearSchedule()
-    {
-        _scheduleTimer?.Dispose();
-        _scheduleTimer = null;
-        _scheduledAt = null;
-    }
-
-            catch
-            {
-                // ignore
-            }
-        }, null, due, Timeout.InfiniteTimeSpan);
-    }
-
-    private void ClearSchedule()
-    {
-        _scheduleTimer?.Dispose();
-        _scheduleTimer = null;
-        _scheduledAt = null;
     }
 
     private void StartRecording()
