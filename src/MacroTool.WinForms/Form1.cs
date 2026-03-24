@@ -1254,6 +1254,99 @@ public partial class Form1 : Form
         MessageBox.Show(this, "CSVを出力しました。", "Export CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }
 
+    /// <summary>
+    /// GoToTarget を CSV仕様値に変換
+    /// </summary>
+    private static string ToGoToString(GoToTarget target)
+    {
+        return target.Kind switch
+        {
+            GoToKind.Start => "Start",
+            GoToKind.Next => "Next",
+            GoToKind.End => "End",
+            GoToKind.Label => $"Label:{target.Label}",
+            _ => "Next"
+        };
+    }
+    private void ScheduleMacro()
+    {
+        var result = Dialogs.ScheduleMacroDialog.Show(this, _scheduledAt);
+        if (result is null) return;
+
+        if (result.Clear)
+        {
+            ClearSchedule();
+            return;
+        }
+
+        if (result.RunAt is null) return;
+
+        var runAt = result.RunAt.Value;
+        var due = runAt - DateTime.Now;
+        if (due <= TimeSpan.Zero)
+        {
+            MessageBox.Show(this, "未来の時刻を指定してください。", "Schedule", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        ClearSchedule();
+        _scheduledAt = runAt;
+        _scheduleTimer = new System.Threading.Timer(_ =>
+        {
+            try
+            {
+                BeginInvoke(() =>
+                {
+                    // 1回実行
+                    ClearSchedule();
+                    if (_app.State == MacroTool.Application.AppState.Stopped)
+                    {
+                        _app.Play();
+                    }
+                });
+            }
+            catch
+            {
+                // ignore
+            }
+        }, null, due, Timeout.InfiniteTimeSpan);
+    }
+
+    private void ClearSchedule()
+    {
+        _scheduleTimer?.Dispose();
+        _scheduleTimer = null;
+        _scheduledAt = null;
+    }
+
+            catch
+            {
+                // ignore
+            }
+        }, null, due, Timeout.InfiniteTimeSpan);
+    }
+
+    private void ClearSchedule()
+    {
+        _scheduleTimer?.Dispose();
+        _scheduleTimer = null;
+        _scheduledAt = null;
+    }
+
+            catch
+            {
+                // ignore
+            }
+        }, null, due, Timeout.InfiniteTimeSpan);
+    }
+
+    private void ClearSchedule()
+    {
+        _scheduleTimer?.Dispose();
+        _scheduleTimer = null;
+        _scheduledAt = null;
+    }
+
     private void StartRecording()
     {
         if (_app.State != MacroTool.Application.AppState.Stopped) return;
