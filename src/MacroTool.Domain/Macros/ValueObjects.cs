@@ -13,8 +13,8 @@ public enum MouseButton
     Left,
     Right,
     Middle,
-    XButton1,
-    XButton2
+    SideButton1,
+    SideButton2
 }
 
 public enum MouseClickType
@@ -113,7 +113,7 @@ public enum IfConditionKind
 public enum ImageTemplateKind
 {
     FilePath,
-    EmbeddedPng
+    CapturedBitmap
 }
 
 // ===== expandable objects (PropertyGrid friendly) =====
@@ -205,7 +205,7 @@ public sealed record ImageTemplate
     public string FilePath { get; set; } = string.Empty;
 
     /// <summary>
-    /// Kind=EmbeddedPng のときに使用。
+    /// Kind=CapturedBitmap のときに使用。
     /// （JSONではBase64化される）
     /// </summary>
     public byte[]? PngBytes { get; set; }
@@ -214,7 +214,7 @@ public sealed record ImageTemplate
         => Kind switch
         {
             ImageTemplateKind.FilePath => string.IsNullOrWhiteSpace(FilePath) ? "(file not set)" : FilePath,
-            ImageTemplateKind.EmbeddedPng => PngBytes is null ? "(embedded not set)" : $"Embedded ({PngBytes.Length} bytes)",
+            ImageTemplateKind.CapturedBitmap => PngBytes is null ? "(captured bitmap not set)" : $"CapturedBitmap ({PngBytes.Length} bytes)",
             _ => Kind.ToString()
         };
 }

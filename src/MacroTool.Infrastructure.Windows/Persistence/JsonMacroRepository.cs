@@ -323,7 +323,7 @@ public sealed class JsonMacroRepository : IMacroRepository
                 Kind = "FilePath",
                 Value = template.FilePath
             },
-            ImageTemplateKind.EmbeddedPng => new BitmapSourceDto
+            ImageTemplateKind.CapturedBitmap => new BitmapSourceDto
             {
                 Kind = "CapturedBitmap",
                 Value = template.PngBytes is null ? string.Empty : Convert.ToBase64String(template.PngBytes)
@@ -499,7 +499,7 @@ public sealed class JsonMacroRepository : IMacroRepository
             },
             "CapturedBitmap" => new ImageTemplate
             {
-                Kind = ImageTemplateKind.EmbeddedPng,
+                Kind = ImageTemplateKind.CapturedBitmap,
                 PngBytes = string.IsNullOrWhiteSpace(dto.Value) ? null : Convert.FromBase64String(dto.Value)
             },
             _ => throw new InvalidDataException($"Unsupported bitmapSource.kind: {dto.Kind}")
@@ -513,8 +513,8 @@ public sealed class JsonMacroRepository : IMacroRepository
         MouseButton.Left => "Left",
         MouseButton.Right => "Right",
         MouseButton.Middle => "Middle",
-        MouseButton.XButton1 => "SideButton1",
-        MouseButton.XButton2 => "SideButton2",
+        MouseButton.SideButton1 => "SideButton1",
+        MouseButton.SideButton2 => "SideButton2",
         _ => throw new InvalidDataException($"Unsupported MouseButton: {value}")
     };
 
@@ -523,8 +523,8 @@ public sealed class JsonMacroRepository : IMacroRepository
         "Left" => MouseButton.Left,
         "Right" => MouseButton.Right,
         "Middle" => MouseButton.Middle,
-        "SideButton1" => MouseButton.XButton1,
-        "SideButton2" => MouseButton.XButton2,
+        "SideButton1" => MouseButton.SideButton1,
+        "SideButton2" => MouseButton.SideButton2,
         _ => throw new InvalidDataException($"Invalid mouseButton: {token}")
     };
 

@@ -205,7 +205,7 @@ public partial class FindImageDialog : Form
 
         _template = new ImageTemplate
         {
-            Kind = ImageTemplateKind.EmbeddedPng,
+            Kind = ImageTemplateKind.CapturedBitmap,
             PngBytes = bytes,
             FilePath = string.Empty
         };
@@ -246,7 +246,7 @@ public partial class FindImageDialog : Form
 
         try
         {
-            if (_template.Kind == ImageTemplateKind.EmbeddedPng && _template.PngBytes is { Length: > 0 })
+            if (_template.Kind == ImageTemplateKind.CapturedBitmap && _template.PngBytes is { Length: > 0 })
             {
                 _preview = Image.FromStream(new MemoryStream(_template.PngBytes));
             }
@@ -349,7 +349,7 @@ public partial class FindImageDialog : Form
 
         bool hasTemplate = _template.Kind switch
         {
-            ImageTemplateKind.EmbeddedPng => _template.PngBytes is { Length: > 0 },
+            ImageTemplateKind.CapturedBitmap => _template.PngBytes is { Length: > 0 },
             ImageTemplateKind.FilePath => !string.IsNullOrWhiteSpace(_template.FilePath),
             _ => false
         };

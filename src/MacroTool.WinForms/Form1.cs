@@ -1051,7 +1051,7 @@ public partial class Form1 : Form
         {
             Area = new SearchArea { Kind = SearchAreaKind.EntireDesktop },
             ColorTolerancePercent = 10,
-            Template = new ImageTemplate { Kind = ImageTemplateKind.EmbeddedPng, PngBytes = bytes },
+            Template = new ImageTemplate { Kind = ImageTemplateKind.CapturedBitmap, PngBytes = bytes },
             MouseActionEnabled = false,
             MouseAction = MouseActionBehavior.Positioning,
             MousePosition = MacroTool.Domain.Macros.MousePosition.Center,

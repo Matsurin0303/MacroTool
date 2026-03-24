@@ -331,7 +331,7 @@ public sealed class SendInputPlayer : IPlayer
             MouseButton.Left => Win32.MOUSEEVENTF_LEFTDOWN,
             MouseButton.Right => Win32.MOUSEEVENTF_RIGHTDOWN,
             MouseButton.Middle => Win32.MOUSEEVENTF_MIDDLEDOWN,
-            MouseButton.XButton1 or MouseButton.XButton2 => Win32.MOUSEEVENTF_XDOWN,
+            MouseButton.SideButton1 or MouseButton.SideButton2 => Win32.MOUSEEVENTF_XDOWN,
             _ => Win32.MOUSEEVENTF_LEFTDOWN
         };
 
@@ -341,15 +341,15 @@ public sealed class SendInputPlayer : IPlayer
             MouseButton.Left => Win32.MOUSEEVENTF_LEFTUP,
             MouseButton.Right => Win32.MOUSEEVENTF_RIGHTUP,
             MouseButton.Middle => Win32.MOUSEEVENTF_MIDDLEUP,
-            MouseButton.XButton1 or MouseButton.XButton2 => Win32.MOUSEEVENTF_XUP,
+            MouseButton.SideButton1 or MouseButton.SideButton2 => Win32.MOUSEEVENTF_XUP,
             _ => Win32.MOUSEEVENTF_LEFTUP
         };
 
     private static uint GetXButtonData(MouseButton button)
         => button switch
         {
-            MouseButton.XButton2 => Win32.XBUTTON2,
-            MouseButton.XButton1 => Win32.XBUTTON1,
+            MouseButton.SideButton2 => Win32.XBUTTON2,
+            MouseButton.SideButton1 => Win32.XBUTTON1,
             _ => 0
         };
 

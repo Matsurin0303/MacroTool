@@ -151,7 +151,7 @@ internal static class DetectionTestUtil
 
         return template.Kind switch
         {
-            ImageTemplateKind.EmbeddedPng when template.PngBytes is { Length: > 0 } => new Bitmap(new MemoryStream(template.PngBytes)),
+            ImageTemplateKind.CapturedBitmap when template.PngBytes is { Length: > 0 } => new Bitmap(new MemoryStream(template.PngBytes)),
             ImageTemplateKind.FilePath when !string.IsNullOrWhiteSpace(template.FilePath) && File.Exists(template.FilePath) => new Bitmap(template.FilePath),
             _ => null
         };

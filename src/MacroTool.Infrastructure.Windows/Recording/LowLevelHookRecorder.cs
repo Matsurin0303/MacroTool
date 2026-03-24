@@ -139,7 +139,7 @@ public sealed class LowLevelHookRecorder : IRecorder, IDisposable
 
                 Win32.WM_XBUTTONDOWN => new MouseClickAction
                 {
-                    Button = ((info.mouseData >> 16) & 0xFFFF) == 2 ? MouseButton.XButton2 : MouseButton.XButton1,
+                    Button = ((info.mouseData >> 16) & 0xFFFF) == 2 ? MouseButton.SideButton2 : MouseButton.SideButton1,
                     Action = MouseClickType.Click,
                     Relative = false,
                     X = info.pt.x,
