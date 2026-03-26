@@ -276,7 +276,7 @@ public partial class Form1 : Form
     // ===== File/Open/Save =====
     private void LoadMacroFromFile()
     {
-        if (!ConfirmSaveIfDirty("読み込み"))
+        if (!ConfirmSaveIfDirty())
             return;
 
         if (_openMacroDialog.ShowDialog(this) != DialogResult.OK)
@@ -322,23 +322,29 @@ public partial class Form1 : Form
         }
     }
 
-    private bool ConfirmSaveIfDirty(string actionName)
+    private bool ConfirmSaveIfDirty()
     {
         if (!_isDirty) return true;
 
-        var result = MessageBox.Show(
-            this,
-            $"未保存の変更があります。\n保存して {actionName} しますか？",
-            "確認",
-            MessageBoxButtons.YesNoCancel,
-            MessageBoxIcon.Warning);
+        var saveButton = new TaskDialogButton("保存");
+        var dontSaveButton = new TaskDialogButton("保存しない");
+        var cancelButton = new TaskDialogButton("キャンセル");
 
-        return result switch
+        var page = new TaskDialogPage
         {
-            DialogResult.Yes => TrySaveWithPrompt(false),
-            DialogResult.No => true,
-            _ => false
+            Caption = "未保存の変更",
+            Text = "変更内容は保存されていません。保存しますか？",
+            Icon = TaskDialogIcon.Warning,
+            Buttons = { saveButton, dontSaveButton, cancelButton },
+            DefaultButton = saveButton,
+            AllowCancel = true,
         };
+
+        var result = TaskDialog.ShowDialog(this, page);
+
+        if (result == saveButton) return TrySaveWithPrompt(false);
+        if (result == dontSaveButton) return true;
+        return false;
     }
 
     // ===== ToolStrip (Record/Stop/Play/Delete) =====
@@ -1530,6 +1536,7 @@ public partial class Form1 : Form
     private void StartRecording()
     {
         if (_app.State != MacroTool.Application.AppState.Stopped) return;
+        if (!ConfirmSaveIfDirty()) return;
 
         bool ok = _app.StartRecording(clearExisting: true);
         if (!ok)
@@ -1654,7 +1661,7 @@ public partial class Form1 : Form
     {
         if (e.CloseReason == CloseReason.UserClosing)
         {
-            if (!ConfirmSaveIfDirty("終了"))
+            if (!ConfirmSaveIfDirty())
             {
                 e.Cancel = true;
                 return;
@@ -2072,7 +2079,7 @@ public partial class Form1 : Form
 
     private void newToolStripMenuItem_Click(object sender, EventArgs e)
     {
-        if (!ConfirmSaveIfDirty("新規作成"))
+        if (!ConfirmSaveIfDirty())
             return;
 
         RunWithoutDirty(() => _app.New());
@@ -2086,7 +2093,7 @@ public partial class Form1 : Form
 
     private void LoadMacroFromPath(string path)
     {
-        if (!ConfirmSaveIfDirty("読み込み"))
+        if (!ConfirmSaveIfDirty())
             return;
 
         if (!File.Exists(path))
