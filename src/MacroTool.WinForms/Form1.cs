@@ -34,6 +34,7 @@ public partial class Form1 : Form
     private readonly System.Windows.Forms.Timer _statusTimer = new();
 
     // v1.0 追加メニュー
+    private ToolStripMenuItem? _miImportCsv;
     private ToolStripMenuItem? _miExportCsv;
     private ToolStripMenuItem? _miPlayUntilSelected;
     private ToolStripMenuItem? _miPlayFromSelected;
@@ -386,6 +387,12 @@ public partial class Form1 : Form
         };
 
         // v1.0 仕様（MacroTool_MacroSpecification_v1.0.md 3.1 File）に合わせる
+        _miImportCsv = new ToolStripMenuItem("Import from CSV")
+        {
+            Name = "miImportCsv"
+        };
+        _miImportCsv.Click += (_, __) => ImportFromCsv();
+
         _miExportCsv = new ToolStripMenuItem("Export to CSV")
         {
             Name = "miExportCsv"
@@ -396,7 +403,8 @@ public partial class Form1 : Form
         var insertBefore = fileToolStripMenuItem.DropDownItems.IndexOf(toolStripMenuItem2);
         if (insertBefore < 0) insertBefore = fileToolStripMenuItem.DropDownItems.Count;
         fileToolStripMenuItem.DropDownItems.Insert(insertBefore, miTriggerMacroByHotkey);
-        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 1, _miExportCsv);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 1, _miImportCsv);
+        fileToolStripMenuItem.DropDownItems.Insert(insertBefore + 2, _miExportCsv);
     }
 
     // ===== v1.0: ToolStrip 拡張（各アクション追加 / 範囲再生 / 編集） =====
@@ -1533,6 +1541,653 @@ public partial class Form1 : Form
         };
     }
 
+    // ===== CSV Import =====
+
+    /// <summary>CSV_v1.0 固定ヘッダ</summary>
+    private const string CsvExpectedHeader =
+        "Order,Action,Label,Comment,SearchAreaKind,X1,Y1,X2,Y2,WaitingMs,GoTo,TrueGoTo,FalseGoTo,FinishGoTo,MouseActionBehavior,MousePosition,SaveXVariable,SaveYVariable,Tolerance,Text,Language,BitmapKind,BitmapValue,MouseButton,ClickType,Relative,X,Y,Color,StartX,StartY,EndX,EndY,DurationMs,WheelOrientation,WheelValue,KeyOption,Key,Count,StartLabel,RepeatMode,Seconds,Repetitions,Until,VariableName,ConditionType,ConditionValue,Path";
+
+    // CSV_v1.0 列インデックス
+    private const int ColAction = 1;
+    private const int ColLabel = 2;
+    private const int ColComment = 3;
+    private const int ColSearchAreaKind = 4;
+    private const int ColX1 = 5;
+    private const int ColY1 = 6;
+    private const int ColX2 = 7;
+    private const int ColY2 = 8;
+    private const int ColWaitingMs = 9;
+    private const int ColGoTo = 10;
+    private const int ColTrueGoTo = 11;
+    private const int ColFalseGoTo = 12;
+    private const int ColFinishGoTo = 13;
+    private const int ColMouseActionBehavior = 14;
+    private const int ColMousePosition = 15;
+    private const int ColSaveXVariable = 16;
+    private const int ColSaveYVariable = 17;
+    private const int ColTolerance = 18;
+    private const int ColText = 19;
+    private const int ColLanguage = 20;
+    private const int ColBitmapKind = 21;
+    private const int ColBitmapValue = 22;
+    private const int ColMouseButton = 23;
+    private const int ColClickType = 24;
+    private const int ColRelative = 25;
+    private const int ColX = 26;
+    private const int ColY = 27;
+    private const int ColColor = 28;
+    private const int ColStartX = 29;
+    private const int ColStartY = 30;
+    private const int ColEndX = 31;
+    private const int ColEndY = 32;
+    private const int ColDurationMs = 33;
+    private const int ColWheelOrientation = 34;
+    private const int ColWheelValue = 35;
+    private const int ColKeyOption = 36;
+    private const int ColKey = 37;
+    private const int ColCount = 38;
+    private const int ColStartLabel = 39;
+    private const int ColRepeatMode = 40;
+    private const int ColSeconds = 41;
+    private const int ColRepetitions = 42;
+    private const int ColUntil = 43;
+    private const int ColVariableName = 44;
+    private const int ColConditionType = 45;
+    private const int ColConditionValue = 46;
+    private const int ColPath = 47;
+
+    private static readonly System.Text.RegularExpressions.Regex VariableNamePattern =
+        new(@"^[A-Za-z_][A-Za-z0-9_]*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private void ImportFromCsv()
+    {
+        if (_app.State != MacroTool.Application.AppState.Stopped) return;
+
+        using var ofd = new OpenFileDialog
+        {
+            Title = "Import CSV",
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+        };
+
+        if (ofd.ShowDialog(this) != DialogResult.OK) return;
+
+        try
+        {
+            var lines = File.ReadAllLines(ofd.FileName, System.Text.Encoding.UTF8);
+            if (lines.Length == 0)
+            {
+                MessageBox.Show(this, "CSVファイルが空です。", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // ヘッダ検証（固定ヘッダ完全一致）
+            if (lines[0].Trim() != CsvExpectedHeader)
+            {
+                MessageBox.Show(this, "CSVヘッダが仕様と一致しません。", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (lines.Length < 2)
+            {
+                MessageBox.Show(this, "CSVにデータ行がありません。", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 全行パース（1行でもエラーなら全体失敗）
+            var steps = new List<MacroStep>();
+            for (int i = 1; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
+                var fields = ParseCsvFields(lines[i]);
+                var step = ConvertCsvRowToStep(fields, i + 1);
+                steps.Add(step);
+            }
+
+            if (steps.Count == 0)
+            {
+                MessageBox.Show(this, "インポート対象の行がありません。", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // GoTo/StartLabel 参照バリデーション
+            ValidateGoToReferences(steps);
+
+            // 選択行位置から挿入
+            int insertIndex = GetInsertIndexForPaste();
+            _app.InsertSteps(insertIndex, steps);
+
+            BeginInvoke(new Action(() =>
+            {
+                if (gridActions.RowCount > 0)
+                    SelectRow(Math.Min(insertIndex, gridActions.RowCount - 1));
+            }));
+
+            MessageBox.Show(this, $"{steps.Count} 件のステップをインポートしました。", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (InvalidDataException ex)
+        {
+            MessageBox.Show(this, $"CSVインポートに失敗しました。\n{ex.Message}", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"CSVインポート中にエラーが発生しました。\n{ex.Message}", "Import CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// CSV行をフィールド配列にパース（RFC 4180準拠: ダブルクォート対応）
+    /// </summary>
+    private static string[] ParseCsvFields(string line)
+    {
+        var fields = new List<string>();
+        var sb = new System.Text.StringBuilder();
+        bool inQuotes = false;
+
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        sb.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            else
+            {
+                if (c == '"')
+                {
+                    inQuotes = true;
+                }
+                else if (c == ',')
+                {
+                    fields.Add(sb.ToString());
+                    sb.Clear();
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+        }
+
+        fields.Add(sb.ToString());
+        return fields.ToArray();
+    }
+
+    /// <summary>
+    /// フィールド値を安全に取得（範囲外は空文字）
+    /// </summary>
+    private static string F(string[] fields, int index)
+        => index >= 0 && index < fields.Length ? fields[index].Trim() : "";
+
+    /// <summary>
+    /// 必須フィールドを取得（空の場合はエラー）
+    /// </summary>
+    private static string Req(string[] fields, int index, string columnName, int rowNumber)
+    {
+        var v = F(fields, index);
+        if (string.IsNullOrEmpty(v))
+            throw new InvalidDataException($"行 {rowNumber}: {columnName} は必須です。");
+        return v;
+    }
+
+    /// <summary>
+    /// 必須 int フィールド
+    /// </summary>
+    private static int ReqInt(string[] fields, int index, string columnName, int rowNumber)
+    {
+        var v = Req(fields, index, columnName, rowNumber);
+        if (!int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int result))
+            throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{v}\" は整数に変換できません。");
+        return result;
+    }
+
+    /// <summary>
+    /// 任意 int フィールド（空なら null）
+    /// </summary>
+    private static int? OptInt(string[] fields, int index, string columnName, int rowNumber)
+    {
+        var v = F(fields, index);
+        if (string.IsNullOrEmpty(v)) return null;
+        if (!int.TryParse(v, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int result))
+            throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{v}\" は整数に変換できません。");
+        return result;
+    }
+
+    /// <summary>
+    /// 必須 bool フィールド
+    /// </summary>
+    private static bool ReqBool(string[] fields, int index, string columnName, int rowNumber)
+    {
+        var v = Req(fields, index, columnName, rowNumber);
+        if (bool.TryParse(v, out bool result)) return result;
+        throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{v}\" は True/False に変換できません。");
+    }
+
+    /// <summary>
+    /// 必須 Enum フィールド
+    /// </summary>
+    private static T ReqEnum<T>(string[] fields, int index, string columnName, int rowNumber) where T : struct, Enum
+    {
+        var v = Req(fields, index, columnName, rowNumber);
+        if (Enum.TryParse<T>(v, ignoreCase: true, out var result)) return result;
+        throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{v}\" は不正です。");
+    }
+
+    /// <summary>
+    /// 任意 Enum フィールド（空ならデフォルト値）
+    /// </summary>
+    private static T OptEnum<T>(string[] fields, int index, T defaultValue) where T : struct, Enum
+    {
+        var v = F(fields, index);
+        if (string.IsNullOrEmpty(v)) return defaultValue;
+        if (Enum.TryParse<T>(v, ignoreCase: true, out var result)) return result;
+        return defaultValue;
+    }
+
+    /// <summary>
+    /// GoTo文字列を GoToTarget に変換
+    /// </summary>
+    private static GoToTarget ParseGoToTarget(string value, int rowNumber, string columnName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidDataException($"行 {rowNumber}: {columnName} は必須です。");
+
+        var v = value.Trim();
+        if (v.Equals("Start", StringComparison.OrdinalIgnoreCase)) return GoToTarget.Start();
+        if (v.Equals("Next", StringComparison.OrdinalIgnoreCase)) return GoToTarget.Next();
+        if (v.Equals("End", StringComparison.OrdinalIgnoreCase)) return GoToTarget.End();
+
+        if (v.StartsWith("Label:", StringComparison.Ordinal))
+        {
+            var labelName = v.Substring(6);
+            if (string.IsNullOrWhiteSpace(labelName))
+                throw new InvalidDataException($"行 {rowNumber}: {columnName} の Label: の後ろが空です。");
+            return GoToTarget.ToLabel(labelName);
+        }
+
+        throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{v}\" は不正です。(Start/Next/End/Label:<name>)");
+    }
+
+    /// <summary>
+    /// 変数名バリデーション（空は許容、値ありなら正規表現チェック）
+    /// </summary>
+    private static void ValidateVariableName(string value, int rowNumber, string columnName)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        if (!VariableNamePattern.IsMatch(value))
+            throw new InvalidDataException($"行 {rowNumber}: {columnName} の値 \"{value}\" は変数名規則に違反しています。");
+    }
+
+    /// <summary>
+    /// SearchArea を CSV列から構築
+    /// </summary>
+    private static SearchArea ParseSearchArea(string[] fields, int rowNumber)
+    {
+        var kindStr = Req(fields, ColSearchAreaKind, "SearchAreaKind", rowNumber);
+        var kind = ReqEnum<SearchAreaKind>(fields, ColSearchAreaKind, "SearchAreaKind", rowNumber);
+
+        var area = new SearchArea { Kind = kind };
+
+        if (kind is SearchAreaKind.AreaOfDesktop or SearchAreaKind.AreaOfFocusedWindow)
+        {
+            area.X1 = ReqInt(fields, ColX1, "X1", rowNumber);
+            area.Y1 = ReqInt(fields, ColY1, "Y1", rowNumber);
+            area.X2 = ReqInt(fields, ColX2, "X2", rowNumber);
+            area.Y2 = ReqInt(fields, ColY2, "Y2", rowNumber);
+
+            if (area.X2 <= area.X1 || area.Y2 <= area.Y1)
+                throw new InvalidDataException($"行 {rowNumber}: SearchArea の座標が不正です (X2 > X1 かつ Y2 > Y1 が必要)。");
+        }
+
+        return area;
+    }
+
+    /// <summary>
+    /// CSVの1行を MacroStep に変換
+    /// </summary>
+    private static MacroStep ConvertCsvRowToStep(string[] fields, int rowNumber)
+    {
+        var actionType = Req(fields, ColAction, "Action", rowNumber);
+        var label = F(fields, ColLabel);
+        var comment = F(fields, ColComment);
+
+        MacroAction action = actionType switch
+        {
+            "MouseClick" => BuildMouseClick(fields, rowNumber),
+            "MouseMove" => BuildMouseMove(fields, rowNumber),
+            "MouseWheel" => BuildMouseWheel(fields, rowNumber),
+            "KeyPress" => BuildKeyPress(fields, rowNumber),
+            "Wait" => BuildWait(fields, rowNumber),
+            "WaitForPixelColor" => BuildWaitForPixelColor(fields, rowNumber),
+            "WaitForTextInput" => BuildWaitForTextInput(fields, rowNumber),
+            "FindImage" => BuildFindImage(fields, rowNumber),
+            "FindTextOcr" => BuildFindTextOcr(fields, rowNumber),
+            "GoTo" => BuildGoTo(fields, rowNumber),
+            "If" => BuildIf(fields, rowNumber),
+            "Repeat" => BuildRepeat(fields, rowNumber),
+            "EmbedMacroFile" => BuildEmbedMacroFile(fields, rowNumber),
+            "ExecuteProgram" => BuildExecuteProgram(fields, rowNumber),
+            _ => throw new InvalidDataException($"行 {rowNumber}: 未知の Action \"{actionType}\" です。")
+        };
+
+        return new MacroStep(action, label, comment);
+    }
+
+    private static MouseClickAction BuildMouseClick(string[] f, int row)
+    {
+        var button = ReqEnum<MouseButton>(f, ColMouseButton, "MouseButton", row);
+        var clickType = ReqEnum<MouseClickType>(f, ColClickType, "ClickType", row);
+        return new MouseClickAction
+        {
+            Button = button,
+            Action = clickType,
+            ClickType = clickType,
+            Relative = ReqBool(f, ColRelative, "Relative", row),
+            X = ReqInt(f, ColX, "X", row),
+            Y = ReqInt(f, ColY, "Y", row)
+        };
+    }
+
+    private static MouseMoveAction BuildMouseMove(string[] f, int row) => new()
+    {
+        Relative = ReqBool(f, ColRelative, "Relative", row),
+        StartX = ReqInt(f, ColStartX, "StartX", row),
+        StartY = ReqInt(f, ColStartY, "StartY", row),
+        EndX = ReqInt(f, ColEndX, "EndX", row),
+        EndY = ReqInt(f, ColEndY, "EndY", row),
+        DurationMs = ReqInt(f, ColDurationMs, "DurationMs", row)
+    };
+
+    private static MouseWheelAction BuildMouseWheel(string[] f, int row) => new()
+    {
+        Orientation = ReqEnum<WheelOrientation>(f, ColWheelOrientation, "WheelOrientation", row),
+        Value = ReqInt(f, ColWheelValue, "WheelValue", row)
+    };
+
+    private static KeyPressAction BuildKeyPress(string[] f, int row)
+    {
+        var keyStr = Req(f, ColKey, "Key", row);
+        if (!ushort.TryParse(keyStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var keyCode))
+            throw new InvalidDataException($"行 {row}: Key の値 \"{keyStr}\" は整数に変換できません。");
+
+        return new KeyPressAction
+        {
+            Option = ReqEnum<KeyPressOption>(f, ColKeyOption, "KeyOption", row),
+            Key = new VirtualKey(keyCode),
+            Count = ReqInt(f, ColCount, "Count", row)
+        };
+    }
+
+    private static WaitTimeAction BuildWait(string[] f, int row) => new()
+    {
+        Milliseconds = ReqInt(f, ColWaitingMs, "WaitingMs", row)
+    };
+
+    private static WaitForPixelColorAction BuildWaitForPixelColor(string[] f, int row)
+    {
+        var color = Req(f, ColColor, "Color", row);
+        return new WaitForPixelColorAction
+        {
+            X = ReqInt(f, ColX, "X", row),
+            Y = ReqInt(f, ColY, "Y", row),
+            ColorHex = color,
+            TolerancePercent = ReqInt(f, ColTolerance, "Tolerance", row),
+            TimeoutMs = ReqInt(f, ColWaitingMs, "WaitingMs", row),
+            TrueGoTo = ParseGoToTarget(F(f, ColTrueGoTo), row, "TrueGoTo"),
+            FalseGoTo = ParseGoToTarget(F(f, ColFalseGoTo), row, "FalseGoTo")
+        };
+    }
+
+    private static WaitForTextInputAction BuildWaitForTextInput(string[] f, int row) => new()
+    {
+        TextToWaitFor = Req(f, ColText, "Text", row),
+        TimeoutMs = ReqInt(f, ColWaitingMs, "WaitingMs", row),
+        TrueGoTo = ParseGoToTarget(F(f, ColTrueGoTo), row, "TrueGoTo"),
+        FalseGoTo = ParseGoToTarget(F(f, ColFalseGoTo), row, "FalseGoTo")
+    };
+
+    private static FindImageAction BuildFindImage(string[] f, int row)
+    {
+        var searchArea = ParseSearchArea(f, row);
+        var bitmapKindStr = Req(f, ColBitmapKind, "BitmapKind", row);
+
+        if (!Enum.TryParse<ImageTemplateKind>(bitmapKindStr, ignoreCase: true, out var bitmapKind))
+            throw new InvalidDataException($"行 {row}: BitmapKind の値 \"{bitmapKindStr}\" は不正です。");
+
+        if (bitmapKind != ImageTemplateKind.FilePath && bitmapKind != ImageTemplateKind.CapturedBitmap)
+            throw new InvalidDataException($"行 {row}: BitmapKind は CapturedBitmap または FilePath のみ許可されます。");
+
+        var bitmapValue = Req(f, ColBitmapValue, "BitmapValue", row);
+
+        var saveX = F(f, ColSaveXVariable);
+        var saveY = F(f, ColSaveYVariable);
+        ValidateVariableName(saveX, row, "SaveXVariable");
+        ValidateVariableName(saveY, row, "SaveYVariable");
+        bool hasSaveCoord = !string.IsNullOrEmpty(saveX) || !string.IsNullOrEmpty(saveY);
+
+        var mouseActionBehavior = OptEnum(f, ColMouseActionBehavior, MouseActionBehavior.Positioning);
+        var mousePos = OptEnum(f, ColMousePosition, Domain.Macros.MousePosition.Center);
+        bool hasMouseAction = !string.IsNullOrEmpty(F(f, ColMouseActionBehavior));
+
+        return new FindImageAction
+        {
+            SearchArea = searchArea,
+            Area = searchArea,
+            ColorTolerancePercent = ReqInt(f, ColTolerance, "Tolerance", row),
+            Template = new ImageTemplate
+            {
+                Kind = bitmapKind,
+                FilePath = bitmapKind == ImageTemplateKind.FilePath ? bitmapValue : ""
+            },
+            MouseActionEnabled = hasMouseAction,
+            MouseAction = mouseActionBehavior,
+            MousePosition = mousePos,
+            SaveCoordinateEnabled = hasSaveCoord,
+            SaveXVariable = hasSaveCoord ? (string.IsNullOrEmpty(saveX) ? "X" : saveX) : "X",
+            SaveYVariable = hasSaveCoord ? (string.IsNullOrEmpty(saveY) ? "Y" : saveY) : "Y",
+            TimeoutMs = ReqInt(f, ColWaitingMs, "WaitingMs", row),
+            TrueGoTo = ParseGoToTarget(F(f, ColTrueGoTo), row, "TrueGoTo"),
+            FalseGoTo = ParseGoToTarget(F(f, ColFalseGoTo), row, "FalseGoTo")
+        };
+    }
+
+    private static FindTextOcrAction BuildFindTextOcr(string[] f, int row)
+    {
+        var searchArea = ParseSearchArea(f, row);
+        var saveX = F(f, ColSaveXVariable);
+        var saveY = F(f, ColSaveYVariable);
+        ValidateVariableName(saveX, row, "SaveXVariable");
+        ValidateVariableName(saveY, row, "SaveYVariable");
+        bool hasSaveCoord = !string.IsNullOrEmpty(saveX) || !string.IsNullOrEmpty(saveY);
+
+        var mouseActionBehavior = OptEnum(f, ColMouseActionBehavior, MouseActionBehavior.Positioning);
+        var mousePos = OptEnum(f, ColMousePosition, Domain.Macros.MousePosition.Center);
+        bool hasMouseAction = !string.IsNullOrEmpty(F(f, ColMouseActionBehavior));
+
+        return new FindTextOcrAction
+        {
+            TextToSearchFor = Req(f, ColText, "Text", row),
+            Language = ReqEnum<OcrLanguage>(f, ColLanguage, "Language", row),
+            SearchArea = searchArea,
+            Area = searchArea,
+            MouseActionEnabled = hasMouseAction,
+            MouseAction = mouseActionBehavior,
+            MousePosition = mousePos,
+            SaveCoordinateEnabled = hasSaveCoord,
+            SaveXVariable = hasSaveCoord ? (string.IsNullOrEmpty(saveX) ? "X" : saveX) : "X",
+            SaveYVariable = hasSaveCoord ? (string.IsNullOrEmpty(saveY) ? "Y" : saveY) : "Y",
+            TimeoutMs = ReqInt(f, ColWaitingMs, "WaitingMs", row),
+            TrueGoTo = ParseGoToTarget(F(f, ColTrueGoTo), row, "TrueGoTo"),
+            FalseGoTo = ParseGoToTarget(F(f, ColFalseGoTo), row, "FalseGoTo")
+        };
+    }
+
+    private static GoToAction BuildGoTo(string[] f, int row) => new()
+    {
+        Target = ParseGoToTarget(F(f, ColGoTo), row, "GoTo")
+    };
+
+    private static IfAction BuildIf(string[] f, int row)
+    {
+        var varName = Req(f, ColVariableName, "VariableName", row);
+        ValidateVariableName(varName, row, "VariableName");
+
+        var condTypeStr = Req(f, ColConditionType, "ConditionType", row);
+        if (!Enum.TryParse<IfConditionKind>(condTypeStr, ignoreCase: true, out var condKind))
+            throw new InvalidDataException($"行 {row}: ConditionType の値 \"{condTypeStr}\" は不正です。");
+
+        // ConditionValue は ValueDefined 以外で必須
+        var condValue = F(f, ColConditionValue);
+        if (condKind != IfConditionKind.ValueDefined && string.IsNullOrEmpty(condValue))
+            throw new InvalidDataException($"行 {row}: ConditionValue は ConditionType が ValueDefined 以外の場合必須です。");
+
+        return new IfAction
+        {
+            VariableName = varName,
+            Condition = condKind,
+            Value = condValue,
+            TrueGoTo = ParseGoToTarget(F(f, ColTrueGoTo), row, "TrueGoTo"),
+            FalseGoTo = ParseGoToTarget(F(f, ColFalseGoTo), row, "FalseGoTo")
+        };
+    }
+
+    private static RepeatAction BuildRepeat(string[] f, int row)
+    {
+        var startLabel = Req(f, ColStartLabel, "StartLabel", row);
+        var repeatModeStr = Req(f, ColRepeatMode, "RepeatMode", row);
+
+        if (!Enum.TryParse<RepeatConditionKind>(repeatModeStr, ignoreCase: true, out var repeatMode))
+            throw new InvalidDataException($"行 {row}: RepeatMode の値 \"{repeatModeStr}\" は不正です。");
+
+        var condition = new RepeatCondition { Kind = repeatMode };
+        switch (repeatMode)
+        {
+            case RepeatConditionKind.Seconds:
+                condition.Seconds = ReqInt(f, ColSeconds, "Seconds", row);
+                break;
+            case RepeatConditionKind.Repetitions:
+                condition.Repetitions = ReqInt(f, ColRepetitions, "Repetitions", row);
+                break;
+            case RepeatConditionKind.Until:
+                condition.UntilTime = Req(f, ColUntil, "Until", row);
+                break;
+            case RepeatConditionKind.Infinite:
+                break;
+        }
+
+        var finishGoToStr = F(f, ColFinishGoTo);
+        var afterRepeatGoTo = string.IsNullOrEmpty(finishGoToStr)
+            ? GoToTarget.Next()
+            : ParseGoToTarget(finishGoToStr, row, "FinishGoTo");
+
+        return new RepeatAction
+        {
+            StartLabel = startLabel,
+            Condition = condition,
+            AfterRepeatGoTo = afterRepeatGoTo
+        };
+    }
+
+    private static EmbedMacroFileAction BuildEmbedMacroFile(string[] f, int row) => new()
+    {
+        MacroFilePath = Req(f, ColPath, "Path", row)
+    };
+
+    private static ExecuteProgramAction BuildExecuteProgram(string[] f, int row) => new()
+    {
+        ProgramPath = Req(f, ColPath, "Path", row)
+    };
+
+    /// <summary>
+    /// GoTo / TrueGoTo / FalseGoTo / FinishGoTo / StartLabel の参照先ラベルが
+    /// インポート対象 + 現在のMacro内に存在するかを検証する。
+    /// </summary>
+    private void ValidateGoToReferences(List<MacroStep> importSteps)
+    {
+        // 利用可能ラベル = インポート対象ラベル + 現在Macroの既存ラベル
+        var availableLabels = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var step in importSteps)
+        {
+            var l = (step.Label ?? "").Trim();
+            if (l.Length > 0) availableLabels.Add(l);
+        }
+
+        foreach (var step in _app.CurrentMacro.Steps)
+        {
+            var l = (step.Label ?? "").Trim();
+            if (l.Length > 0) availableLabels.Add(l);
+        }
+
+        for (int i = 0; i < importSteps.Count; i++)
+        {
+            var action = importSteps[i].Action;
+            var row = i + 1;
+
+            CheckLabelRef(action switch
+            {
+                GoToAction g => g.Target,
+                _ => null
+            }, "GoTo", row);
+
+            CheckLabelRef(action switch
+            {
+                WaitForPixelColorAction a => a.TrueGoTo,
+                WaitForTextInputAction a => a.TrueGoTo,
+                FindImageAction a => a.TrueGoTo,
+                FindTextOcrAction a => a.TrueGoTo,
+                IfAction a => a.TrueGoTo,
+                _ => null
+            }, "TrueGoTo", row);
+
+            CheckLabelRef(action switch
+            {
+                WaitForPixelColorAction a => a.FalseGoTo,
+                WaitForTextInputAction a => a.FalseGoTo,
+                FindImageAction a => a.FalseGoTo,
+                FindTextOcrAction a => a.FalseGoTo,
+                IfAction a => a.FalseGoTo,
+                _ => null
+            }, "FalseGoTo", row);
+
+            CheckLabelRef(action switch
+            {
+                RepeatAction a => a.AfterRepeatGoTo,
+                _ => null
+            }, "FinishGoTo", row);
+
+            // StartLabel 検証（Repeat専用）
+            if (action is RepeatAction ra)
+            {
+                if (!availableLabels.Contains(ra.StartLabel))
+                    throw new InvalidDataException($"行 {row}: StartLabel \"{ra.StartLabel}\" が解決できません。");
+            }
+        }
+
+        void CheckLabelRef(GoToTarget? target, string col, int row)
+        {
+            if (target is null) return;
+            if (target.Kind != GoToKind.Label) return;
+            if (!availableLabels.Contains(target.Label))
+                throw new InvalidDataException($"行 {row}: {col} の参照ラベル \"{target.Label}\" が存在しません。");
+        }
+    }
+
     private void StartRecording()
     {
         if (_app.State != MacroTool.Application.AppState.Stopped) return;
@@ -1602,6 +2257,7 @@ public partial class Form1 : Form
         tsbSearchReplace.Enabled = stopped && hasMacro;
 
         // File menu extras
+        if (_miImportCsv != null) _miImportCsv.Enabled = stopped;
         if (_miExportCsv != null) _miExportCsv.Enabled = stopped && hasMacro;
 
         // Range play
