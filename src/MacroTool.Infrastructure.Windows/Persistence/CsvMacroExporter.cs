@@ -259,8 +259,9 @@ public static class CsvMacroExporter
         };
     }
 
-    private static string CsvEscape(string s)
+    private static string CsvEscape(string? s)
     {
+        s ??= "";
         if (s.Contains('"') || s.Contains(',') || s.Contains('\n') || s.Contains('\r'))
         {
             return '"' + s.Replace("\"", "\"\"") + '"';
