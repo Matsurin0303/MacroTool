@@ -46,3 +46,15 @@ internal sealed class FakeRepo : IMacroRepository
     public void Save(string path, Macro macro) => Saved = macro;
     public Macro Load(string path) => ToLoad;
 }
+
+internal sealed class FakeCsvExporter : ICsvMacroExporter
+{
+    public Macro? ExportedMacro { get; private set; }
+    public string? ExportedPath { get; private set; }
+
+    public void Export(Macro macro, string path)
+    {
+        ExportedMacro = macro;
+        ExportedPath = path;
+    }
+}

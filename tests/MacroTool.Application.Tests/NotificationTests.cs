@@ -12,7 +12,7 @@ public class NotificationTests
         var player = new FakePlayer { ThrowOnPlay = true };
         var repo = new FakeRepo();
 
-        var app = new MacroAppService(rec, player, repo);
+        var app = new MacroAppService(rec, player, repo, new FakeCsvExporter());
 
         // 再生できるように1ステップ入れる
         app.CurrentMacro.AddStep(new KeyPressAction { Option = KeyPressOption.Press, Key = new VirtualKey(65), Count = 1 });

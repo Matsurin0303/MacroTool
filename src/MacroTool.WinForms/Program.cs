@@ -20,7 +20,7 @@ internal static class Program
         using var host = Host.CreateDefaultBuilder()
             .ConfigureServices((ctx, services) =>
             {
-                // SettingsiLocalAppData\MacroTool\settings.jsonj
+                // Settingsï¿½iLocalAppData\MacroTool\settings.jsonï¿½j
                 var store = new SettingsStore(SettingsStore.DefaultPath());
                 var s = store.Load();
 
@@ -31,13 +31,14 @@ internal static class Program
                     ClickHoldDelayMs = s.Playback.ClickHoldDelayMs
                 };
 
-                // š‘¦”½‰f‚Ì—vFƒAƒNƒZƒT‚ğSingleton‚Å•Û
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½fï¿½Ì—vï¿½Fï¿½Aï¿½Nï¿½Zï¿½Tï¿½ï¿½Singletonï¿½Å•Ûï¿½
                 services.AddSingleton<IPlaybackOptionsAccessor>(new PlaybackOptionsAccessor(initial));
 
                 // Core
                 services.AddSingleton<IRecorder, LowLevelHookRecorder>();
                 services.AddSingleton<IPlayer, SendInputPlayer>();
                 services.AddSingleton<IMacroRepository, JsonMacroRepository>();
+                services.AddSingleton<ICsvMacroExporter, CsvMacroExporter>();
                 services.AddSingleton<MacroAppService>();
 
                 // Form

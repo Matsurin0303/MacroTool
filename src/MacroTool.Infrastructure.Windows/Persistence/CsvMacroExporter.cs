@@ -1,4 +1,5 @@
-﻿using MacroTool.Domain.Macros;
+﻿using MacroTool.Application.Abstractions;
+using MacroTool.Domain.Macros;
 using System.Globalization;
 using System.Text;
 
@@ -8,7 +9,7 @@ namespace MacroTool.Infrastructure.Windows.Persistence;
 /// CSV_v1.0 仕様に準拠した CSV Export。
 /// 48列固定ヘッダでマクロを出力する。
 /// </summary>
-public static class CsvMacroExporter
+public sealed class CsvMacroExporter : ICsvMacroExporter
 {
     // ---- 列インデックス（0-based、CSV_Schema_v1.0 準拠） ----
     private const int ColOrder = 0;
@@ -72,7 +73,7 @@ public static class CsvMacroExporter
     /// <summary>
     /// CSV_v1.0 形式でマクロを指定パスに出力する。
     /// </summary>
-    public static void Export(Macro macro, string path)
+    public void Export(Macro macro, string path)
     {
         if (macro is null) throw new ArgumentNullException(nameof(macro));
         if (string.IsNullOrWhiteSpace(path))
@@ -90,7 +91,7 @@ public static class CsvMacroExporter
 
     // ---- 行生成 ----
 
-    private static string BuildRow(int order, MacroStep step)
+    private string BuildRow(int order, MacroStep step)
     {
         var cols = new string[ColumnCount];
         Array.Fill(cols, "");
@@ -107,7 +108,7 @@ public static class CsvMacroExporter
 
     // ---- Action 別列マッピング ----
 
-    private static void MapAction(string[] cols, MacroAction action)
+    private void MapAction(string[] cols, MacroAction action)
     {
         switch (action)
         {

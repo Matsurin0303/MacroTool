@@ -12,7 +12,7 @@ public class MacroAppServiceTests
         var player = new FakePlayer();
         var repo = new FakeRepo();
 
-        var app = new MacroAppService(rec, player, repo);
+        var app = new MacroAppService(rec, player, repo, new FakeCsvExporter());
 
         // 録画開始
         Assert.True(app.StartRecording(clearExisting: true));
@@ -36,7 +36,7 @@ public class MacroAppServiceTests
         var rec = new FakeRecorder();
         var player = new FakePlayer();
         var repo = new FakeRepo();
-        var app = new MacroAppService(rec, player, repo);
+        var app = new MacroAppService(rec, player, repo, new FakeCsvExporter());
 
         app.CurrentMacro.AddStep(new MacroStep(new KeyPressAction { Option = KeyPressOption.Down, Key = new VirtualKey(65), Count = 1 }));
         app.CurrentMacro.AddStep(new MacroStep(new KeyPressAction { Option = KeyPressOption.Up, Key = new VirtualKey(65), Count = 1 }));
@@ -53,7 +53,7 @@ public class MacroAppServiceTests
         var rec = new FakeRecorder();
         var player = new FakePlayer();
         var repo = new FakeRepo();
-        var app = new MacroAppService(rec, player, repo);
+        var app = new MacroAppService(rec, player, repo, new FakeCsvExporter());
 
         app.CurrentMacro.AddStep(new MacroStep(new KeyPressAction { Option = KeyPressOption.Down, Key = new VirtualKey(65), Count = 1 }, "A", ""));
 

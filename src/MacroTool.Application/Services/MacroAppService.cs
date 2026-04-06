@@ -10,6 +10,7 @@ public sealed class MacroAppService : IDisposable
     private readonly IRecorder _recorder;
     private readonly IPlayer _player;
     private readonly IMacroRepository _repo;
+    private readonly ICsvMacroExporter _csvExporter;
     private const int MaxUndoHistory = 100;
 
     private IReadOnlyList<int>? _playIndexMap;
@@ -61,11 +62,12 @@ public sealed class MacroAppService : IDisposable
     public event EventHandler<string>? UserNotification; // UIでメッセージ出したい場合用（任意）
     public event EventHandler<StepExecutingEventArgs>? StepExecuting;
 
-    public MacroAppService(IRecorder recorder, IPlayer player, IMacroRepository repo)
+    public MacroAppService(IRecorder recorder, IPlayer player, IMacroRepository repo, ICsvMacroExporter csvExporter)
     {
         _recorder = recorder;
         _player = player;
         _repo = repo;
+        _csvExporter = csvExporter;
 
         _recorder.ActionRecorded += OnActionRecorded;
         _player.StepExecuting += OnPlayerStepExecuting;
@@ -245,6 +247,31 @@ public sealed class MacroAppService : IDisposable
 
     // ===== 保存/読み込み =====
     public void Save(string path) => _repo.Save(path, CurrentMacro);
+
+    /// <summary>
+    /// UC-06: CSV Export。Application Service 経由で CSV 出力する。
+    /// I/O 失敗時は ApplicationError として例外をスローする。
+    /// </summary>
+    public void ExportToCsv(string csvPath)
+    {
+        if (State != AppState.Stopped)
+        {
+            UserNotification?.Invoke(this, "停止中のみCSV出力できます。");
+            return;
+        }
+
+        if (CurrentMacro.Count == 0)
+            throw new InvalidOperationException("Export対象のアクションがありません。");
+
+        try
+        {
+            _csvExporter.Export(CurrentMacro, csvPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new IOException($"CSVファイルの書き込みに失敗しました: {ex.Message}", ex);
+        }
+    }
 
     public void Load(string path)
     {
