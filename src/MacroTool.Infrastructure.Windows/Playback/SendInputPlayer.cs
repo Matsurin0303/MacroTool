@@ -98,7 +98,10 @@ public sealed class SendInputPlayer : IPlayer
             // ===== Wait =====
             case WaitTimeAction wt:
                 if (wt.Milliseconds > 0)
-                    await Task.Delay(wt.Milliseconds, token);
+                {
+                    int effectiveMs = (int)Math.Max(1, (long)wt.Milliseconds * 100 / opt.PlaybackSpeedPercent);
+                    await Task.Delay(effectiveMs, token);
+                }
                 return index + 1;
 
             case WaitForPixelColorAction wpc:

@@ -48,6 +48,9 @@ public partial class Form1 : Form
     private ToolStripMenuItem? _miPlayFromSelectedPb;
     private ToolStripMenuItem? _miPlaySelectedOnlyPb;
 
+    // Playback Properties
+    private TextBox? _txtPlaybackSpeed;
+
     // Ribbon: View tab UI
     private ToolStrip? _tsView;
     private ToolStripButton? _tsbShowLineNumbers;
@@ -269,7 +272,8 @@ public partial class Form1 : Form
         {
             EnableStabilizeWait = _settings.Playback.EnableStabilizeWait,
             CursorSettleDelayMs = _settings.Playback.CursorSettleDelayMs,
-            ClickHoldDelayMs = _settings.Playback.ClickHoldDelayMs
+            ClickHoldDelayMs = _settings.Playback.ClickHoldDelayMs,
+            PlaybackSpeedPercent = _playbackOptionsAccessor.Current.PlaybackSpeedPercent
         });
     }
 
@@ -567,7 +571,7 @@ public partial class Form1 : Form
         ts.Items.Add(_tsbStopPb);
         ts.Items.Add(new ToolStripSeparator());
 
-        // === Playback Properties（UIのみ） ===
+        // === Playback Properties ===
         var propsPanel = BuildPlaybackPropertiesPanel();
         ts.Items.Add(CreateHost(propsPanel));
 
@@ -624,7 +628,7 @@ public partial class Form1 : Form
         }
     }
 
-    private static Panel BuildPlaybackPropertiesPanel()
+    private Panel BuildPlaybackPropertiesPanel()
     {
         var panel = new Panel
         {
@@ -647,16 +651,18 @@ public partial class Form1 : Form
         tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         tlp.Controls.Add(new Label { Text = "Playback speed:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 0);
-        tlp.Controls.Add(new TextBox { Text = "100", Width = 60, Anchor = AnchorStyles.Left }, 1, 0);
+        _txtPlaybackSpeed = new TextBox { Text = "100", Width = 60, Anchor = AnchorStyles.Left };
+        _txtPlaybackSpeed.Validating += TxtPlaybackSpeed_Validating;
+        tlp.Controls.Add(_txtPlaybackSpeed, 1, 0);
 
-        tlp.Controls.Add(new Label { Text = "Mouse path:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 1);
-        var cmbPath = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Anchor = AnchorStyles.Left };
+        tlp.Controls.Add(new Label { Text = "Mouse path:", AutoSize = true, Anchor = AnchorStyles.Left, Enabled = false }, 0, 1);
+        var cmbPath = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120, Anchor = AnchorStyles.Left, Enabled = false };
         cmbPath.Items.AddRange(new object[] { "As recorded" });
         cmbPath.SelectedIndex = 0;
         tlp.Controls.Add(cmbPath, 1, 1);
 
-        tlp.Controls.Add(new Label { Text = "Repeat:", AutoSize = true, Anchor = AnchorStyles.Left }, 0, 2);
-        tlp.Controls.Add(new TextBox { Text = "1", Width = 60, Anchor = AnchorStyles.Left }, 1, 2);
+        tlp.Controls.Add(new Label { Text = "Repeat:", AutoSize = true, Anchor = AnchorStyles.Left, Enabled = false }, 0, 2);
+        tlp.Controls.Add(new TextBox { Text = "1", Width = 60, Anchor = AnchorStyles.Left, Enabled = false }, 1, 2);
 
         var lbl = new Label
         {
@@ -670,9 +676,34 @@ public partial class Form1 : Form
 
         panel.Controls.Add(tlp);
 
-        // v1.0: まだ反映先がないため UI のみ
-        panel.Enabled = false;
         return panel;
+    }
+
+    private void TxtPlaybackSpeed_Validating(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_txtPlaybackSpeed == null) return;
+
+        if (int.TryParse(_txtPlaybackSpeed.Text, out int speed) && speed >= 1 && speed <= 1000)
+        {
+            UpdatePlaybackSpeedPercent(speed);
+        }
+        else
+        {
+            // 不正値時は入力キャンセル（現在のアクセサ値に戻す）
+            _txtPlaybackSpeed.Text = _playbackOptionsAccessor.Current.PlaybackSpeedPercent.ToString();
+        }
+    }
+
+    private void UpdatePlaybackSpeedPercent(int speedPercent)
+    {
+        var current = _playbackOptionsAccessor.Current;
+        _playbackOptionsAccessor.Update(new PlaybackOptions
+        {
+            EnableStabilizeWait = current.EnableStabilizeWait,
+            CursorSettleDelayMs = current.CursorSettleDelayMs,
+            ClickHoldDelayMs = current.ClickHoldDelayMs,
+            PlaybackSpeedPercent = speedPercent
+        });
     }
 
     private static Panel BuildAfterPlaybackPanel()
