@@ -1263,8 +1263,8 @@ public partial class Form1 : Form
         var validationErrors = _app.ValidateCurrentMacro();
         if (validationErrors.Count > 0)
         {
-            var messages = validationErrors.Select(e => e.Message);
-            var errorText = string.Join(Environment.NewLine, messages);
+            var errorMessages = validationErrors.Select(e => e.Message);
+            var errorText = string.Join(Environment.NewLine, errorMessages);
             MessageBox.Show(
                 this,
                 $"マクロに整合性エラーがあるため、CSV を出力できません。{Environment.NewLine}{Environment.NewLine}{errorText}",

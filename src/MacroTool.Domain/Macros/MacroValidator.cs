@@ -20,15 +20,15 @@ public sealed class MacroValidator
         if (macro is null) throw new ArgumentNullException(nameof(macro));
 
         var errors = new List<MacroValidationError>();
-        var labels = new HashSet<string>(
+        var definedLabels = new HashSet<string>(
             macro.GetDefinedLabels(),
             StringComparer.Ordinal);
 
         for (int i = 0; i < macro.Steps.Count; i++)
         {
             var step = macro.Steps[i];
-            ValidateGoToReferences(step.Action, i, labels, errors);
-            ValidateRepeat(step.Action, i, labels, macro.Steps, errors);
+            ValidateGoToReferences(step.Action, i, definedLabels, errors);
+            ValidateRepeat(step.Action, i, definedLabels, macro.Steps, errors);
             ValidateVariableNames(step.Action, i, errors);
             ValidateRequiredFields(step.Action, i, errors);
         }
@@ -41,43 +41,43 @@ public sealed class MacroValidator
     /// </summary>
     private static void ValidateGoToReferences(
         MacroAction action, int index,
-        HashSet<string> labels,
+        HashSet<string> definedLabels,
         List<MacroValidationError> errors)
     {
         switch (action)
         {
             case GoToAction a:
-                ValidateGoToTarget(a.Target, index, "GoTo", labels, errors);
+                ValidateGoToTarget(a.Target, index, "GoTo", definedLabels, errors);
                 break;
             case IfAction a:
-                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", labels, errors);
-                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", labels, errors);
+                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", definedLabels, errors);
+                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", definedLabels, errors);
                 break;
             case WaitForPixelColorAction a:
-                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", labels, errors);
-                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", labels, errors);
+                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", definedLabels, errors);
+                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", definedLabels, errors);
                 break;
             case WaitForTextInputAction a:
-                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", labels, errors);
-                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", labels, errors);
+                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", definedLabels, errors);
+                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", definedLabels, errors);
                 break;
             case FindImageAction a:
-                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", labels, errors);
-                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", labels, errors);
+                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", definedLabels, errors);
+                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", definedLabels, errors);
                 break;
             case FindTextOcrAction a:
-                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", labels, errors);
-                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", labels, errors);
+                ValidateGoToTarget(a.TrueGoTo, index, "TrueGoTo", definedLabels, errors);
+                ValidateGoToTarget(a.FalseGoTo, index, "FalseGoTo", definedLabels, errors);
                 break;
             case RepeatAction a:
-                ValidateGoToTarget(a.AfterRepeatGoTo, index, "FinishGoTo", labels, errors);
+                ValidateGoToTarget(a.AfterRepeatGoTo, index, "FinishGoTo", definedLabels, errors);
                 break;
         }
     }
 
     private static void ValidateGoToTarget(
         GoToTarget target, int index, string field,
-        HashSet<string> labels,
+        HashSet<string> definedLabels,
         List<MacroValidationError> errors)
     {
         if (target is null) return;
@@ -91,7 +91,7 @@ public sealed class MacroValidator
             return;
         }
 
-        if (!labels.Contains(target.Label))
+        if (!definedLabels.Contains(target.Label))
         {
             errors.Add(new MacroValidationError(
                 index, field,
@@ -104,7 +104,7 @@ public sealed class MacroValidator
     /// </summary>
     private static void ValidateRepeat(
         MacroAction action, int repeatIndex,
-        HashSet<string> labels,
+        HashSet<string> definedLabels,
         IReadOnlyList<MacroStep> steps,
         List<MacroValidationError> errors)
     {
@@ -120,7 +120,7 @@ public sealed class MacroValidator
         }
 
         // StartLabel が既存ラベルを参照しているか
-        if (!labels.Contains(repeat.StartLabel))
+        if (!definedLabels.Contains(repeat.StartLabel))
         {
             errors.Add(new MacroValidationError(
                 repeatIndex, "StartLabel",
@@ -132,8 +132,8 @@ public sealed class MacroValidator
         int startIndex = -1;
         for (int i = 0; i < steps.Count; i++)
         {
-            var l = (steps[i].Label ?? "").Trim();
-            if (l == repeat.StartLabel)
+            var stepLabel = (steps[i].Label ?? "").Trim();
+            if (stepLabel == repeat.StartLabel)
             {
                 startIndex = i;
                 break;
@@ -141,7 +141,7 @@ public sealed class MacroValidator
         }
 
         if (startIndex < 0) return; // ラベル検証は上でエラー済み
-        if (startIndex >= repeatIndex) return; // 逆方向の参照は別の検証
+        if (startIndex >= repeatIndex) return; // StartLabel が Repeat 行より後方にある場合はネスト検証不要
 
         // ネスト禁止: StartLabel 行と Repeat 行の間に別の RepeatAction がないか
         for (int i = startIndex + 1; i < repeatIndex; i++)
