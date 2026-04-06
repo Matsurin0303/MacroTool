@@ -10,6 +10,7 @@ public sealed class MacroAppService : IDisposable
     private readonly IRecorder _recorder;
     private readonly IPlayer _player;
     private readonly IMacroRepository _repo;
+    private readonly MacroValidator _validator = new();
     private const int MaxUndoHistory = 100;
 
     private IReadOnlyList<int>? _playIndexMap;
@@ -261,6 +262,15 @@ public sealed class MacroAppService : IDisposable
 
         MacroChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    // ===== バリデーション =====
+
+    /// <summary>
+    /// 現在編集中の Macro の整合性を検証する。
+    /// CSV Import / Export 前に呼び出し、エラーがあれば処理を中止する。
+    /// </summary>
+    public IReadOnlyList<MacroValidationError> ValidateCurrentMacro()
+        => _validator.Validate(CurrentMacro);
 
     // ===== 録画イベント =====
     private void OnActionRecorded(object? sender, RecordedAction e)
