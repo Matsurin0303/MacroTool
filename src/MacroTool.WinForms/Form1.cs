@@ -1259,6 +1259,21 @@ public partial class Form1 : Form
             return;
         }
 
+        // 整合性検証
+        var validationErrors = _app.ValidateCurrentMacro();
+        if (validationErrors.Count > 0)
+        {
+            var messages = validationErrors.Select(e => e.Message);
+            var errorText = string.Join(Environment.NewLine, messages);
+            MessageBox.Show(
+                this,
+                $"マクロに整合性エラーがあるため、CSV を出力できません。{Environment.NewLine}{Environment.NewLine}{errorText}",
+                "Export CSV",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
         using var sfd = new SaveFileDialog
         {
             Title = "Export CSV",
